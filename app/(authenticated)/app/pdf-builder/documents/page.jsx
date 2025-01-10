@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { HelpCircle } from 'lucide-react'
 import Sidebar from '../../../../../components/sidebarPdf'
 import DocumentActions from '../../../../../components/document-actions'
 import LeaseTypeForm from '../../../../../components/forms/lease-type-form'
@@ -17,28 +18,33 @@ import TenantAddressForm from '../../../../../components/forms/tenant-address-fo
 import DateForm from '../../../../../components/forms/date-form'
 
 const steps = [
-  { id: 'lease-type', component: LeaseTypeForm, title: 'Lease Type' },
+  { 
+    id: 'lease-type', 
+    component: LeaseTypeForm, 
+    title: 'Lease Type',
+    detail: 'A lease agreement (or rental agreement) is a legally binding contract between a tenant and landlord that outlines the terms and conditions of renting a property. It specifies the rights and obligations of both parties, including details such as the rent amount, payment schedule, duration of the lease, and any rules or restrictions on the use of the property.'
+  },
   { 
     id: 'premises',
     title: 'Premises',
     subItems: [
-      { id: 'housing-type', component: HousingTypeForm, title: 'Housing Type' },
-      { id: 'parking-storage', component: ParkingStorageForm, title: 'Parking and Storage' },
-      { id: 'furnishings', component: FurnishingsForm, title: 'Furnishings' },
-      { id: 'condition', component: ConditionOfPremisesForm, title: 'Condition of the Premises' },
+      { id: 'housing-type', component: HousingTypeForm, title: 'Housing Type', detail: 'The type of housing affects the specific terms and conditions in your lease agreement. Different housing types may have unique considerations, such as shared spaces in apartments or maintenance responsibilities in houses.' },
+      { id: 'parking-storage', component: ParkingStorageForm, title: 'Parking and Storage', detail: 'Clearly defining parking and storage arrangements helps prevent misunderstandings and ensures both parties are aware of what\'s included in the lease.' },
+      { id: 'furnishings', component: FurnishingsForm, title: 'Furnishings', detail: 'Specifying whether the property is furnished or unfurnished is crucial for setting expectations and determining responsibilities for maintenance and potential damage.' },
+      { id: 'condition', component: ConditionOfPremisesForm, title: 'Condition of the Premises', detail: 'Documenting the condition of the premises at the start of the lease helps avoid disputes about damages when the tenant moves out.' },
       { id: 'additional-description', component: AdditionalDescriptionForm, title: 'Additional Description' },
-      { id: 'address', component: AddressForm, title: 'Address' },
-      { id: 'lead-disclosure', component: LeadDisclosureForm, title: 'Lead Disclosure' }
+      { id: 'address', component: AddressForm, title: 'Address', detail: 'The precise address of the rental property is a crucial part of the lease agreement, ensuring legal clarity about the exact premises being rented.' },
+      { id: 'lead-disclosure', component: LeadDisclosureForm, title: 'Lead Disclosure', detail: 'Lead disclosure is a legal requirement for properties built before 1978. It informs tenants about potential lead hazards in the property.' }
     ]
   },
   {
     id: 'final-details',
     title: 'Final Details',
     subItems: [
-      { id: 'dispute-resolution', component: DisputeResolutionForm, title: 'Dispute Resolution' },
-      { id: 'landlord-address', component: LandlordAddressForm, title: 'Landlord\'s Address' },
-      { id: 'tenant-address', component: TenantAddressForm, title: 'Tenant\'s Address' },
-      { id: 'date', component: DateForm, title: 'Date' }
+      { id: 'dispute-resolution', component: DisputeResolutionForm, title: 'Dispute Resolution', detail: 'Specifying a dispute resolution method in advance can save time and reduce stress if disagreements arise during the tenancy.' },
+      { id: 'landlord-address', component: LandlordAddressForm, title: 'Landlord\'s Address', detail: 'The landlord\'s address is necessary for official communications and legal notices related to the lease.' },
+      { id: 'tenant-address', component: TenantAddressForm, title: 'Tenant\'s Address', detail: 'The tenant\'s current address may be required for background checks or as an alternate contact method.' },
+      { id: 'date', component: DateForm, title: 'Date', detail: 'The date of the lease agreement is important for establishing when the terms of the lease become effective.' }
     ]
   }
 ];
@@ -109,23 +115,43 @@ export default function Home() {
         progress={progress}
       />
       
-      <main className="flex-1 p-4 md:p-8 max-w-4xl">
-        <div className="w-full max-w-2xl">
-          <DocumentActions />
-          {isPreviewMode ? (
-            <div className="prose max-w-none">
-              <h1>Lease Agreement Preview</h1>
-              <pre className="bg-gray-100 p-4 rounded-lg">
-                {JSON.stringify(formData, null, 2)}
-              </pre>
+      <main className="flex-1 p-4 md:p-8 overflow-x-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-8">
+            <DocumentActions />
+          </div>
+          
+          <div className="flex flex-col lg:flex-row gap-8">
+            <div className="w-full lg:w-2/3">
+              {isPreviewMode ? (
+                <div className="prose max-w-none">
+                  <h1>Lease Agreement Preview</h1>
+                  <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto whitespace-pre-wrap break-words">
+                    {JSON.stringify(formData, null, 2)}
+                  </pre>
+                </div>
+              ) : (
+                <CurrentStepComponent 
+                  onNext={handleNext}
+                  onBack={handleBack}
+                  onSkip={handleSkip}
+                />
+              )}
             </div>
-          ) : (
-            <CurrentStepComponent 
-              onNext={handleNext}
-              onBack={handleBack}
-              onSkip={handleSkip}
-            />
-          )}
+            <div className="w-full lg:w-1/3">
+              {currentStep.detail && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-lg font-medium">{currentStep.title}</h3>
+                    <HelpCircle className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  </div>
+                  <div className="space-y-4 text-gray-500">
+                    <p className="text-sm">{currentStep.detail}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </main>
     </div>

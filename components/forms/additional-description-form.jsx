@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
+import { HelpCircle } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip'
 
 export default function AdditionalDescriptionForm({ onNext, onBack, onSkip }) {
   const [formData, setFormData] = useState({
@@ -19,20 +20,34 @@ export default function AdditionalDescriptionForm({ onNext, onBack, onSkip }) {
         <h2 className="text-2xl font-semibold mb-6">Additional Description</h2>
 
         <form onSubmit={handleSubmit}>
-          <Card>
-            <CardContent className="p-4">
-              <label className="block text-sm font-medium mb-4">
-                Add any additional description of the premises:
-              </label>
-              <textarea
-                value={formData.additionalDescription}
-                onChange={(e) => setFormData({ ...formData, additionalDescription: e.target.value })}
-                className="w-full p-2 border rounded-md"
-                rows={4}
-                placeholder="Add any additional description..."
-              />
-            </CardContent>
-          </Card>
+          <div className="bg-white shadow-sm border border-gray-200">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium">
+                  Add any additional description of the premises:
+                </label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <HelpCircle className="w-4 h-4 text-gray-400" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="w-64 text-sm">Include any additional details about the property that weren't covered in previous sections. This could include unique features, recent renovations, or specific rules.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div className="border-t border-gray-200 mt-2 pt-2">
+                <textarea
+                  value={formData.additionalDescription}
+                  onChange={(e) => setFormData({ ...formData, additionalDescription: e.target.value })}
+                  className="w-full p-2 border rounded-md"
+                  rows={4}
+                  placeholder="Add any additional description..."
+                />
+              </div>
+            </div>
+          </div>
 
           <div className="flex items-center justify-between mt-8">
             <button

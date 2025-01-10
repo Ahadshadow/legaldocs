@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
+import { HelpCircle } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip'
 
 export default function TenantAddressForm({ onNext, onBack, onSkip }) {
   const [formData, setFormData] = useState({
@@ -23,57 +24,116 @@ export default function TenantAddressForm({ onNext, onBack, onSkip }) {
 
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
-            <Card>
-              <CardContent className="p-4">
-                <label className="block text-sm font-medium mb-1">Street Address</label>
-                <input
-                  type="text"
-                  value={formData.street}
-                  onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                  className="w-full p-2 border rounded-md"
-                  placeholder="Enter street address"
-                />
-              </CardContent>
-            </Card>
+            <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium">Street Address</label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="w-4 h-4 text-gray-400" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="w-64 text-sm">Enter the full street address of the tenant.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <div className="border-t border-gray-200 mt-2 pt-2">
+                  <input
+                    type="text"
+                    value={formData.street}
+                    onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                    className="w-full p-2 border rounded-md"
+                    placeholder="Enter street address"
+                  />
+                </div>
+              </div>
+            </div>
 
-            <Card>
-              <CardContent className="p-4">
-                <label className="block text-sm font-medium mb-1">City</label>
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  className="w-full p-2 border rounded-md"
-                  placeholder="Enter city"
-                />
-              </CardContent>
-            </Card>
+            <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium">City</label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="w-4 h-4 text-gray-400" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="w-64 text-sm">Enter the city of the tenant's address.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <div className="border-t border-gray-200 mt-2 pt-2">
+                  <input
+                    type="text"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className="w-full p-2 border rounded-md"
+                    placeholder="Enter city"
+                  />
+                </div>
+              </div>
+            </div>
 
-            <Card>
-              <CardContent className="p-4">
-                <label className="block text-sm font-medium mb-1">State</label>
-                <input
-                  type="text"
-                  value={formData.state}
-                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                  className="w-full p-2 border rounded-md"
-                  placeholder="Enter state"
-                />
-              </CardContent>
-            </Card>
+            <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium">State</label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="w-4 h-4 text-gray-400" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="w-64 text-sm">Select the state of the tenant's address.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <div className="border-t border-gray-200 mt-2 pt-2">
+                  <select
+                    value={formData.state}
+                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                    className="w-full p-2 border rounded-md"
+                  >
+                    <option value="">Select state</option>
+                    <option value="CA">California</option>
+                    <option value="NY">New York</option>
+                    {/* Add more states */}
+                  </select>
+                </div>
+              </div>
+            </div>
 
-            <Card>
-              <CardContent className="p-4">
-                <label className="block text-sm font-medium mb-1">Zip Code</label>
-                <input
-                  type="text"
-                  value={formData.zipCode}
-                  onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-                  className="w-full p-2 border rounded-md"
-                  placeholder="Enter zip code"
-                />
-              </CardContent>
-            </Card>
+            <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium">Zip Code</label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="w-4 h-4 text-gray-400" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="w-64 text-sm">Enter the zip code of the tenant's address.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <div className="border-t border-gray-200 mt-2 pt-2">
+                  <input
+                    type="text"
+                    value={formData.zipCode}
+                    onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
+                    className="w-full p-2 border rounded-md"
+                    placeholder="Enter zip code"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center justify-between mt-8">

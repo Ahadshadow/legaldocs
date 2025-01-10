@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { HelpCircle } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip'
 
 export default function LeaseTypeForm({ onNext, onBack, onSkip }) {
   const [formData, setFormData] = useState({
@@ -21,53 +20,81 @@ export default function LeaseTypeForm({ onNext, onBack, onSkip }) {
       <div className="mb-8">
         <h2 className="text-2xl font-semibold mb-6">Term</h2>
         
-        <div className="bg-gray-50 rounded-lg p-4 mb-6">
-          <div className="flex items-start gap-2">
-            <HelpCircle className="w-5 h-5 text-gray-400 mt-1 flex-shrink-0" />
-            <div>
-              <h3 className="font-medium mb-1">What is a Lease Agreement?</h3>
-              <p className="text-sm text-gray-600">
-                A lease agreement (or rental agreement) is a legally binding contract between a tenant and landlord that outlines the terms and conditions of renting a property.
-                <br /><br />
-                It specifies the rights and obligations of both parties, including details such as the rent amount, payment schedule, duration of the lease, and any rules or restrictions on the use of the property.
-                <br /><br />
-                By clearly defining these terms, a lease agreement helps prevent disputes and provides a framework for resolving issues that may arise during the tenancy, such as late rent payments, property damage, or breaches of lease terms.
-              </p>
-            </div>
-          </div>
-        </div>
-
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
-            <Card>
-              <CardContent className="p-4">
-                <label className="block text-sm font-medium mb-4">
-                  What type of lease agreement is this?
-                </label>
-                <RadioGroup
-                  value={formData.leaseType}
-                  onValueChange={(value) => setFormData({ ...formData, leaseType: value })}
-                  className="space-y-3"
-                >
-                  <RadioGroupItem value="standard">Standard Lease</RadioGroupItem>
-                  <RadioGroupItem value="month-to-month">Month to Month Lease</RadioGroupItem>
-                </RadioGroup>
-              </CardContent>
-            </Card>
+            <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium">
+                    What type of lease agreement is this?
+                  </label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="w-4 h-4 text-gray-400" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="w-64 text-sm">Choose the type of lease agreement that best fits your situation. A standard lease is for a fixed term, while a month-to-month lease offers more flexibility.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <div className="border-t border-gray-200 mt-2 pt-2">
+                  <div className="space-y-3">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="leaseType"
+                        value="standard"
+                        checked={formData.leaseType === 'standard'}
+                        onChange={(e) => setFormData({ ...formData, leaseType: e.target.value })}
+                        className="h-4 w-4 border-gray-300 text-[#5586ff] focus:ring-[#5586ff]"
+                      />
+                      <span className="text-sm">Standard Lease</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="leaseType"
+                        value="month-to-month"
+                        checked={formData.leaseType === 'month-to-month'}
+                        onChange={(e) => setFormData({ ...formData, leaseType: e.target.value })}
+                        className="h-4 w-4 border-gray-300 text-[#5586ff] focus:ring-[#5586ff]"
+                      />
+                      <span className="text-sm">Month to Month Lease</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-            <Card>
-              <CardContent className="p-4">
-                <label className="block text-sm font-medium mb-4">
-                  When does the lease begin?
-                </label>
-                <input
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  className="w-full p-2 border rounded-md"
-                />
-              </CardContent>
-            </Card>
+            <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium">
+                    When does the lease begin?
+                  </label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="w-4 h-4 text-gray-400" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="w-64 text-sm">Select the start date of the lease. This is typically the day the tenant can move in and start occupying the property.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <div className="border-t border-gray-200 mt-2 pt-2">
+                  <input
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    className="w-full p-2 border rounded-md"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center justify-between mt-8">

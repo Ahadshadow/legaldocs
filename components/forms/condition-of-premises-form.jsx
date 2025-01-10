@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { HelpCircle } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip'
 
 export default function ConditionOfPremisesForm({ onNext, onBack, onSkip }) {
   const [formData, setFormData] = useState({
@@ -20,20 +20,34 @@ export default function ConditionOfPremisesForm({ onNext, onBack, onSkip }) {
         <h2 className="text-2xl font-semibold mb-6">Condition of Premises</h2>
 
         <form onSubmit={handleSubmit}>
-          <Card>
-            <CardContent className="p-4">
-              <label className="block text-sm font-medium mb-4">
-                Describe the condition of the premises:
-              </label>
-              <textarea
-                value={formData.conditionDescription}
-                onChange={(e) => setFormData({ ...formData, conditionDescription: e.target.value })}
-                className="w-full p-2 border rounded-md"
-                rows={4}
-                placeholder="Describe the condition of the premises..."
-              />
-            </CardContent>
-          </Card>
+          <div className="bg-white shadow-sm border border-gray-200">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium">
+                  Describe the condition of the premises:
+                </label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <HelpCircle className="w-4 h-4 text-gray-400" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="w-64 text-sm">Provide a detailed description of the current condition of the rental property.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div className="border-t border-gray-200 mt-2 pt-2">
+                <textarea
+                  value={formData.conditionDescription}
+                  onChange={(e) => setFormData({ ...formData, conditionDescription: e.target.value })}
+                  className="w-full p-2 border rounded-md"
+                  rows={4}
+                  placeholder="Describe the condition of the premises..."
+                />
+              </div>
+            </div>
+          </div>
 
           <div className="flex items-center justify-between mt-8">
             <button

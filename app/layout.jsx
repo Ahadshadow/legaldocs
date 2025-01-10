@@ -19,9 +19,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        {!pathname.startsWith('/signin') && !pathname.startsWith('/signup') && !pathname.startsWith('/forgot-password') && <Navigation />}
+        {!pathname.startsWith('/signin') && !pathname.startsWith('/signup') && !pathname.startsWith('/forgot-password') && !pathname.startsWith('/app/pdf-builder') && !pathname.startsWith('/app/dashboard') && <Navigation />}
         {children}
-        <Footer />
       </body>
     </html>
   )

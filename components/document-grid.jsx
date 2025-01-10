@@ -5,7 +5,7 @@ const documents = [
   {
     title: "Lease Agreement",
     icon: Building2,
-    href: "#"
+    href: "/real-estate/leases"
   },
   {
     title: "Eviction Notice",
