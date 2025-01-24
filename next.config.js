@@ -1,17 +1,11 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-    images: {
-      remotePatterns: [
-        {
-          protocol: 'https',
-          hostname: 'v0.blob.com',
-          port: '',
-          pathname: '/**',
-        },
-      ],
-    },
-  }
-  
-  module.exports = nextConfig
-  
-  
+const path = require('path')
+
+module.exports = {
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Ensure that all imports of 'yjs' resolve to the same instance
+      config.resolve.alias['yjs'] = path.resolve(__dirname, 'node_modules/yjs')
+    }
+    return config
+  },
+}

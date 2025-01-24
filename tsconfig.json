@@ -27,7 +27,7 @@
     ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx"
-, "app/(authenticated)/app/dashboard/documents/recent/page.jsx", "components/ui/card.jsx", "components/ui/card.jsx"  ],
+, "app/(authenticated)/app/dashboard/documents/recent/page.jsx", "components/ui/card.jsx", "components/ui/card.jsx", "components/Editor/Tiptap.jsx", "app/(guest)/signin/page.tsx", "app/(guest)/signin/page.tsx", "components/navigationService.js", "components/navigationService.js", "lib/AuthWrapper.jsx", "app/layout.jsx"  ],
   "exclude": [
     "node_modules"
   ]

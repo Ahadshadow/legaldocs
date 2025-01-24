@@ -1,26 +1,24 @@
 "use client"
-import { Inter } from 'next/font/google'
-import './globals.css'
-import Navigation from '../components/navigation'
-import Footer from '../components/footer'
-import { usePathname } from 'next/navigation'
 
-const inter = Inter({ subsets: ['latin'] })
+import { Inter } from "next/font/google"
+import { usePathname } from "next/navigation"
+import "./globals.css"
+import Navigation from "../components/navigation"
+import AuthWrapper from "../lib/AuthWrapper"
 
-// export const metadata = {
-//   title: 'Legal Templates',
-//   description: 'Create Your Free Legal Documents & Contracts Online in Minutes',
-// }
+const inter = Inter({ subsets: ["latin"] })
 
-export default function RootLayout({
-  children,
-}) {
+export default function RootLayout({ children }) {
   const pathname = usePathname()
+  const isSignInPage = pathname === "/signin"
+
   return (
     <html lang="en">
       <body className={inter.className}>
-        {!pathname.startsWith('/signin') && !pathname.startsWith('/signup') && !pathname.startsWith('/forgot-password') && !pathname.startsWith('/app/pdf-builder') && !pathname.startsWith('/app/dashboard') && <Navigation />}
-        {children}
+        <AuthWrapper>
+          {!isSignInPage && <Navigation />}
+          {children}
+        </AuthWrapper>
       </body>
     </html>
   )
