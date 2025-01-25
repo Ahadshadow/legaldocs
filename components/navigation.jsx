@@ -2,18 +2,19 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Button } from "./ui/button"
+import { useRouter } from "next/navigation"
+import PropTypes from "prop-types"
+import { Button } from "../components/ui/button"
 import { Search } from "lucide-react"
 import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-} from "./ui/navigation-menu"
+} from "../components/ui/navigation-menu"
 import { usePathname } from "next/navigation"
-import UserDropdown from "./UserDropdown"
+import UserDropdown from "../components/UserDropdown"
 import { useAuth } from "../hooks/useAuth"
 import { getCategories, getSubcategoriesByCategoryId } from "../service/navigationService"
 
@@ -25,16 +26,22 @@ export default function Navigation() {
   const [subcategories, setSubcategories] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const router = useRouter()
 
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const fetchedCategories = await getCategories()
-        setCategories(fetchedCategories)
+        const response = await getCategories()
+        if (response && response.status) {
+          setCategories(response.data || [])
+        } else {
+          setCategories([])
+        }
         setIsLoading(false)
       } catch (err) {
         console.error("Error loading categories:", err)
         setCategories([])
+        setError("Failed to load categories")
         setIsLoading(false)
       }
     }
@@ -44,13 +51,18 @@ export default function Navigation() {
 
   useEffect(() => {
     async function fetchSubcategories() {
-      if (selectedCategory) {
+      if (selectedCategory && selectedCategory._id) {
         try {
-          const fetchedSubcategories = await getSubcategoriesByCategoryId(selectedCategory.id)
-          setSubcategories(fetchedSubcategories)
+          const response = await getSubcategoriesByCategoryId(selectedCategory._id)
+          if (response && response.status) {
+            setSubcategories(response.data || [])
+          } else {
+            setSubcategories([])
+          }
         } catch (err) {
           console.error("Error loading subcategories:", err)
           setSubcategories([])
+          setError("Failed to load subcategories")
         }
       } else {
         setSubcategories([])
@@ -62,6 +74,14 @@ export default function Navigation() {
 
   const handleCategorySelect = (category) => {
     setSelectedCategory(category)
+  }
+
+  const handleSubcategorySelect = (subcategory) => {
+    if (subcategory && subcategory.name && selectedCategory && selectedCategory.name) {
+      const categorySlug = selectedCategory.name.toLowerCase().replace(/\s+/g, "-")
+      const subcategorySlug = subcategory.name.toLowerCase().replace(/\s+/g, "-")
+      router.push(`/${categorySlug}/${subcategorySlug}`)
+    }
   }
 
   const renderNavigationContent = () => {
@@ -76,6 +96,17 @@ export default function Navigation() {
       )
     }
 
+    if (error) {
+      return (
+        <NavigationMenuItem>
+          <NavigationMenuTrigger>Legal Documents</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <div className="p-4 text-red-500">{error}</div>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+      )
+    }
+
     return (
       <NavigationMenuItem>
         <NavigationMenuTrigger>Legal Documents</NavigationMenuTrigger>
@@ -83,11 +114,11 @@ export default function Navigation() {
           <div className="grid w-[600px] gap-3 p-4 md:grid-cols-2">
             <div className="space-y-4">
               <h3 className="font-medium">Categories</h3>
-              {categories.length > 0 ? (
+              {categories && categories.length > 0 ? (
                 categories.map((category) => (
                   <div
-                    key={category.id}
-                    className={`cursor-pointer p-2 rounded-lg ${selectedCategory?.id === category.id ? "bg-accent" : "hover:bg-accent"}`}
+                    key={category._id}
+                    className={`cursor-pointer p-2 rounded-lg ${selectedCategory?._id === category._id ? "bg-accent" : "hover:bg-accent"}`}
                     onClick={() => handleCategorySelect(category)}
                   >
                     {category.name}
@@ -100,15 +131,15 @@ export default function Navigation() {
             <div className="space-y-4">
               <h3 className="font-medium">Subcategories</h3>
               {selectedCategory ? (
-                subcategories.length > 0 ? (
+                subcategories && subcategories.length > 0 ? (
                   subcategories.map((subcategory) => (
-                    <Link
-                      key={subcategory.id}
-                      href={subcategory.href}
-                      className="block p-2 text-sm hover:text-[#6B7CFF]"
+                    <div
+                      key={subcategory._id}
+                      className="block p-2 text-sm hover:text-[#6B7CFF] cursor-pointer"
+                      onClick={() => handleSubcategorySelect(subcategory)}
                     >
                       {subcategory.name}
-                    </Link>
+                    </div>
                   ))
                 ) : (
                   <div className="text-sm text-gray-500">No subcategories available</div>
@@ -179,5 +210,9 @@ export default function Navigation() {
       </div>
     </nav>
   )
+}
+
+Navigation.propTypes = {
+  // Add any props if needed
 }
 

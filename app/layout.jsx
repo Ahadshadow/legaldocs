@@ -10,13 +10,13 @@ const inter = Inter({ subsets: ["latin"] })
 
 export default function RootLayout({ children }) {
   const pathname = usePathname()
-  const isSignInPage = pathname === "/signin"
+  const hideNavigation = pathname === "/signin" || pathname.includes("user-panel")
 
   return (
     <html lang="en">
       <body className={inter.className}>
         <AuthWrapper>
-          {!isSignInPage && <Navigation />}
+          {!hideNavigation && <Navigation />}
           {children}
         </AuthWrapper>
       </body>
