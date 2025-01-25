@@ -42,6 +42,10 @@ export default function UserDropdown() {
           <User className="mr-2 h-4 w-4" />
           <span>{userData.email}</span>
         </DropdownMenuItem>
+        <DropdownMenuItem>
+          <User className="mr-2 h-4 w-4" />
+          <span>{userData.email}</span>
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>

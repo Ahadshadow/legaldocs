@@ -2,7 +2,7 @@ import { SC } from "../service/Api/serverCall"
 
 export async function getCategories() {
   try {
-    const response = await SC.getCall({ url: "document/678acd9fac31dcfb630e508c" })
+    const response = await SC.getCall({ url: "categoryList" })
     return response.data
   } catch (error) {
     console.error("Error fetching categories:", error)
