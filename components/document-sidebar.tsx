@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
+import { Checkbox } from "../components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -38,7 +39,7 @@ import {
   CheckSquare,
   X,
 } from "lucide-react"
-import { useDocument } from "../components/context/document-context"
+import { useDocument } from "./context/document-context"
 import { toast } from "sonner"
 import { useState, useRef } from "react"
 

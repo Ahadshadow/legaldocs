@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { ScrollArea } from "..//components/ui/scroll-area"
+import { ScrollArea } from "../components/ui/scroll-area"
 import { ZoomInIcon as Zoom } from "lucide-react"
 import { Slider } from "../components/ui/slider"
-import { useDocument } from "../components/context/document-context"
+import { useDocument } from "./context/document-context"
 import { TiptapEditor } from "./tiptap-editor"
 import { TextFormattingPanel } from "./text-formatting-panel"
 import { CommentPanel } from "./comment-panel"
@@ -16,6 +16,8 @@ import { CutPanel } from "./cut-panel"
 import { SignaturePanel } from "./signature-panel"
 import { DrawPanel } from "./draw-panel"
 import { SignatureField } from "./signature-field"
+import { HorizontalLinePanel } from "./horizontal-line-panel"
+import "./document-viewer.css"
 
 export function DocumentViewer() {
   const [zoom, setZoom] = useState(100)
@@ -24,7 +26,6 @@ export function DocumentViewer() {
     pages,
     updatePageContent,
     activePanel,
-    setActivePanel,
     comments,
     addComment,
     toggleCommentPanel,
@@ -36,17 +37,16 @@ export function DocumentViewer() {
   } = useDocument()
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const contentRef = useRef<HTMLDivElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [drawColor, setDrawColor] = useState("#000000")
   const [drawLineWidth, setDrawLineWidth] = useState(2)
 
-  const handlePageClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handlePageClick = (e: React.MouseEvent<HTMLDivElement>, pageIndex: number) => {
     if (activePanel === "comment") {
       const rect = e.currentTarget.getBoundingClientRect()
       const x = ((e.clientX - rect.left) / rect.width) * 100
       const y = ((e.clientY - rect.top) / rect.height) * 100
-      addComment(1, x, y) // Always add comment to the first (and only) page
+      addComment(pageIndex + 1, x, y)
     }
   }
 
@@ -82,13 +82,16 @@ export function DocumentViewer() {
     [isDrawing, activePanel],
   )
 
-  const stopDrawing = useCallback(() => {
-    if (currentPath && activePanel === "draw") {
-      addDrawing(1, currentPath, drawColor, drawLineWidth) // Always add drawing to the first (and only) page
-    }
-    setIsDrawing(false)
-    setCurrentPath("")
-  }, [currentPath, activePanel, addDrawing, drawColor, drawLineWidth])
+  const stopDrawing = useCallback(
+    (pageIndex: number) => {
+      if (currentPath && activePanel === "draw") {
+        addDrawing(pageIndex + 1, currentPath, drawColor, drawLineWidth)
+      }
+      setIsDrawing(false)
+      setCurrentPath("")
+    },
+    [currentPath, activePanel, addDrawing, drawColor, drawLineWidth],
+  )
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -101,7 +104,7 @@ export function DocumentViewer() {
       window.addEventListener("resize", resizeCanvas)
       return () => window.removeEventListener("resize", resizeCanvas)
     }
-  }, [zoom, activePanel])
+  }, [])
 
   const renderActivePanel = () => {
     switch (activePanel) {
@@ -123,14 +126,12 @@ export function DocumentViewer() {
         return <SignaturePanel />
       case "draw":
         return <DrawPanel setDrawColor={setDrawColor} setDrawLineWidth={setDrawLineWidth} />
+      case "horizontalLine":
+        return <HorizontalLinePanel />
       default:
         return null
     }
   }
-
-  const page = pages[0] // We only use the first page now
-  const pageComment = comments.find((comment) => comment.pageId === page.id)
-  const pageDrawings = getDrawingsForPage(page.id)
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -150,40 +151,36 @@ export function DocumentViewer() {
         <ScrollArea className="flex-1 bg-gray-100">
           <div className="flex flex-col items-center py-8">
             <div
-              className="relative mb-8 bg-white document-viewer"
+              className="relative bg-white document-viewer pagination-wrapper border-none"
               style={{
+                width: "816px",
                 transform: `scale(${zoom / 100})`,
                 transformOrigin: "top center",
                 transition: "transform 0.3s ease-in-out",
-                boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-                cursor: activePanel === "comment" ? "crosshair" : "default",
-                minHeight: "100%",
-                height: "auto",
-                width: "210mm", // A4 width
-                padding: "20mm", // Add some padding
+                boxShadow: "none",
               }}
-              onClick={(e) => {
-                handlePageClick(e)
-              }}
+              onClick={(e) => handlePageClick(e, 0)}
             >
-              <div ref={contentRef} className="w-full h-full">
-                <TiptapEditor
-                  content={page.content}
-                  onChange={(newContent) => updatePageContent(page.id, newContent)}
-                  className="prose max-w-none h-full"
-                />
-              </div>
-              <div className="relative mt-8 px-16">
-                {Array.from({ length: Math.ceil(signatureFields.length / 2) }).map((_, rowIndex) => (
-                  <div key={rowIndex} className="grid grid-cols-2 gap-4 mb-4">
-                    {signatureFields.slice(rowIndex * 2, rowIndex * 2 + 2).map((field, idx) => (
-                      <SignatureField key={idx} label={field.label} type="custom" editable={true} />
-                    ))}
-                  </div>
-                ))}
-              </div>
-              {pageComment && (
+              <TiptapEditor
+                content={pages[0].content}
+                onChange={(newContent) => updatePageContent(pages[0].id, newContent)}
+                className="prose max-w-none w-full"
+                readOnly={false}
+              />
+              {signatureFields.length > 0 && (
+                <div className="relative mt-8 px-16">
+                  {Array.from({ length: Math.ceil(signatureFields.length / 2) }).map((_, rowIndex) => (
+                    <div key={rowIndex} className="grid grid-cols-2 gap-4 mb-4">
+                      {signatureFields.slice(rowIndex * 2, rowIndex * 2 + 2).map((field, idx) => (
+                        <SignatureField key={idx} label={field.label} type="custom" editable={true} />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {comments.map((pageComment) => (
                 <div
+                  key={pageComment.id}
                   className="absolute -ml-3 -mt-3"
                   style={{
                     left: `${pageComment.x}%`,
@@ -205,14 +202,14 @@ export function DocumentViewer() {
                     />
                   </svg>
                 </div>
-              )}
+              ))}
               <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 10 }}>
-                {pageDrawings.paths.map((path, index) => (
+                {getDrawingsForPage(1).paths.map((path, pathIndex) => (
                   <path
-                    key={index}
+                    key={pathIndex}
                     d={path}
-                    stroke={pageDrawings.colors[index]}
-                    strokeWidth={pageDrawings.lineWidths[index]}
+                    stroke={getDrawingsForPage(1).colors[pathIndex]}
+                    strokeWidth={getDrawingsForPage(1).lineWidths[pathIndex]}
                     fill="none"
                   />
                 ))}
@@ -227,8 +224,8 @@ export function DocumentViewer() {
                   style={{ zIndex: 11 }}
                   onMouseDown={startDrawing}
                   onMouseMove={draw}
-                  onMouseUp={stopDrawing}
-                  onMouseLeave={stopDrawing}
+                  onMouseUp={() => stopDrawing(0)}
+                  onMouseLeave={() => stopDrawing(0)}
                 />
               )}
             </div>

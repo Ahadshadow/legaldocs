@@ -1,14 +1,6 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import '../node_modules/@syncfusion/ej2-base/styles/material.css';
-@import '../node_modules/@syncfusion/ej2-buttons/styles/material.css';
-@import '../node_modules/@syncfusion/ej2-inputs/styles/material.css';
-@import '../node_modules/@syncfusion/ej2-popups/styles/material.css';
-@import '../node_modules/@syncfusion/ej2-lists/styles/material.css';
-@import '../node_modules/@syncfusion/ej2-navigations/styles/material.css';
-@import '../node_modules/@syncfusion/ej2-splitbuttons/styles/material.css';
-@import '../node_modules/@syncfusion/ej2-react-documenteditor/styles/material.css';
 
 @layer base {
   :root {
@@ -76,5 +68,63 @@
   border-radius: 0.25em;
   box-decoration-break: clone;
   padding: 0.125em 0;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid hsl(var(--border));
+  margin: 1em 0;
+}
+
+.ProseMirror hr {
+  border: none;
+  background-color: hsl(var(--border));
+}
+
+.custom-horizontal-rule {
+  cursor: pointer;
+  position: relative;
+  z-index: 10;
+  border: none;
+  background: none;
+}
+
+.ProseMirror-selectednode {
+  display: flex;
+  width: 100%;
+}
+
+.ProseMirror-selectednode[data-text-align="left"] {
+  justify-content: flex-start;
+}
+
+.ProseMirror-selectednode[data-text-align="center"] {
+  justify-content: center;
+}
+
+.ProseMirror-selectednode[data-text-align="right"] {
+  justify-content: flex-end;
+}
+
+.ProseMirror [contenteditable="false"] {
+  white-space: normal;
+  display: flex;
+  justify-content: center;
+}
+
+.ProseMirror hr.custom-horizontal-rule {
+  padding: 0;
+  border: none;
+  display: block;
+  background-color: currentColor;
+  margin: 1em 0;
+}
+
+.ProseMirror .custom-horizontal-rule {
+  cursor: pointer;
+}
+
+.ProseMirror .custom-horizontal-rule.ProseMirror-selectednode {
+  outline: 2px solid #68cef8;
 }
 

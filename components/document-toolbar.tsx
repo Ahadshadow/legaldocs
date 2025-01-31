@@ -14,8 +14,9 @@ import {
   Scissors,
   FileSignature,
   Pencil,
+  MinusSquare,
 } from "lucide-react"
-import { useDocument } from "../components/context/document-context"
+import { useDocument } from "./context/document-context"
 import { useState } from "react"
 import { SignerSelectionDialog } from "./signer-selection-dialog"
 
@@ -103,7 +104,7 @@ function ToolbarButton({ icon, label, toolbarItem, hasDropdown, onClick }: Toolb
 }
 
 export function DocumentToolbar() {
-  const { activeTool, activePanel, setActivePanel } = useDocument()
+  const { activeTool, activePanel, setActivePanel, setActiveTool } = useDocument()
   const [isSelectSignerOpen, setIsSelectSignerOpen] = useState(false)
 
   if (activeTool !== "edit" && activeTool !== "signature") {
@@ -122,6 +123,11 @@ export function DocumentToolbar() {
           <ToolbarButton icon={<Underline className="h-4 w-4" />} label="Underline" toolbarItem="underline" />
           <ToolbarButton icon={<MessageSquare className="h-4 w-4" />} label="Comment" toolbarItem="comment" />
           <ToolbarButton icon={<Pencil className="h-4 w-4" />} label="Draw" toolbarItem="draw" />
+          <ToolbarButton
+            icon={<MinusSquare className="h-4 w-4" />}
+            label="Horizontal Line"
+            toolbarItem="horizontalLine"
+          />
         </>
       )}
       {activeTool === "signature" && (

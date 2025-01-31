@@ -3,7 +3,7 @@
 import { Button } from "../components/ui/button"
 import { Printer, Save, Undo, Redo, ChevronDown } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
-import { useDocument } from "../components/context/document-context"
+import { useDocument } from "./context/document-context"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../components/ui/dropdown-menu"
 import html2canvas from "html2canvas"
 import { jsPDF } from "jspdf"

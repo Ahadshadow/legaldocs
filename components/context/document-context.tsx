@@ -4,6 +4,7 @@ import type React from "react"
 import { createContext, useContext, useState, useRef, useEffect, useCallback } from "react"
 import type { Comment, Reply } from "../../types/comment"
 import type { Editor } from "@tiptap/react"
+import type { DrawingResult } from "../../types/drawing"
 
 interface Page {
   id: number
@@ -95,12 +96,15 @@ interface DocumentContextType {
   drawings: Drawing[]
   addDrawing: (pageId: number, path: string, color: string, lineWidth: number) => void
   clearDrawings: (pageId: number) => void
-  getDrawingsForPage: (pageId: number) => Drawing
+  getDrawingsForPage: (pageId: number) => DrawingResult
   signatures: Signature[]
   addSignature: (pageId: number, x: number, y: number, type: "draw" | "type", content: string) => void
   removeSignature: (id: string) => void
   contentPages: string[]
   setContentPages: React.Dispatch<React.SetStateAction<string[]>>
+  insertHorizontalLine: () => void
+  updateHorizontalLine: (width: string, height: string) => void
+  updatePageCount: (count: number) => void
 }
 
 const DocumentContext = createContext<DocumentContextType | undefined>(undefined)
@@ -121,25 +125,81 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       rotation: 0,
       backgroundColor: "white",
       content: `
-      <h1>Lease Agreement</h1>
-      <p>This Lease Agreement (the "Agreement") is made and entered into on [DATE], by and between [LANDLORD NAME] (the "Landlord") and [TENANT NAME] (the "Tenant").</p>
-      <h2>1. Property</h2>
-      <p>The Landlord agrees to rent to the Tenant the property located at [PROPERTY ADDRESS] (the "Property").</p>
-      <h2>2. Term</h2>
-      <p>The term of this lease shall be for a period of [LEASE DURATION], commencing on [START DATE] and ending on [END DATE].</p>
-      <h2>3. Rent</h2>
-      <p>The Tenant agrees to pay rent in the amount of $[RENT AMOUNT] per month, due on the [DUE DATE] of each month. Late payments will incur a fee of $[LATE FEE AMOUNT].</p>
-      <h2>4. Security Deposit</h2>
-      <p>Upon execution of this Agreement, the Tenant shall deposit with the Landlord the sum of $[DEPOSIT AMOUNT] as a security deposit.</p>
-      <h2>5. Utilities</h2>
-      <p>The Tenant shall be responsible for the payment of the following utilities and services:</p>
-      <ul>
-        <li>Electricity</li>
-        <li>Gas</li>
-        <li>Water and sewage</li>
-        <li>Internet and cable TV</li>
-      </ul>
-    `,
+<h1>Residential Lease Agreement</h1>
+
+<p>This Residential Lease Agreement ("Agreement") is made and entered into on [DATE], by and between [LANDLORD NAME] ("Landlord") and [TENANT NAME] ("Tenant").</p>
+
+<h2>1. Property</h2>
+<p>The Landlord agrees to rent to the Tenant the residential property located at [FULL PROPERTY ADDRESS] ("the Property").</p>
+
+<h2>2. Term</h2>
+<p>The term of this lease shall be for a period of [LEASE DURATION], commencing on [START DATE] and ending on [END DATE], unless terminated earlier in accordance with this Agreement.</p>
+
+<h2>3. Rent</h2>
+<p>The Tenant agrees to pay rent in the amount of $[RENT AMOUNT] per month, due on the [DUE DATE] of each month. Payments shall be made to [PAYMENT DETAILS]. Late payments will incur a fee of $[LATE FEE AMOUNT] for each day the rent is overdue.</p>
+
+<h2>4. Security Deposit</h2>
+<p>Upon execution of this Agreement, the Tenant shall deposit with the Landlord the sum of $[DEPOSIT AMOUNT] as a security deposit. This deposit will be returned to the Tenant, less any deductions for damages or unpaid rent, within [NUMBER] days after the termination of this Agreement.</p>
+
+<h2>5. Utilities and Services</h2>
+<p>The Tenant shall be responsible for the payment of the following utilities and services:</p>
+<ul>
+  <li>Electricity</li>
+  <li>Gas</li>
+  <li>Water and sewage</li>
+  <li>Internet and cable TV</li>
+  <li>Trash collection</li>
+</ul>
+<p>The Landlord shall be responsible for [LIST ANY LANDLORD-COVERED UTILITIES].</p>
+
+<h2>6. Occupancy</h2>
+<p>The Property shall be occupied solely by the Tenant and the following individuals: [LIST NAMES OF ADDITIONAL OCCUPANTS]. Occupancy by guests staying over 14 days in any six-month period is prohibited without the written consent of the Landlord.</p>
+
+<h2>7. Use of Property</h2>
+<p>The Tenant agrees to use the Property solely as a private residence. Any business use is prohibited without prior written consent from the Landlord.</p>
+
+<h2>8. Pets</h2>
+<p>Pets are [ALLOWED/NOT ALLOWED] on the Property. [IF ALLOWED, SPECIFY ANY RESTRICTIONS, ADDITIONAL DEPOSITS, OR FEES]</p>
+
+<h2>9. Maintenance and Repairs</h2>
+<p>The Tenant shall keep the Property in a good state of repair and promptly notify the Landlord of any damage, defect, or need for repairs. The Landlord is responsible for maintaining the Property in a habitable condition and will make necessary repairs within a reasonable timeframe after receiving notice from the Tenant.</p>
+
+<h2>10. Alterations</h2>
+<p>The Tenant shall not make any alterations, additions, or improvements to the Property without the prior written consent of the Landlord. Any authorized alterations shall become the property of the Landlord upon termination of the tenancy, unless otherwise agreed in writing.</p>
+
+<h2>11. Entry by Landlord</h2>
+<p>The Landlord reserves the right to enter the Property at reasonable times for inspection, repairs, or to show the Property to prospective tenants or buyers. Except in cases of emergency, the Landlord shall give the Tenant at least 24 hours' notice before entering the Property.</p>
+
+<h2>12. Insurance</h2>
+<p>The Landlord is responsible for maintaining appropriate insurance coverage on the Property. The Tenant is advised to obtain renter's insurance to cover personal belongings and liability.</p>
+
+<h2>13. Subletting and Assignment</h2>
+<p>The Tenant shall not sublet the Property or assign this Agreement without the prior written consent of the Landlord.</p>
+
+<h2>14. Noise and Nuisance</h2>
+<p>The Tenant agrees not to make or permit any disturbing noises or activities that interfere with the rights, comforts, or conveniences of other tenants or neighbors.</p>
+
+<h2>15. Compliance with Laws</h2>
+<p>The Tenant agrees to comply with all applicable laws, ordinances, and regulations affecting the Property and the use thereof.</p>
+
+<h2>16. Termination</h2>
+<p>Either party may terminate this Agreement at the end of the lease term by giving written notice at least [NOTICE PERIOD] days before the end of the term. If no notice is given, the Agreement will automatically renew on a month-to-month basis.</p>
+
+<h2>17. Surrender of Premises</h2>
+<p>At the termination of this Agreement, the Tenant shall surrender the Property in as good a state and condition as they were at the commencement of this Agreement, reasonable use and wear and tear thereof excepted.</p>
+
+<h2>18. Governing Law</h2>
+<p>This Agreement shall be governed by and construed in accordance with the laws of the State of [STATE].</p>
+
+<h2>19. Entire Agreement</h2>
+<p>This Agreement constitutes the entire agreement between the parties and may not be modified except in writing signed by both parties.</p>
+
+<h2>20. Signatures</h2>
+<p>By signing below, the Landlord and Tenant agree to be bound by the terms and conditions of this Residential Lease Agreement.</p>
+
+<p>Landlord: __________________________ Date: __________</p>
+<p>Tenant: ____________________________ Date: __________</p>
+`,
     },
   ])
   const [currentPage, setCurrentPage] = useState(1)
@@ -165,6 +225,7 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [drawings, setDrawings] = useState<Drawing[]>([])
   const [signatures, setSignatures] = useState<Signature[]>([])
   const [contentPages, setContentPages] = useState<string[]>([])
+  const [pageCount, setPageCount] = useState(1)
 
   const deletePage = (pageId: number) => {
     setPages((prevPages) => {
@@ -177,6 +238,7 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (currentPage > pages.length - 1) {
       setCurrentPage(Math.max(1, pages.length - 1))
     }
+    setPageCount(pages.length)
   }
 
   const copyPage = (pageId: number) => {
@@ -198,6 +260,7 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       return prevPages
     })
+    setPageCount(pages.length)
   }
 
   const rotatePage = (pageId: number, degrees: number) => {
@@ -254,6 +317,7 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         pageNumber: index + 1,
       }))
     })
+    setPageCount(pages.length)
   }
 
   const updatePageContent = useCallback((pageId: number, newContent: string) => {
@@ -315,7 +379,8 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         pageNumber: index + 1,
       }))
     })
-  }, [])
+    setPageCount(pages.length)
+  }, [pages.length])
 
   const setActiveToolAndResetFormat = (tool: string) => {
     setActiveTool(tool)
@@ -327,7 +392,7 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const toggleFormatPanel = useCallback(() => {
     setActiveTool("edit")
     setIsFormatPanelOpen((prev) => !prev)
-  }, [setActiveTool, setIsFormatPanelOpen])
+  }, [])
 
   useEffect(() => {
     if (activeTool !== "edit") {
@@ -505,7 +570,7 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [])
 
   const getDrawingsForPage = useCallback(
-    (pageId: number) => {
+    (pageId: number): DrawingResult => {
       return drawings.find((d) => d.pageId === pageId) || { paths: [], colors: [], lineWidths: [] }
     },
     [drawings],
@@ -533,6 +598,41 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const removeSignatureField = useCallback((index: number) => {
     setSignatureFields((prev) => prev.filter((_, i) => i !== index))
+  }, [])
+
+  const insertHorizontalLine = () => {
+    if (editor) {
+      editor.chain().focus().setHorizontalRule().run()
+    }
+  }
+
+  const updateHorizontalLine = useCallback(
+    (width: string, height: string) => {
+      if (editor) {
+        editor.chain().focus().updateAttributes("customHorizontalRule", { width, height }).run()
+      }
+    },
+    [editor],
+  )
+
+  const updatePageCount = useCallback((count: number) => {
+    setPageCount(count)
+    setPages((prevPages) => {
+      const newPages = [...prevPages]
+      while (newPages.length < count) {
+        newPages.push({
+          id: Math.max(...newPages.map((p) => p.id)) + 1,
+          pageNumber: newPages.length + 1,
+          rotation: 0,
+          backgroundColor: "white",
+          content: "",
+        })
+      }
+      while (newPages.length > count) {
+        newPages.pop()
+      }
+      return newPages
+    })
   }, [])
 
   return (
@@ -605,6 +705,9 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         removeSignature,
         contentPages,
         setContentPages,
+        insertHorizontalLine,
+        updateHorizontalLine,
+        updatePageCount,
       }}
     >
       {children}
