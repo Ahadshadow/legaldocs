@@ -1,5 +1,5 @@
-"use client"
 
+"use client";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,24 +14,25 @@ import {
   CustomSelectValue,
 } from "../../../../components/ui/custom-select";
 import { SC } from "../../../../service/Api/serverCall";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function SubcategoryPage({ params }) {
   const { category, subcategory } = params;
   const [options, setOptions] = useState([]);
-  console.log(options , 'data');
+  const [selectedId, setSelectedId] = useState(null); // Store selected ID
+  const searchParams = useSearchParams();
+  const subcategoryId = searchParams.get('subcategoryId');
+  const router = useRouter(); // Initialize router
+
 
 
   useEffect(() => {
-    // Fetch the options from the API
     async function fetchOptions() {
       try {
-        // Use your API call function
-        const response = await SC.getCall({ url: "templetList" });
+        const response = await SC.getCall({ url: `documents/${subcategoryId}` });
 
-        // Check if the status is true, then set the options state with the data
         if (response.status) {
-          
-          setOptions(response.data.data); // Update state with the fetched data
+          setOptions(response.data.data);
         } else {
           console.error("Failed to fetch options:", response.message);
         }
@@ -41,7 +42,17 @@ export default function SubcategoryPage({ params }) {
     }
 
     fetchOptions();
-  }, []);
+  }, [subcategoryId]);
+  const handleCreateDocument = () => {
+    if (!selectedId) {
+      console.error("No document selected.");
+      return;
+    }
+  
+    router.push(`/app/pdf-builder/documents?selectedId=${selectedId}`);
+  };
+
+
 
   return (
     <div className="max-w-[1400px] mx-auto px-6 py-8">
@@ -71,7 +82,7 @@ export default function SubcategoryPage({ params }) {
 
           <div className="space-y-4">
             <div className="flex gap-4">
-              <CustomSelect>
+              <CustomSelect onValueChange={(value) => setSelectedId(value)}>
                 <CustomSelectTrigger className="w-full">
                   <CustomSelectValue placeholder="Select a Template" />
                 </CustomSelectTrigger>
@@ -79,7 +90,7 @@ export default function SubcategoryPage({ params }) {
                   {options.length > 0 ? (
                     options.map(option => (
                       <CustomSelectItem key={option._id} value={option._id}>
-                        {option.name} {/* Using the 'name' for display */}
+                        {option.name}
                       </CustomSelectItem>
                     ))
                   ) : (
@@ -87,14 +98,12 @@ export default function SubcategoryPage({ params }) {
                   )}
                 </CustomSelectContent>
               </CustomSelect>
-              <CreateDocumentButton />
+              <CreateDocumentButton onClick={handleCreateDocument} />
             </div>
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm text-gray-500">
-              Updated August 12, 2024
-            </p>
+            <p className="text-sm text-gray-500">Updated August 12, 2024</p>
             <p className="text-sm text-gray-500">
               Written by{" "}
               <a href="#" className="text-[#4b62f9] hover:underline">
@@ -126,16 +135,13 @@ export default function SubcategoryPage({ params }) {
               height={800}
               className="w-full rounded-lg border border-gray-200"
             />
-            <CreateDocumentButton fullWidth />
+            <CreateDocumentButton fullWidth onClick={handleCreateDocument} />
             <div className="flex items-center justify-between pt-2">
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-semibold text-gray-900">4.8</span>
                 <div className="flex gap-0.5">
                   {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="w-5 h-5 fill-[#4b62f9] text-[#4b62f9]"
-                    />
+                    <Star key={i} className="w-5 h-5 fill-[#4b62f9] text-[#4b62f9]" />
                   ))}
                 </div>
                 <span className="text-sm text-gray-500">29,272 Ratings</span>

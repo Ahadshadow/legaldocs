@@ -132,7 +132,6 @@ export const CustomHorizontalRule = Node.create<HorizontalRuleOptions>({
         default: "center",
         parseHTML: (element) => element.style.justifyContent,
         renderHTML: (attributes) => {
-            console.log(attributes, 'attributes');
             
           if (!attributes.justifyContent) {
             return {}

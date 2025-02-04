@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "../../../../../components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../../../components/ui/tablePanel"
 import Layout from "../../../../../components/layout"
@@ -8,26 +9,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../../../../../components/ui/dropdown-menu"
-import {
-  ChevronDown,
-  Download,
-  FileSignature,
-  MessagesSquare,
-  Pencil,
-  Printer,
-  Share2,
-  Trash2,
-  Copy,
-  Plus,
-  FileText,
-  Upload,
-} from "lucide-react"
+import { Pencil, Plus, FileText, Upload } from "lucide-react"
 import Link from "next/link"
 import { TemplateModal } from "../../../../../components/template-dialog"
 import { UploadDialog } from "../../../../../components/upload-dialog"
+import { SC } from "../../../../../service/Api/serverCall"
 
 const GlobalStyles = () => (
   <style jsx global>{`
@@ -42,16 +30,17 @@ const GlobalStyles = () => (
 )
 
 export default function DocumentsPage() {
+  const router = useRouter()
   const [currentTab, setCurrentTab] = useState("All Documents")
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [submissions, setSubmissions] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  // Function to open the modal
-  const openModal = () => setIsModalOpen(true);
-
-  // Function to close the modal
-  const closeModal = () => setIsModalOpen(false);
+  const openModal = () => setIsModalOpen(true)
+  const closeModal = () => setIsModalOpen(false)
 
   const tabs = [
     "All Documents",
@@ -63,11 +52,60 @@ export default function DocumentsPage() {
     "Cancelled",
   ]
 
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      setIsLoading(true)
+      try {
+        const response = await SC.getCall({ url: "get/submissions" })
+        if (response.status) {
+          setSubmissions(response.data.submissions)
+        } else {
+          throw new Error( "Failed to fetch submissions")
+        }
+      } catch (error) {
+        console.error("Error fetching submissions:", error)
+        setError(error.message)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchSubmissions()
+  }, [])
+
+  const filteredSubmissions = submissions.filter((submission) => {
+    switch (currentTab) {
+      case "All Documents":
+        return true
+      case "Draft":
+        return submission.status === "draft"
+      case "Actions Required":
+        return submission.status === "pending"
+      case "Waiting for Others":
+        return submission.status === "waiting"
+      case "Completed":
+        return submission.status === "completed"
+      case "Declined":
+        return submission.status === "declined"
+      case "Cancelled":
+        return submission.status === "cancelled"
+      default:
+        return false
+    }
+  })
+
+  const handleSmartEditorClick = useCallback(
+    (submissionId) => {
+      console.log("Smart Editor clicked for submission ID:", submissionId)
+      router.push(`/app/document-editor/documents?submissionId=${submissionId}`)
+    },
+    [router],
+  )
+
   return (
     <Layout>
       <GlobalStyles />
-      {/* <TemplateDialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen} /> */}
-      <TemplateModal open={isModalOpen} onClose={closeModal}/>
+      <TemplateModal open={isModalOpen} onClose={closeModal} />
       <UploadDialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen} />
 
       {/* Premium Banner */}
@@ -135,133 +173,77 @@ export default function DocumentsPage() {
 
       {/* Documents Table */}
       <div className="rounded-lg border bg-white overflow-x-auto scrollbar-hide">
-        <Table className="scrollbar-hide">
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="text-xs font-medium text-gray-500">Name</TableHead>
-              <TableHead className="text-xs font-medium text-gray-500">Status</TableHead>
-              <TableHead className="text-xs font-medium text-gray-500">
-                Last Updated
-                <svg className="ml-1 inline-block h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </TableHead>
-              <TableHead className="text-xs font-medium text-gray-500">Owner</TableHead>
-              <TableHead className="text-right text-xs font-medium text-gray-500">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {currentTab === "All Documents" ? (
-              <TableRow>
-                <TableCell className="font-medium">
-                  <div className="flex items-center gap-2">
-                    <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                    Lease/Rental Agreement
-                  </div>
-                </TableCell>
-                <TableCell>Draft</TableCell>
-                <TableCell>04/01/2025 • 8:57 PM</TableCell>
-                <TableCell>You</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <div className="inline-flex rounded border border-gray-200 [&>*:first-child]:rounded-r-none [&>*:last-child]:rounded-l-none">
-                        <Button
-                          variant="ghost"
-                          className="bg-white hover:bg-gray-50 h-8 px-3 text-sm font-normal text-gray-700 border-r"
-                        >
-                          Edit
-                        </Button>
-                        <Button variant="ghost" className="bg-white hover:bg-gray-50 h-8 px-1.5">
-                          <ChevronDown className="h-4 w-4 text-gray-600" />
-                        </Button>
+        {isLoading ? (
+          <div className="p-4 text-center text-gray-500">Loading documents...</div>
+        ) : error ? (
+          <div className="p-4 text-center text-red-500">Error: {error}</div>
+        ) : (
+          <Table className="scrollbar-hide">
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="text-xs font-medium text-gray-500">Name</TableHead>
+                <TableHead className="text-xs font-medium text-gray-500">Status</TableHead>
+                <TableHead className="text-xs font-medium text-gray-500">
+                  Last Updated
+                  <svg className="ml-1 inline-block h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </TableHead>
+                <TableHead className="text-right text-xs font-medium text-gray-500">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredSubmissions.length > 0 ? (
+                filteredSubmissions.map((submission) => (
+                  <TableRow key={submission.submission_id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        {submission.document.name}
                       </div>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem>
-                        <FileSignature className="mr-2 h-4 w-4" />
-                        <span>E-Sign</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <MessagesSquare className="mr-2 h-4 w-4" />
-                        <span>AI Assistant</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        <span>Rename</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Download className="mr-2 h-4 w-4" />
-                        <span>Download</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Copy className="mr-2 h-4 w-4" />
-                        <span>Duplicate</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Share2 className="mr-2 h-4 w-4" />
-                        <span>Access</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Printer className="mr-2 h-4 w-4" />
-                        <span>Print</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-red-600">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        <span>Move to Trash</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-gray-500">
-                  No documents found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+                    </TableCell>
+                    <TableCell className="capitalize">{submission.status}</TableCell>
+                    <TableCell>{new Date(submission.updated_at).toLocaleString()}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <div className="inline-flex rounded border border-gray-200 [&>*:first-child]:rounded-r-none [&>*:last-child]:rounded-l-none">
+                            <Button
+                              variant="ghost"
+                              className="bg-white hover:bg-gray-50 h-8 px-3 text-sm font-normal text-gray-700"
+                            >
+                              Edit
+                            </Button>
+                          </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => handleSmartEditorClick(submission.submission_id)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            <span>Smart Editor</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center text-gray-500">
+                    No documents found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        )}
       </div>
-      {currentTab === "Draft" && (
-        <div className="p-4 text-center text-gray-500">
-          <p>No draft documents found.</p>
-        </div>
-      )}
-      {currentTab === "Actions Required" && (
-        <div className="p-4 text-center text-gray-500">
-          <p>No documents requiring action.</p>
-        </div>
-      )}
-      {currentTab === "Waiting for Others" && (
-        <div className="p-4 text-center text-gray-500">
-          <p>No documents waiting for others.</p>
-        </div>
-      )}
-      {currentTab === "Completed" && (
-        <div className="p-4 text-center text-gray-500">
-          <p>No completed documents found.</p>
-        </div>
-      )}
-      {currentTab === "Declined" && (
-        <div className="p-4 text-center text-gray-500">
-          <p>No declined documents found.</p>
-        </div>
-      )}
-      {currentTab === "Cancelled" && (
-        <div className="p-4 text-center text-gray-500">
-          <p>No cancelled documents found.</p>
-        </div>
-      )}
     </Layout>
   )
 }

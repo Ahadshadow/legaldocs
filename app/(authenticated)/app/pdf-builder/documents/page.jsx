@@ -1,78 +1,110 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { HelpCircle } from 'lucide-react'
-import Sidebar from '../../../../../components/sidebarPdf'
-import DocumentActions from '../../../../../components/document-actions'
-import LeaseTypeForm from '../../../../../components/forms/lease-type-form'
-import HousingTypeForm from '../../../../../components/forms/housing-type-form'
-import ParkingStorageForm from '../../../../../components/forms/parking-storage-form'
-import FurnishingsForm from '../../../../../components/forms/furnishings-form'
-import ConditionOfPremisesForm from '../../../../../components/forms/condition-of-premises-form'
-import AdditionalDescriptionForm from '../../../../../components/forms/additional-description-form'
-import AddressForm from '../../../../../components/forms/address-form'
-import LeadDisclosureForm from '../../../../../components/forms/lead-disclosure-form'
-import DisputeResolutionForm from '../../../../../components/forms/dispute-resolution-form'
-import LandlordAddressForm from '../../../../../components/forms/landlord-address-form'
-import TenantAddressForm from '../../../../../components/forms/tenant-address-form'
-import DateForm from '../../../../../components/forms/date-form'
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { HelpCircle } from "lucide-react"
+import Sidebar from "../../../../../components/sidebarPdf"
+import DocumentActions from "../../../../../components/document-actions"
+import { SC } from "../../../../../service/Api/serverCall"
+import { Input } from "../../../../../components/ui/input"
+import { Textarea } from "../../../../../components/ui/textarea"
+import { RadioGroup, RadioGroupItem } from "../../../../../components/ui/radio-group-document"
+import { Label } from "../../../../../components/ui/label"
+import { Button } from "../../../../../components/ui/button"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../../../../components/ui/tooltip"
+import { useToast } from "../../../../../components/ui/use-toast"
+import { Checkbox } from "../../../../../components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../../components/ui/select"
 
-const steps = [
-  { 
-    id: 'lease-type', 
-    component: LeaseTypeForm, 
-    title: 'Lease Type',
-    detail: 'A lease agreement (or rental agreement) is a legally binding contract between a tenant and landlord that outlines the terms and conditions of renting a property. It specifies the rights and obligations of both parties, including details such as the rent amount, payment schedule, duration of the lease, and any rules or restrictions on the use of the property.'
-  },
-  { 
-    id: 'premises',
-    title: 'Premises',
-    subItems: [
-      { id: 'housing-type', component: HousingTypeForm, title: 'Housing Type', detail: 'The type of housing affects the specific terms and conditions in your lease agreement. Different housing types may have unique considerations, such as shared spaces in apartments or maintenance responsibilities in houses.' },
-      { id: 'parking-storage', component: ParkingStorageForm, title: 'Parking and Storage', detail: 'Clearly defining parking and storage arrangements helps prevent misunderstandings and ensures both parties are aware of what\'s included in the lease.' },
-      { id: 'furnishings', component: FurnishingsForm, title: 'Furnishings', detail: 'Specifying whether the property is furnished or unfurnished is crucial for setting expectations and determining responsibilities for maintenance and potential damage.' },
-      { id: 'condition', component: ConditionOfPremisesForm, title: 'Condition of the Premises', detail: 'Documenting the condition of the premises at the start of the lease helps avoid disputes about damages when the tenant moves out.' },
-      { id: 'additional-description', component: AdditionalDescriptionForm, title: 'Additional Description' },
-      { id: 'address', component: AddressForm, title: 'Address', detail: 'The precise address of the rental property is a crucial part of the lease agreement, ensuring legal clarity about the exact premises being rented.' },
-      { id: 'lead-disclosure', component: LeadDisclosureForm, title: 'Lead Disclosure', detail: 'Lead disclosure is a legal requirement for properties built before 1978. It informs tenants about potential lead hazards in the property.' }
-    ]
-  },
-  {
-    id: 'final-details',
-    title: 'Final Details',
-    subItems: [
-      { id: 'dispute-resolution', component: DisputeResolutionForm, title: 'Dispute Resolution', detail: 'Specifying a dispute resolution method in advance can save time and reduce stress if disagreements arise during the tenancy.' },
-      { id: 'landlord-address', component: LandlordAddressForm, title: 'Landlord\'s Address', detail: 'The landlord\'s address is necessary for official communications and legal notices related to the lease.' },
-      { id: 'tenant-address', component: TenantAddressForm, title: 'Tenant\'s Address', detail: 'The tenant\'s current address may be required for background checks or as an alternate contact method.' },
-      { id: 'date', component: DateForm, title: 'Date', detail: 'The date of the lease agreement is important for establishing when the terms of the lease become effective.' }
-    ]
-  }
-];
+// Function to transform documentData.steps into the format expected by Sidebar
+const transformSteps = (steps) => {
+  return steps.map((step) => ({
+    id: step._id,
+    title: step.name,
+  }))
+}
 
-export default function Home() {
+export default function LeaseAgreement() {
+  const { toast } = useToast()
+  const searchParams = useSearchParams()
+  const selectedId = searchParams.get("selectedId")
+
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [completedSteps, setCompletedSteps] = useState([])
   const [formData, setFormData] = useState({})
+  const [documentData, setDocumentData] = useState(null)
   const [isPreviewMode, setIsPreviewMode] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState(null)
+  const router = useRouter()
 
-  const flattenedSteps = steps.reduce((acc, step) => {
-    if (step.subItems) {
-      return [...acc, ...step.subItems];
+
+  useEffect(() => {
+    const fetchLeaseData = async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const response = await SC.getCall({ url: `document/${selectedId}` })
+        if (response.status) {
+          setDocumentData(response.data.data)
+          const initialFormData = {}
+          if (response.data.data.steps && Array.isArray(response.data.data.steps)) {
+            response.data.data.steps.forEach((step) => {
+              if (step.fields && Array.isArray(step.fields)) {
+                step.fields.forEach((field) => {
+                  initialFormData[field._id] = ""
+                })
+              }
+            })
+          }
+          setFormData(initialFormData)
+          setCompletedSteps([])
+        } else {
+          setError(response.message || "Failed to fetch lease agreement data")
+        }
+      } catch (error) {
+        setError(error.message || "Error fetching lease agreement data")
+      } finally {
+        setIsLoading(false)
+      }
     }
-    return [...acc, step];
-  }, []);
 
-  const currentStep = flattenedSteps[currentStepIndex];
-
-  const handleNext = (stepData) => {
-    setFormData({ ...formData, [currentStep.id]: stepData })
-    if (!completedSteps.includes(currentStep.id)) {
-      setCompletedSteps([...completedSteps, currentStep.id])
-    }
-    if (currentStepIndex < flattenedSteps.length - 1) {
-      setCurrentStepIndex(currentStepIndex + 1)
+    if (selectedId) {
+      fetchLeaseData()
     } else {
-      console.log('Form completed:', formData)
+      setIsLoading(false)
+    }
+  }, [selectedId])
+
+  const handleStepSelect = (stepId) => {
+    if (documentData && documentData.steps) {
+      const index = documentData.steps.findIndex((step) => step._id === stepId)
+      if (index !== -1) {
+        setCurrentStepIndex(index)
+        setIsPreviewMode(false)
+      }
+    }
+  }
+
+  const handleInputChange = (fieldId, value) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      [fieldId]: value,
+    }))
+  }
+
+  const handleNext = () => {
+    if (documentData && documentData.steps) {
+      const currentStep = documentData.steps[currentStepIndex]
+      if (!completedSteps.includes(currentStep._id)) {
+        setCompletedSteps([...completedSteps, currentStep._id])
+      }
+      if (currentStepIndex < documentData.steps.length - 1) {
+        setCurrentStepIndex(currentStepIndex + 1)
+      } else {
+        setIsPreviewMode(true)
+      }
     }
   }
 
@@ -83,73 +115,297 @@ export default function Home() {
   }
 
   const handleSkip = () => {
-    if (currentStepIndex < flattenedSteps.length - 1) {
+    if (documentData && documentData.steps && currentStepIndex < documentData.steps.length - 1) {
       setCurrentStepIndex(currentStepIndex + 1)
     }
   }
 
-  const handleStepSelect = (stepId) => {
-    const newIndex = flattenedSteps.findIndex(step => step.id === stepId);
-    if (newIndex !== -1) {
-      setCurrentStepIndex(newIndex);
-      setIsPreviewMode(false);
-    }
-  };
-
   const handlePreview = () => {
-    setIsPreviewMode(true);
-  };
+    setIsPreviewMode(true)
+  }
 
-  // Calculate progress
-  const progress = Math.round((completedSteps.length / flattenedSteps.length) * 100)
+  const handleSave = async () => {
+    setIsSaving(true)
+    try {
+      const responses = Object.entries(formData).map(([fieldId, value]) => ({
+        field_id: fieldId,
+        value: value,
+      }))
 
-  const CurrentStepComponent = currentStep.component
+      const payload = {
+        document_id: selectedId,
+        responses: responses,
+      }
+
+      const response = await SC.postCall({
+        url: "submissions",
+        data: payload,
+      })
+
+      if (response.status) {
+        toast({
+          title: "Success",
+          description: "Document saved successfully",
+        })
+        router.push("/app//user-panel/documents")
+
+      } else {
+        throw new Error(response.message || "Failed to save the document")
+      }
+    } catch (error) {
+      console.error("Error saving document:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save the document. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center min-h-screen">Loading...</div>
+  }
+
+  if (error) {
+    return <div className="flex justify-center items-center min-h-screen text-red-500">Error: {error}</div>
+  }
+
+  if (!documentData || !documentData.steps || !Array.isArray(documentData.steps) || documentData.steps.length === 0) {
+    return <div className="flex justify-center items-center min-h-screen">No valid document data available</div>
+  }
+
+  const currentStep = documentData.steps[currentStepIndex]
+  const progress =
+    documentData.steps.length > 0 ? Math.round((completedSteps.length / documentData.steps.length) * 100) : 0
+
+  const renderField = (field) => {
+    switch (field.type) {
+      case "text":
+        return (
+          <Input
+            key={field._id}
+            id={field._id}
+            value={formData[field._id] || ""}
+            onChange={(e) => handleInputChange(field._id, e.target.value)}
+            required={field.required}
+          />
+        )
+
+      case "textarea":
+        return (
+          <Textarea
+            key={field._id}
+            id={field._id}
+            value={formData[field._id] || ""}
+            onChange={(e) => handleInputChange(field._id, e.target.value)}
+            required={field.required}
+          />
+        )
+
+      case "radio":
+        return (
+          <RadioGroup
+            key={field._id}
+            value={formData[field._id] || ""}
+            onValueChange={(value) => handleInputChange(field._id, value)}
+          >
+            {field.options?.map((option, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <RadioGroupItem value={option} id={`${field._id}-${index}`} />
+                <Label htmlFor={`${field._id}-${index}`}>{option}</Label>
+              </div>
+            ))}
+          </RadioGroup>
+        )
+
+      case "dropdown":
+        return (
+          <Select
+            key={field._id}
+            value={formData[field._id] || ""}
+            onValueChange={(value) => handleInputChange(field._id, value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select an option" />
+            </SelectTrigger>
+            <SelectContent>
+              {field.options?.map((option, index) => (
+                <SelectItem key={index} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )
+
+      case "checkbox":
+        return field.options?.map((option, index) => (
+          <div key={index} className="flex items-center space-x-2">
+            <Checkbox
+              id={`${field._id}-${index}`}
+              checked={Array.isArray(formData[field._id]) && formData[field._id].includes(option)}
+              onCheckedChange={(checked) => {
+                const currentValues = formData[field._id] || []
+                const newValues = checked
+                  ? [...currentValues, option]
+                  : currentValues.filter((value) => value !== option)
+                handleInputChange(field._id, newValues)
+              }}
+            />
+            <Label htmlFor={`${field._id}-${index}`}>{option}</Label>
+          </div>
+        ))
+
+      case "date":
+        return (
+          <Input
+            key={field._id}
+            id={field._id}
+            type="date"
+            value={formData[field._id] || ""}
+            onChange={(e) => handleInputChange(field._id, e.target.value)}
+            required={field.required}
+          />
+        )
+
+      case "datetime":
+        return (
+          <Input
+            key={field._id}
+            id={field._id}
+            type="datetime-local"
+            value={formData[field._id] || ""}
+            onChange={(e) => handleInputChange(field._id, e.target.value)}
+            required={field.required}
+          />
+        )
+
+      default:
+        return <div key={field._id}>Unsupported field type: {field.type}</div>
+    }
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <Sidebar 
-        currentStep={currentStep.id}
+      <Sidebar
+        steps={transformSteps(documentData.steps)}
+        currentStep={currentStep._id}
         completedSteps={completedSteps}
         onStepSelect={handleStepSelect}
         onPreview={handlePreview}
         progress={progress}
       />
-      
+
       <main className="flex-1 p-4 md:p-8 overflow-x-hidden">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">
             <DocumentActions />
           </div>
-          
+
           <div className="flex flex-col lg:flex-row gap-8">
             <div className="w-full lg:w-2/3">
               {isPreviewMode ? (
                 <div className="prose max-w-none">
-                  <h1>Lease Agreement Preview</h1>
-                  <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto whitespace-pre-wrap break-words">
-                    {JSON.stringify(formData, null, 2)}
-                  </pre>
+                  <div className="flex justify-between items-center mb-4">
+                    <h1 className="text-2xl font-semibold">Lease Agreement Preview</h1>
+                    <Button onClick={handleSave} className="bg-red-500 text-white hover:bg-red-600" disabled={isSaving}>
+                      {isSaving ? "Saving..." : "Save"}
+                    </Button>
+                  </div>
+                  <div className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
+                    {documentData.steps.flatMap((step) =>
+                      step.fields.map((field) => (
+                        <div key={field._id} className="mb-4">
+                          <h3 className="font-semibold">{field.label}</h3>
+                          <p className="whitespace-pre-wrap break-words">
+                            {Array.isArray(formData[field._id])
+                              ? formData[field._id].join(", ")
+                              : formData[field._id] || "Not provided"}
+                          </p>
+                        </div>
+                      )),
+                    )}
+                  </div>
                 </div>
               ) : (
-                <CurrentStepComponent 
-                  onNext={handleNext}
-                  onBack={handleBack}
-                  onSkip={handleSkip}
-                />
+                <div className="w-full">
+                  <div className="mb-8">
+                    <h2 className="text-2xl font-semibold mb-6">{currentStep.name}</h2>
+
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault()
+                        handleNext()
+                      }}
+                    >
+                      <div className="space-y-4">
+                        {currentStep.fields.map((field) => (
+                          <div key={field._id} className="bg-white shadow-sm border border-gray-200 rounded-lg">
+                            <div className="p-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <Label htmlFor={field.position} className="text-sm font-medium">
+                                  {field.label}
+                                </Label>
+                                {field.note && (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger>
+                                        <HelpCircle className="w-4 h-4 text-gray-400" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p className="w-64 text-sm">{field.note}</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
+                              </div>
+                              <div className="border-t border-gray-200 mt-2 pt-2">{renderField(field)}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center justify-between mt-8">
+                        <Button
+                          type="button"
+                          onClick={handleBack}
+                          variant="ghost"
+                          className="text-gray-600 hover:text-gray-800"
+                        >
+                          ← Back
+                        </Button>
+
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            onClick={handleSkip}
+                            variant="ghost"
+                            className="text-gray-600 hover:text-gray-800"
+                          >
+                            Skip
+                          </Button>
+                          <Button type="submit" className="bg-red-500 text-white hover:bg-red-600">
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
               )}
             </div>
             <div className="w-full lg:w-1/3">
-              {currentStep.detail && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-lg font-medium">{currentStep.title}</h3>
-                    <HelpCircle className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                  </div>
-                  <div className="space-y-4 text-gray-500">
-                    <p className="text-sm">{currentStep.detail}</p>
-                  </div>
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-lg font-medium">{currentStep.name}</h3>
+                  <HelpCircle className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 </div>
-              )}
+                <div className="space-y-4 text-gray-500">
+                  <p className="text-sm">Complete the fields in this step to proceed with your lease agreement.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

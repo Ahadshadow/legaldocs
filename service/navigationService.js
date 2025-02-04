@@ -12,7 +12,7 @@ export async function getCategories() {
 
 export async function getSubcategoriesByCategoryId(categoryId) {
   try {
-    const response = await SC.getCall({ url: `subCategoryList?categoryId=${categoryId}` })
+    const response = await SC.getCall({ url: `subcategories/${categoryId}` })
     return response.data
   } catch (error) {
     console.error("Error fetching subcategories:", error)
