@@ -39,7 +39,6 @@ export default function LeaseAgreement() {
   const [error, setError] = useState(null)
   const router = useRouter()
 
-
   useEffect(() => {
     const fetchLeaseData = async () => {
       setIsLoading(true)
@@ -148,7 +147,6 @@ export default function LeaseAgreement() {
           description: "Document saved successfully",
         })
         router.push("/app//user-panel/documents")
-
       } else {
         throw new Error(response.message || "Failed to save the document")
       }
@@ -162,6 +160,11 @@ export default function LeaseAgreement() {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const handleBackToForm = () => {
+    setIsPreviewMode(false)
+    setCurrentStepIndex(documentData.steps.length - 1)
   }
 
   if (isLoading) {
@@ -310,9 +313,18 @@ export default function LeaseAgreement() {
                 <div className="prose max-w-none">
                   <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-semibold">Lease Agreement Preview</h1>
-                    <Button onClick={handleSave} className="bg-red-500 text-white hover:bg-red-600" disabled={isSaving}>
-                      {isSaving ? "Saving..." : "Save"}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button onClick={handleBackToForm} variant="outline">
+                        Back
+                      </Button>
+                      <Button
+                        onClick={handleSave}
+                        className="bg-red-500 text-white hover:bg-red-600"
+                        disabled={isSaving}
+                      >
+                        {isSaving ? "Saving..." : "Save"}
+                      </Button>
+                    </div>
                   </div>
                   <div className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
                     {documentData.steps.flatMap((step) =>

@@ -38,8 +38,6 @@
     "components/navigationService.js",
     "lib/AuthWrapper.jsx",
     "app/layout.jsx",
-    "app/(authenticated)/real-estate/[dynamicRoute]/page.jsx",
-    "app/(authenticated)/real-estate/[dynamicRoute]/page.jsx"
   ],
   "exclude": [
     "node_modules"

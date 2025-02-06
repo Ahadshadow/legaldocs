@@ -9,7 +9,7 @@ export default function AuthWrapper({ children }) {
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (!token) {
-      router.push("/signin");
+      router.push("/");
     }
   }, [router]);
 

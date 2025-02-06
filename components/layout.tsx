@@ -4,7 +4,7 @@ import { Button } from "./ui/button"
 import { Avatar, AvatarFallback } from "./ui/avatar"
 import { HelpCircle, Mail, Settings, Building2, Receipt, Palette, LogOut, Menu, X } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
 import {
   DropdownMenu,
@@ -13,12 +13,20 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "./ui/dropdown-menu"
-import { getUserData } from "../lib/utils"
+import { clearUserData, getUserData } from "../lib/utils"
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const userData = getUserData()
+
+  const router = useRouter()
+
+const handleLogout = () => {
+  clearUserData()
+  window.dispatchEvent(new Event("storage")) // Notify other components
+  router.push("/") // Redirect to the home page
+}
 
 
   return (
@@ -105,12 +113,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Link href="/app/user-panel/logout" className="flex w-full items-center">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log Out</span>
-                  </Link>
-                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={handleLogout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Log Out</span>
+        </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
