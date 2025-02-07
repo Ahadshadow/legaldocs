@@ -2,10 +2,10 @@
 
 import type React from "react"
 import { createContext, useContext, useState, useRef, useEffect, useCallback } from "react"
-import type { Editor } from "@tiptap/react"
 import type { Comment, Reply } from "../../types/comment"
+import type { Editor } from "@tiptap/react"
 import type { DrawingResult } from "../../types/drawing"
-import type { Signature, Signer, SignatureField } from "../../types/signature"
+import { SC } from "../../service/Api/serverCall"
 
 interface Page {
   id: number
@@ -22,11 +22,23 @@ interface Drawing {
   lineWidths: number[]
 }
 
+type Signer = {}
+
+type SignatureField = { label: string }
+
+interface Signature {
+  id: string
+  pageId: number
+  x: number
+  y: number
+  type: "draw" | "type"
+  content: string
+}
+
 interface DocumentContextType {
   pages: Page[]
   currentPage: number
   setCurrentPage: (page: number) => void
-  addPage: () => void
   deletePage: (pageId: number) => void
   copyPage: (pageId: number) => void
   rotatePage: (pageId: number, degrees: number) => void
@@ -35,10 +47,10 @@ interface DocumentContextType {
   replacePage: (pageId: number, newBackgroundColor: string) => void
   extractPage: (pageId: number) => void
   insertPage: (beforeId: number, backgroundColor: string) => void
-  updatePageContent: (pageId: number, newContent: string) => void
   viewerRef: React.RefObject<HTMLDivElement>
   activeTool: string
   setActiveTool: (tool: string) => void
+  updatePageContent: (pageId: number, newContent: string) => void
   isFormatPanelOpen: boolean
   setIsFormatPanelOpen: React.Dispatch<React.SetStateAction<boolean>>
   activeToolbarItem: string | null
@@ -60,41 +72,40 @@ interface DocumentContextType {
   deleteReply: (commentId: string, replyId: string) => void
   editor: Editor | null
   setEditor: React.Dispatch<React.SetStateAction<Editor | null>>
+  isRedactPanelOpen: boolean
+  isUnderlinePanelOpen: boolean
+  isHighlightPanelOpen: boolean
+  toggleRedactPanel: () => void
+  toggleUnderlinePanel: () => void
+  toggleHighlightPanel: () => void
+  isImagePanelOpen: boolean
+  toggleImagePanel: () => void
+  isCutPanelOpen: boolean
+  toggleCutPanel: () => void
   activePanel: string | null
   setActivePanel: (panel: string | null) => void
+  isSignaturePanelOpen: boolean
+  toggleSignaturePanel: () => void
   signers: Signer[]
   setSigners: React.Dispatch<React.SetStateAction<Signer[]>>
   signatureFields: SignatureField[]
   setSignatureFields: React.Dispatch<React.SetStateAction<SignatureField[]>>
   addSignatureField: (label: string) => void
   removeSignatureField: (index: number) => void
+  isDrawPanelOpen: boolean
+  toggleDrawPanel: () => void
   drawings: Drawing[]
   addDrawing: (pageId: number, path: string, color: string, lineWidth: number) => void
   clearDrawings: (pageId: number) => void
   getDrawingsForPage: (pageId: number) => DrawingResult
   signatures: Signature[]
-  addSignature: (signature: Omit<Signature, "rotation">) => void
-  updateSignature: (id: string, updates: Partial<{ x: number; y: number; rotation: number }>) => void
+  addSignature: (pageId: number, x: number, y: number, type: "draw" | "type", content: string) => void
   removeSignature: (id: string) => void
   contentPages: string[]
   setContentPages: React.Dispatch<React.SetStateAction<string[]>>
   insertHorizontalLine: () => void
   updateHorizontalLine: (width: string, height: string) => void
   updatePageCount: (count: number) => void
-  prepareForSubmission: () => {
-    content: string
-    signatures: Array<{
-      id: string
-      content: string
-      x: number
-      y: number
-      rotation: number
-      type: "draw" | "type" | "upload"
-    }>
-    email: string
-  }
-  email: string
-  setEmail: (email: string) => void
 }
 
 const DocumentContext = createContext<DocumentContextType | undefined>(undefined)
@@ -107,19 +118,30 @@ export const useDocument = () => {
   return context
 }
 
-export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData?: any }> = ({
+export const DocumentProvider: React.FC<{ children: React.ReactNode; documentsData: any }> = ({
   children,
-  initialData,
+  documentsData,
 }) => {
+  console.log("Submission ID:", documentsData)
+
+
   const [pages, setPages] = useState<Page[]>(() => [
     {
       id: 1,
       pageNumber: 1,
       rotation: 0,
       backgroundColor: "white",
-      content: initialData?.content || "",
+      content: `
+      ${documentsData}
+    `,
     },
   ])
+
+   
+    
+    
+  
+
   const [currentPage, setCurrentPage] = useState(1)
   const viewerRef = useRef<HTMLDivElement>(null)
   const [activeTool, setActiveTool] = useState<string>("edit")
@@ -130,27 +152,20 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData
   const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false)
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null)
   const [editor, setEditor] = useState<Editor | null>(null)
-  const [activePanel, setActivePanelState] = useState<string | null>(null)
+  const [isRedactPanelOpen, setIsRedactPanelOpen] = useState(false)
+  const [isUnderlinePanelOpen, setIsUnderlinePanelOpen] = useState(false)
+  const [isHighlightPanelOpen, setIsHighlightPanelOpen] = useState(false)
+  const [isImagePanelOpen, setIsImagePanelOpen] = useState(false)
+  const [isCutPanelOpen, setIsCutPanelOpen] = useState(false)
+  const [activePanel, setActivePanel] = useState<string | null>(null)
+  const [isSignaturePanelOpen, setIsSignaturePanelOpen] = useState(false)
   const [signers, setSigners] = useState<Signer[]>([])
-  const [signatureFields, setSignatureFields] = useState<SignatureField[]>([])
+  const [signatureFields, setSignatureFields] = useState<{ label: string }[]>([])
+  const [isDrawPanelOpen, setIsDrawPanelOpen] = useState(false)
   const [drawings, setDrawings] = useState<Drawing[]>([])
-  const [signatures, setSignatures] = useState<Signature[]>(initialData?.signatures || [])
+  const [signatures, setSignatures] = useState<Signature[]>([])
   const [contentPages, setContentPages] = useState<string[]>([])
   const [pageCount, setPageCount] = useState(1)
-  const [email, setEmail] = useState<string>(initialData?.email || "")
-
-  const addPage = useCallback(() => {
-    setPages((prevPages) => [
-      ...prevPages,
-      {
-        id: prevPages.length + 1,
-        pageNumber: prevPages.length + 1,
-        rotation: 0,
-        backgroundColor: "white",
-        content: "",
-      },
-    ])
-  }, [])
 
   const deletePage = (pageId: number) => {
     setPages((prevPages) => {
@@ -246,8 +261,66 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData
   }
 
   const updatePageContent = useCallback((pageId: number, newContent: string) => {
-    setPages((prevPages) => prevPages.map((page) => (page.id === pageId ? { ...page, content: newContent } : page)))
-  }, [])
+    const paginateContent = (content: string): string[] => {
+      // Split content at natural break points (headers, paragraphs)
+      const sections = content.split(/(?=<h[1-6]|<p>|<ul>|<ol>)/)
+      const pages: string[] = [""]
+      let currentPage = 0
+
+      sections.forEach((section) => {
+        // Create a temporary div to measure content height
+        const tempDiv = document.createElement("div")
+        tempDiv.innerHTML = pages[currentPage] + section
+        tempDiv.className = "prose max-w-none"
+        document.body.appendChild(tempDiv)
+
+        // Check if content exceeds page height (297mm - margins)
+        const contentHeight = tempDiv.offsetHeight
+        const maxHeight = (297 - 40) * 3.779528 // Convert mm to px (1mm = 3.779528px)
+
+        document.body.removeChild(tempDiv)
+
+        if (contentHeight > maxHeight && pages[currentPage].length > 0) {
+          // Start new page if content exceeds height
+          currentPage++
+          pages[currentPage] = section
+        } else {
+          // Add content to current page
+          pages[currentPage] += section
+        }
+      })
+
+      return pages
+    }
+
+    const paginatedContent = paginateContent(newContent)
+
+    setPages((prevPages) => {
+      // Update the first page content
+      const updatedPages = prevPages.map((page, index) =>
+        index === 0 ? { ...page, content: paginatedContent[0] } : page,
+      )
+
+      // Add or remove overflow pages as needed
+      const overflowPages = paginatedContent.slice(1).map((content, index) => ({
+        id: Math.max(...prevPages.map((p) => p.id)) + index + 1,
+        pageNumber: index + 2,
+        rotation: 0,
+        backgroundColor: "white",
+        content,
+      }))
+
+      // Combine original first page with new overflow pages
+      const newPages = [...updatedPages.slice(0, 1), ...overflowPages]
+
+      // Update page numbers
+      return newPages.map((page, index) => ({
+        ...page,
+        pageNumber: index + 1,
+      }))
+    })
+    setPageCount(pages.length)
+  }, [pages.length])
 
   const setActiveToolAndResetFormat = (tool: string) => {
     setActiveTool(tool)
@@ -343,31 +416,73 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData
   }, [])
 
   const toggleRedactPanel = useCallback(() => {
-    setActivePanel("redact")
+    setIsRedactPanelOpen((prev) => !prev)
+    setIsUnderlinePanelOpen(false)
+    setIsHighlightPanelOpen(false)
+    setIsImagePanelOpen(false)
+    setIsCutPanelOpen(false)
+    setIsSignaturePanelOpen(false)
+    setIsDrawPanelOpen(false)
   }, [])
 
   const toggleUnderlinePanel = useCallback(() => {
-    setActivePanel("underline")
+    setIsUnderlinePanelOpen((prev) => !prev)
+    setIsRedactPanelOpen(false)
+    setIsHighlightPanelOpen(false)
+    setIsImagePanelOpen(false)
+    setIsCutPanelOpen(false)
+    setIsSignaturePanelOpen(false)
+    setIsDrawPanelOpen(false)
   }, [])
 
   const toggleHighlightPanel = useCallback(() => {
-    setActivePanel("highlight")
+    setIsHighlightPanelOpen((prev) => !prev)
+    setIsRedactPanelOpen(false)
+    setIsUnderlinePanelOpen(false)
+    setIsImagePanelOpen(false)
+    setIsCutPanelOpen(false)
+    setIsSignaturePanelOpen(false)
+    setIsDrawPanelOpen(false)
   }, [])
 
   const toggleImagePanel = useCallback(() => {
-    setActivePanel("image")
+    setIsImagePanelOpen((prev) => !prev)
+    setIsRedactPanelOpen(false)
+    setIsUnderlinePanelOpen(false)
+    setIsHighlightPanelOpen(false)
+    setIsCutPanelOpen(false)
+    setIsSignaturePanelOpen(false)
+    setIsDrawPanelOpen(false)
   }, [])
 
   const toggleCutPanel = useCallback(() => {
-    setActivePanel("cut")
+    setIsCutPanelOpen((prev) => !prev)
+    setIsRedactPanelOpen(false)
+    setIsUnderlinePanelOpen(false)
+    setIsHighlightPanelOpen(false)
+    setIsImagePanelOpen(false)
+    setIsSignaturePanelOpen(false)
+    setIsDrawPanelOpen(false)
   }, [])
 
   const toggleSignaturePanel = useCallback(() => {
-    setActivePanel("signature")
+    setIsSignaturePanelOpen((prev) => !prev)
+    setIsRedactPanelOpen(false)
+    setIsUnderlinePanelOpen(false)
+    setIsHighlightPanelOpen(false)
+    setIsImagePanelOpen(false)
+    setIsCutPanelOpen(false)
+    setIsDrawPanelOpen(false)
   }, [])
 
   const toggleDrawPanel = useCallback(() => {
-    setActivePanel("draw")
+    setIsDrawPanelOpen((prev) => !prev)
+    setIsRedactPanelOpen(false)
+    setIsUnderlinePanelOpen(false)
+    setIsHighlightPanelOpen(false)
+    setIsImagePanelOpen(false)
+    setIsCutPanelOpen(false)
+    setIsSignaturePanelOpen(false)
   }, [])
 
   const addDrawing = useCallback((pageId: number, path: string, color: string, lineWidth: number) => {
@@ -401,27 +516,24 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData
     [drawings],
   )
 
-  const addSignature = useCallback((signature: Omit<Signature, "rotation">) => {
-    setSignatures((prev) => [...prev, { ...signature, rotation: 0 }])
-  }, [])
-
-  const updateSignature = useCallback((id: string, updates: Partial<{ x: number; y: number; rotation: number }>) => {
-    setSignatures((prev) => prev.map((sig) => (sig.id === id ? { ...sig, ...updates } : sig)))
+  const addSignature = useCallback((pageId: number, x: number, y: number, type: "draw" | "type", content: string) => {
+    const newSignature: Signature = {
+      id: Math.random().toString(36).substr(2, 9),
+      pageId,
+      x,
+      y,
+      type,
+      content,
+    }
+    setSignatures((prev) => [...prev, newSignature])
   }, [])
 
   const removeSignature = useCallback((id: string) => {
-    setSignatures((prev) => prev.filter((sig) => sig.id !== id))
+    setSignatures((prev) => prev.filter((signature) => signature.id !== id))
   }, [])
 
   const addSignatureField = useCallback((label: string) => {
-    const newField: SignatureField = {
-      id: Math.random().toString(36).substr(2, 9),
-      type: "signature",
-      label,
-      required: true,
-      signerId: "",
-    }
-    setSignatureFields((prev) => [...prev, newField])
+    setSignatureFields((prev) => [...prev, { label }])
   }, [])
 
   const removeSignatureField = useCallback((index: number) => {
@@ -463,40 +575,12 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData
     })
   }, [])
 
-  const prepareForSubmission = useCallback(() => {
-    const content = pages[0].content
-    console.log("Preparing submission with email:", email)
-    return {
-      content,
-      signatures: signatures.map((sig) => ({
-        id: sig.id,
-        content: sig.content,
-        x: sig.x,
-        y: sig.y,
-        rotation: sig.rotation || 0,
-        type: sig.type,
-      })),
-      email,
-    }
-  }, [pages, signatures, email])
-
-  const updateEmail = useCallback((newEmail: string) => {
-    console.log("Setting email to:", newEmail)
-    setEmail(newEmail)
-  }, [])
-
-  const setActivePanel = useCallback((panel: string | null) => {
-    console.log("Setting active panel to:", panel)
-    setActivePanelState(panel)
-  }, [])
-
   return (
     <DocumentContext.Provider
       value={{
         pages,
         currentPage,
         setCurrentPage,
-        addPage,
         deletePage,
         copyPage,
         rotatePage,
@@ -505,10 +589,10 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData
         replacePage,
         extractPage,
         insertPage,
-        updatePageContent,
         viewerRef,
         activeTool,
         setActiveTool: setActiveToolAndResetFormat,
+        updatePageContent,
         isFormatPanelOpen,
         setIsFormatPanelOpen,
         activeToolbarItem,
@@ -530,14 +614,28 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData
         deleteReply,
         editor,
         setEditor,
+        isRedactPanelOpen,
+        isUnderlinePanelOpen,
+        isHighlightPanelOpen,
+        toggleRedactPanel,
+        toggleUnderlinePanel,
+        toggleHighlightPanel,
+        isImagePanelOpen,
+        toggleImagePanel,
+        isCutPanelOpen,
+        toggleCutPanel,
         activePanel,
         setActivePanel,
+        isSignaturePanelOpen,
+        toggleSignaturePanel,
         signers,
         setSigners,
         signatureFields,
         setSignatureFields,
         addSignatureField,
         removeSignatureField,
+        isDrawPanelOpen,
+        toggleDrawPanel,
         drawings,
         addDrawing,
         clearDrawings,
@@ -545,15 +643,11 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData
         signatures,
         addSignature,
         removeSignature,
-        updateSignature,
         contentPages,
         setContentPages,
         insertHorizontalLine,
         updateHorizontalLine,
         updatePageCount,
-        prepareForSubmission,
-        email,
-        setEmail: updateEmail,
       }}
     >
       {children}

@@ -15,8 +15,8 @@ import { ImagePanel } from "./image-panel"
 import { CutPanel } from "./cut-panel"
 import { SignaturePanel } from "./signature-panel"
 import { DrawPanel } from "./draw-panel"
-import { SignatureField } from "./signature-field"
 import { HorizontalLinePanel } from "./horizontal-line-panel"
+import { DraggableSignature } from "./draggable-signature"
 import "./document-viewer.css"
 
 export function DocumentViewer() {
@@ -33,7 +33,10 @@ export function DocumentViewer() {
     drawings,
     addDrawing,
     getDrawingsForPage,
-    signatureFields,
+    signatures,
+    removeSignature,
+    updateSignature,
+    currentPage,
   } = useDocument()
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -107,6 +110,7 @@ export function DocumentViewer() {
   }, [])
 
   const renderActivePanel = () => {
+    console.log("Active Panel:", activePanel)
     switch (activePanel) {
       case "format":
         return <TextFormattingPanel />
@@ -167,17 +171,19 @@ export function DocumentViewer() {
                 className="prose max-w-none w-full"
                 readOnly={false}
               />
-              {signatureFields.length > 0 && (
-                <div className="relative mt-8 px-16">
-                  {Array.from({ length: Math.ceil(signatureFields.length / 2) }).map((_, rowIndex) => (
-                    <div key={rowIndex} className="grid grid-cols-2 gap-4 mb-4">
-                      {signatureFields.slice(rowIndex * 2, rowIndex * 2 + 2).map((field, idx) => (
-                        <SignatureField key={idx} label={field.label} type="custom" editable={true} />
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              )}
+              {signatures.map((signature) => (
+                <DraggableSignature
+                  key={signature.id}
+                  id={signature.id}
+                  initialX={signature.x}
+                  initialY={signature.y}
+                  content={signature.content}
+                  type={signature.type}
+                  onDelete={removeSignature}
+                  onPositionChange={(id, x, y) => updateSignature(id, { x, y })}
+                  onRotationChange={(id, rotation) => updateSignature(id, { rotation })}
+                />
+              ))}
               {comments.map((pageComment) => (
                 <div
                   key={pageComment.id}
@@ -204,12 +210,12 @@ export function DocumentViewer() {
                 </div>
               ))}
               <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 10 }}>
-                {getDrawingsForPage(1).paths.map((path, pathIndex) => (
+                {getDrawingsForPage(currentPage).paths.map((path, pathIndex) => (
                   <path
                     key={pathIndex}
                     d={path}
-                    stroke={getDrawingsForPage(1).colors[pathIndex]}
-                    strokeWidth={getDrawingsForPage(1).lineWidths[pathIndex]}
+                    stroke={getDrawingsForPage(currentPage).colors[pathIndex]}
+                    strokeWidth={getDrawingsForPage(currentPage).lineWidths[pathIndex]}
                     fill="none"
                   />
                 ))}

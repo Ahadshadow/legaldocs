@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { redirect, useRouter, useSearchParams } from "next/navigation"
 import { HelpCircle } from "lucide-react"
 import Sidebar from "../../../../../components/sidebarPdf"
 import DocumentActions from "../../../../../components/document-actions"
@@ -146,7 +146,7 @@ export default function LeaseAgreement() {
           title: "Success",
           description: "Document saved successfully",
         })
-        router.push("/app//user-panel/documents")
+        redirect("/app/user-panel/documents")
       } else {
         throw new Error(response.message || "Failed to save the document")
       }
