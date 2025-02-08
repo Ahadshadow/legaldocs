@@ -19,9 +19,10 @@ import { HorizontalLinePanel } from "./horizontal-line-panel"
 import { DraggableSignature } from "./draggable-signature"
 import "./document-viewer.css"
 
-export function DocumentViewer() {
+export function DocumentViewer({ isEmailMatch }: { isEmailMatch: boolean }) {
   const [zoom, setZoom] = useState(100)
   const [currentPath, setCurrentPath] = useState<string>("")
+  const [newSignatures, setNewSignatures] = useState<string[]>([])
   const {
     pages,
     updatePageContent,
@@ -109,6 +110,10 @@ export function DocumentViewer() {
     }
   }, [])
 
+  const handleSignatureAdd = useCallback((signature: any) => {
+    setNewSignatures((prev) => [...prev, signature.id])
+  }, [])
+
   const renderActivePanel = () => {
     console.log("Active Panel:", activePanel)
     switch (activePanel) {
@@ -127,7 +132,7 @@ export function DocumentViewer() {
       case "cut":
         return <CutPanel />
       case "signature":
-        return <SignaturePanel />
+        return <SignaturePanel onSignatureAdd={handleSignatureAdd} isEmailMatch={isEmailMatch} />
       case "draw":
         return <DrawPanel setDrawColor={setDrawColor} setDrawLineWidth={setDrawLineWidth} />
       case "horizontalLine":
@@ -169,7 +174,7 @@ export function DocumentViewer() {
                 content={pages[0].content}
                 onChange={(newContent) => updatePageContent(pages[0].id, newContent)}
                 className="prose max-w-none w-full"
-                readOnly={false}
+                readOnly={isEmailMatch}
               />
               {signatures.map((signature) => (
                 <DraggableSignature
@@ -182,6 +187,8 @@ export function DocumentViewer() {
                   onDelete={removeSignature}
                   onPositionChange={(id, x, y) => updateSignature(id, { x, y })}
                   onRotationChange={(id, rotation) => updateSignature(id, { rotation })}
+                  isEmailMatch={isEmailMatch}
+                  isNewSignature={newSignatures.includes(signature.id)}
                 />
               ))}
               {comments.map((pageComment) => (

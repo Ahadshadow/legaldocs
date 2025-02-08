@@ -117,7 +117,7 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData
       pageNumber: 1,
       rotation: 0,
       backgroundColor: "white",
-      content: initialData?.content || "",
+      content: initialData?.content || initialData?.document.document_data,
     },
   ])
   const [currentPage, setCurrentPage] = useState(1)
@@ -137,7 +137,7 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData
   const [signatures, setSignatures] = useState<Signature[]>(initialData?.signatures || [])
   const [contentPages, setContentPages] = useState<string[]>([])
   const [pageCount, setPageCount] = useState(1)
-  const [email, setEmail] = useState<string>(initialData?.email || "")
+  const [email, setEmail] = useState<string>(initialData?.signatureRequestEmail || "")
 
   const addPage = useCallback(() => {
     setPages((prevPages) => [

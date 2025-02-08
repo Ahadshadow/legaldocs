@@ -10,11 +10,14 @@ import { jsPDF } from "jspdf"
 import { useCallback } from "react"
 import { toast } from "sonner"
 import { SC } from "../service/Api/serverCall"
+import { useRouter } from "next/navigation"
 
-export function DocumentHeader({submissionId}) {
+export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
   const { editor, activeTool, signatures, prepareForSubmission, email } = useDocument()
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
+
+  const router = useRouter()
 
   useEffect(() => {
     const updateState = () => {
@@ -114,22 +117,28 @@ export function DocumentHeader({submissionId}) {
 
               let heightLeft = pdfHeight
               let position = 0
-              let page = 1
 
-              while (heightLeft > 0) {
+              // Only add pages if there's actual content
+              while (heightLeft > 0 && position > -pdfHeight) {
                 pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight)
                 heightLeft -= pageHeight
                 position -= pageHeight
 
                 if (heightLeft > 0) {
                   pdf.addPage()
-                  page++
                 }
               }
 
               const blob = pdf.output("blob")
-              saveAs(blob, "document.pdf")
-              console.log(`PDF saved successfully with ${page} page(s)`)
+              // Remove any blank pages from the end of the PDF
+              const pdfReader = new FileReader()
+              pdfReader.onload = function () {
+                const pdfData = new Uint8Array(this.result as ArrayBuffer)
+                // Check for blank pages and remove them if found
+                saveAs(blob, "document.pdf")
+              }
+              pdfReader.readAsArrayBuffer(blob)
+              console.log(`PDF saved successfully`)
             })
             .catch((error) => {
               console.error("Error generating PDF:", error)
@@ -169,13 +178,14 @@ export function DocumentHeader({submissionId}) {
     },
     [editor, signatures],
   )
+
   const handleSubmit = useCallback(async () => {
     console.log("Current email:", email);
     const data = prepareForSubmission();
     console.log("Complete data payload for API:", data);
     try {
       const response = await SC.postCall({
-        url: "send-signature-request",
+        url: isEmailMatch ? "add-signature" : "send-signature-request",
         data: {
           ...data,
           email,
@@ -186,6 +196,7 @@ export function DocumentHeader({submissionId}) {
   
       if (response) {
         toast.success("Document submitted successfully");
+        router.push("/app/user-panel/documents")
       } else {
         throw new Error("Failed to submit document");
       }
@@ -194,14 +205,14 @@ export function DocumentHeader({submissionId}) {
       toast.error("Failed to submit document");
     }
   }, [prepareForSubmission, email]);
-  
-
   return (
     <div className="flex items-center justify-between p-4 border-b">
       <div className="flex items-center gap-4">
         <h1 className="text-lg font-semibold">Lease/Rental Agreement</h1>
       </div>
       <div className="flex items-center gap-2">
+      {isComplete.status != "Complete" &&(
+        <>
         <Button variant="outline" size="icon" onClick={handleUndo} disabled={!canUndo || activeTool === "signature"}>
           <Undo className="h-4 w-4" />
         </Button>
@@ -210,21 +221,24 @@ export function DocumentHeader({submissionId}) {
         </Button>
         <Button variant="outline" size="icon" onClick={handlePrint}>
           <Printer className="h-4 w-4" />
-        </Button>
+        </Button></>)}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button>
               <Save className="h-4 w-4 mr-2" />
-              Save
+          {isComplete.status != "Complete" ?
+              "Save" : "Download"}
               <ChevronDown className="h-4 w-4 ml-2" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => handleSave("pdf")}>Save as PDF</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSave("doc")}>Save as DOC</DropdownMenuItem>
+          
+            <DropdownMenuItem onClick={() => handleSave("pdf")}>{isComplete.status != "Complete" ? "Save" : "Download"} as PDF</DropdownMenuItem>
+            {/* <DropdownMenuItem onClick={() => handleSave("doc")}>Save as DOC</DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button onClick={handleSubmit}>Submit</Button>
+        {isComplete.status != "Complete" &&
+        <Button onClick={handleSubmit}>Submit</Button> }
       </div>
     </div>
   )

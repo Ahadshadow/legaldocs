@@ -66,9 +66,11 @@ import { DocumentSidebar } from "../../../../../components/document-sidebar"
 import { DocumentToolbar } from "../../../../../components/document-toolbar"
 import { DocumentViewer } from "../../../../../components/document-viewer"
 import { DocumentProvider } from "../../../../../components/context/document-context"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { SC } from "../../../../../service/Api/serverCall"
+import { useAuth } from "../../../../../hooks/useAuth"
+import { getUserData } from "../../../../../lib/utils"
 
 // Hardcoded static content
 const staticDocumentsData = {
@@ -134,6 +136,13 @@ export default function DocumentPage() {
   const searchParams = useSearchParams()
   const submissionId = searchParams.get("submissionId")
     const [documentsData,  setDocumentsData] = useState(null)
+
+    const [userData, setUserData] = useState<{ email: string; name?: string } | null>(null)
+  const { isLoggedIn } = useAuth()
+  const [isEmailMatch, setIsEmailMatch] = useState(false);
+
+  
+  
   
 
   if (!submissionId) {
@@ -146,7 +155,7 @@ export default function DocumentPage() {
           try {
             const response = await SC.getCall({ url: `submissions/${submissionId}` })
             if (response.status) {
-              setDocumentsData(response?.data.document?.document_data)
+              setDocumentsData(response?.data)
               
             } else {
               throw new Error( "Failed to fetch submissions")
@@ -159,19 +168,50 @@ export default function DocumentPage() {
     
         fetchSubmissions()
       }, [])
-      console.log(documentsData, 'datadocument');
+      useEffect(() => {
+        if (isLoggedIn) {
+          const data = getUserData()
+          setUserData(data)
+          console.log(data.email, "data.email");
+          
+        } else {
+          setUserData(null)
+        }
+      }, [isLoggedIn])
+
+      useEffect(() => {
+        if (userData?.email && documentsData?.signatureRequestEmail) {
+          const userEmail = userData?.email.trim().toLowerCase();
+          const signatureEmail = documentsData?.signatureRequestEmail.trim().toLowerCase();
+      
+          const match = userEmail === signatureEmail;
+          setIsEmailMatch(match);
+        } else {
+          console.log('One of the emails is undefined or null');
+          setIsEmailMatch(false);
+        }
+      }, [userData?.email, documentsData?.signatureRequestEmail]);
+
+
+
+      
+
+      
+    
+
+// console.log(isEmailMatch, 'ismatch');
       
 
   if(documentsData === null ) return null
   return (
-    <DocumentProvider initialData={staticDocumentsData}>
+    <DocumentProvider initialData={documentsData}>
       <div className="h-screen flex flex-col">
-        <DocumentHeader submissionId={submissionId} />
+        <DocumentHeader submissionId={submissionId} isEmailMatch={isEmailMatch} isComplete={documentsData} />
         <div className="flex-1 flex overflow-hidden">
-          <DocumentSidebar />
+          <DocumentSidebar isEmailMatch={isEmailMatch} isComplete={documentsData} />
           <div className="flex-1 flex flex-col overflow-hidden">
-            <DocumentToolbar />
-            <DocumentViewer />
+            <DocumentToolbar isEmailMatch={isEmailMatch} isComplete={documentsData.status} />
+            <DocumentViewer isEmailMatch={isEmailMatch} />
           </div>
         </div>
       </div>

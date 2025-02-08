@@ -14,6 +14,8 @@ interface DraggableSignatureProps {
   onDelete: (id: string) => void
   onPositionChange: (id: string, x: number, y: number) => void
   onRotationChange: (id: string, rotation: number) => void
+  isEmailMatch: boolean
+  isNewSignature: boolean
 }
 
 export function DraggableSignature({
@@ -25,6 +27,8 @@ export function DraggableSignature({
   onDelete,
   onPositionChange,
   onRotationChange,
+  isEmailMatch,
+  isNewSignature,
 }: DraggableSignatureProps) {
   const [position, setPosition] = useState({ x: initialX, y: initialY })
   const [isDragging, setIsDragging] = useState(false)
@@ -99,10 +103,12 @@ export function DraggableSignature({
     onRotationChange(id, newRotation)
   }
 
+  const canEdit = !isEmailMatch || isNewSignature
+
   return (
     <div
       ref={elementRef}
-      className="absolute cursor-move"
+      className={`absolute cursor-${canEdit ? "move" : "default"}`}
       style={{
         left: position.x,
         top: position.y,
@@ -110,7 +116,7 @@ export function DraggableSignature({
         height: size.height,
         transform: `rotate(${rotation}deg)`,
       }}
-      onMouseDown={handleMouseDown}
+      onMouseDown={canEdit ? handleMouseDown : undefined}
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => setShowControls(false)}
     >
@@ -126,7 +132,7 @@ export function DraggableSignature({
           <div className="w-full h-full flex items-center justify-center text-2xl font-cursive p-2">{content}</div>
         )}
 
-        {showControls && (
+        {showControls && canEdit && (
           <>
             <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 flex items-center gap-1 bg-white border rounded-md shadow-sm p-1">
               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRotate("counterclockwise")}>

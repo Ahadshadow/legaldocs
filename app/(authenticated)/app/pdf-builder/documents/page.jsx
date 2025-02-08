@@ -146,7 +146,7 @@ export default function LeaseAgreement() {
           title: "Success",
           description: "Document saved successfully",
         })
-        redirect("/app/user-panel/documents")
+        router.push("/app/user-panel/documents")
       } else {
         throw new Error(response.message || "Failed to save the document")
       }

@@ -16,6 +16,8 @@ import Link from "next/link"
 import { TemplateModal } from "../../../../../components/template-dialog"
 import { UploadDialog } from "../../../../../components/upload-dialog"
 import { SC } from "../../../../../service/Api/serverCall"
+import { useAuth } from "../../../../../hooks/useAuth"
+import { getUserData } from "../../../../../lib/utils"
 
 const GlobalStyles = () => (
   <style jsx global>{`
@@ -38,6 +40,9 @@ export default function DocumentsPage() {
   const [submissions, setSubmissions] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+     const [userData, setUserData] = useState<{ email: string; name?: string } | null>(null)
+    const { isLoggedIn } = useAuth()
+    const [isEmailMatch, setIsEmailMatch] = useState(false);
 
   const openModal = () => setIsModalOpen(true)
   const closeModal = () => setIsModalOpen(false)
@@ -72,6 +77,44 @@ export default function DocumentsPage() {
 
     fetchSubmissions()
   }, [])
+
+
+   useEffect(() => {
+          if (isLoggedIn) {
+            const data = getUserData()
+            setUserData(data)
+            console.log(data.email, "data.email");
+            
+          } else {
+            setUserData(null)
+          }
+        }, [isLoggedIn])
+
+        useEffect(() => {
+          if (userData?.email && submissions) {
+            const userEmail = userData.email.trim().toLowerCase();
+        
+            // Normalize signature emails
+            const signatureEmails = submissions.map((submission) => 
+              submission.signatureRequestEmail?.trim().toLowerCase()
+            );
+        
+            // Check if any of the signature emails match the userEmail
+            const match = signatureEmails.some((email) => email === userEmail);
+        
+            setIsEmailMatch(match);
+          } else {
+            console.log('One of the emails is undefined or null');
+            setIsEmailMatch(false);
+          }
+        }, [userData?.email, submissions]);
+        
+
+  console.log(isEmailMatch,"dasdasdas");
+  
+
+  
+  
 
   const filteredSubmissions = submissions.filter((submission) => {
     switch (currentTab) {
@@ -212,25 +255,32 @@ export default function DocumentsPage() {
                     <TableCell className="capitalize">{submission.status}</TableCell>
                     <TableCell>{new Date(submission.updated_at).toLocaleString()}</TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <div className="inline-flex rounded border border-gray-200 [&>*:first-child]:rounded-r-none [&>*:last-child]:rounded-l-none">
-                            <Button
-                              variant="ghost"
-                              className="bg-white hover:bg-gray-50 h-8 px-3 text-sm font-normal text-gray-700"
-                            >
-                              Edit
-                            </Button>
-                          </div>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem onClick={() => handleSmartEditorClick(submission.submission_id)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            <span>Smart Editor</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <div className="inline-flex rounded border border-gray-200 [&>*:first-child]:rounded-r-none [&>*:last-child]:rounded-l-none">
+        <Button
+          variant="ghost"
+          className="bg-white hover:bg-gray-50 h-8 px-3 text-sm font-normal text-gray-700"
+        >
+         {submission.status === 'Complete' 
+  ? "Download" :
+  submission.status === 'Waiting for E-Sign' && isEmailMatch
+      ? "E-sign" 
+      : "Edit"
+    
+}
+        </Button>
+      </div>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuItem onClick={() => handleSmartEditorClick(submission.submission_id)}>
+        <Pencil className="mr-2 h-4 w-4" />
+        <span>Smart Editor</span>
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+</TableCell>
+
                   </TableRow>
                 ))
               ) : (

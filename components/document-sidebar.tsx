@@ -35,8 +35,6 @@ import {
   Replace,
   FileOutput,
   FilePlus2,
-  CheckSquare,
-  X,
 } from "lucide-react"
 import { useDocument } from "./context/document-context"
 import { toast } from "sonner"
@@ -327,7 +325,7 @@ function PageActions({ pageId, isEditable }: PageActionsProps) {
   )
 }
 
-export function DocumentSidebar() {
+export function DocumentSidebar({isEmailMatch , isComplete}) {
   const { activeTool, setActiveTool, copyPage, deletePage, rotatePage, extractPage } = useDocument()
   const [selectedPages, setSelectedPages] = useState<number[]>([])
   const [isSelectionMode, setIsSelectionMode] = useState(false)
@@ -339,23 +337,29 @@ export function DocumentSidebar() {
     setSelectedPages((prev) => (prev.includes(pageId) ? prev.filter((id) => id !== pageId) : [...prev, pageId]))
   }
 
+  console.log(isComplete, 'all');
+  
+
   return (
     <div className="h-full flex flex-shrink-0 overflow-hidden">
       <div className="w-[120px] border-r flex flex-col">
         <div className="flex-1 overflow-auto">
           <div className="p-3 space-y-3">
-            <SidebarButton
-              icon={<Edit />}
-              label="Edit"
-              active={activeTool === "edit"}
-              onClick={() => setActiveTool(activeTool === "edit" ? null : "edit")}
-            />
+            {!isEmailMatch && (
+              <SidebarButton
+                icon={<Edit />}
+                label="Edit"
+                active={activeTool === "edit"}
+                onClick={() => setActiveTool(activeTool === "edit" ? null : "edit")}
+              />
+            )}
+            {isComplete.status != "Complete" ?
             <SidebarButton
               icon={<FileSignature />}
               label="Signature"
               active={activeTool === "signature"}
               onClick={() => setActiveTool(activeTool === "signature" ? null : "signature")}
-            />
+            /> : null}
           </div>
         </div>
       </div>

@@ -101,11 +101,17 @@ interface NewSignature extends Omit<Signature, "id" | "rotation"> {
   content: string
 }
 
-export function SignaturePanel() {
+interface SignaturePanelProps {
+  isEmailMatch: boolean
+  onSignatureAdd: (signature: Signature) => void
+}
+
+export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelProps) {
   const { setActivePanel, addSignature, removeSignature, signatures, email, currentPage } = useDocument()
   const [isDrawDialogOpen, setIsDrawDialogOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [convertedImages, setConvertedImages] = useState<Record<string, string>>({})
+  const [newSignatures, setNewSignatures] = useState<string[]>([])
 
   useEffect(() => {
     console.log("SignaturePanel rendered")
@@ -160,6 +166,8 @@ export function SignaturePanel() {
         y,
       }
       addSignature(newSignature)
+      onSignatureAdd(newSignature)
+      setNewSignatures((prev) => [...prev, newSignature.id])
       setIsDrawDialogOpen(false)
       console.log(`Signature added:`, newSignature)
 
@@ -231,7 +239,11 @@ export function SignaturePanel() {
         {signatures.length > 0 && (
           <div className="mt-6">
             <h3 className="text-sm font-medium mb-2">Existing Signatures</h3>
-            <p className="text-xs text-muted-foreground mb-2">These signatures are present in the document</p>
+            <p className="text-xs text-muted-foreground mb-2">
+              {isEmailMatch
+                ? "These signatures are present in the document"
+                : "You can edit or delete these signatures"}
+            </p>
             <div className="space-y-2">
               {signatures.map((signature) => (
                 <div key={signature.id} className="flex flex-col items-start p-2 bg-muted rounded-md">
@@ -258,14 +270,16 @@ export function SignaturePanel() {
                     <span className="text-xs text-muted-foreground">
                       Type: {signature.type}, Position: ({signature.x.toFixed(2)}, {signature.y.toFixed(2)})
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeSignature(signature.id)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <FileSignature className="h-4 w-4" />
-                    </Button>
+                    {(!isEmailMatch || newSignatures.includes(signature.id)) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeSignature(signature.id)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <FileSignature className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}

@@ -16,9 +16,9 @@ import {
   MinusSquare,
 } from "lucide-react"
 import { useDocument } from "./context/document-context"
+import type React from "react"
 import { useState } from "react"
 import { SignerSelectionDialog } from "./signer-selection-dialog"
-import type React from "react" // Added import for React
 
 interface ToolbarButtonProps {
   icon: React.ReactNode
@@ -30,8 +30,6 @@ interface ToolbarButtonProps {
 
 function ToolbarButton({ icon, label, toolbarItem, hasDropdown, onClick }: ToolbarButtonProps) {
   const { activePanel, setActivePanel } = useDocument()
-
-  const [isSelectSignerOpen, setIsSelectSignerOpen] = useState(false)
 
   const handleClick = () => {
     if (toolbarItem === "signature") {
@@ -102,7 +100,7 @@ function ToolbarButton({ icon, label, toolbarItem, hasDropdown, onClick }: Toolb
   )
 }
 
-export function DocumentToolbar() {
+export function DocumentToolbar({isEmailMatch , isComplete}) {
   const { activeTool, activePanel, setActivePanel, setActiveTool, setEmail } = useDocument()
   const [isSelectSignerOpen, setIsSelectSignerOpen] = useState(false)
 
@@ -111,12 +109,18 @@ export function DocumentToolbar() {
   }
 
   const handleSignatureClick = () => {
-    setIsSelectSignerOpen(true)
+    if (isEmailMatch) {
+      setActivePanel("signature")
+    } else {
+      setIsSelectSignerOpen(true)
+    }
   }
+  console.log(isComplete, "compiii");
+  
 
   return (
     <div className="flex items-center gap-0.5 p-1 border-b bg-background">
-      {activeTool === "edit" && (
+      {activeTool === "edit" && !isEmailMatch && (
         <>
           <ToolbarButton icon={<TextSelect className="h-4 w-4" />} label="Format text" toolbarItem="format" />
           <ToolbarButton icon={<UndoIcon className="h-4 w-4" />} label="Redact" toolbarItem="redact" />
@@ -133,22 +137,24 @@ export function DocumentToolbar() {
           />
         </>
       )}
+      {isComplete != "Complete"  ?
       <ToolbarButton
         icon={<FileSignature className="h-4 w-4" />}
         label="Signature"
         toolbarItem="signature"
         onClick={handleSignatureClick}
-      />
-
-      <SignerSelectionDialog
-        isOpen={isSelectSignerOpen}
-        onClose={() => setIsSelectSignerOpen(false)}
-        onSelect={(email) => {
-          setEmail(email)
-          setActivePanel("signature")
-          setIsSelectSignerOpen(false)
-        }}
-      />
+      /> : null}
+      {!isEmailMatch && (
+        <SignerSelectionDialog
+          isOpen={isSelectSignerOpen}
+          onClose={() => setIsSelectSignerOpen(false)}
+          onSelect={(email) => {
+            setEmail(email)
+            setActivePanel("signature")
+            setIsSelectSignerOpen(false)
+          }}
+        />
+      )}
     </div>
   )
 }
