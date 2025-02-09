@@ -160,7 +160,8 @@ export function DocumentViewer({ isEmailMatch }: { isEmailMatch: boolean }) {
         <ScrollArea className="flex-1 bg-gray-100">
           <div className="flex flex-col items-center py-8">
             <div
-              className="relative bg-white document-viewer pagination-wrapper border-none"
+              // className="relative bg-white document-viewer pagination-wrapper border-none"
+              className="relative bg-white document-viewer pagination-wrapper border-none whitespace-pre-wrap"
               style={{
                 width: "816px",
                 transform: `scale(${zoom / 100})`,
@@ -171,9 +172,11 @@ export function DocumentViewer({ isEmailMatch }: { isEmailMatch: boolean }) {
               onClick={(e) => handlePageClick(e, 0)}
             >
               <TiptapEditor
-                content={pages[0].content}
+                // content={pages[0].content}
+                content={pages[0].content.replace(/\\n/g, "\n").replace(/\\r/g, "\r")}
                 onChange={(newContent) => updatePageContent(pages[0].id, newContent)}
-                className="prose max-w-none w-full"
+                // className="prose max-w-none w-full"
+                className="prose max-w-none w-full whitespace-pre-wrap"
                 readOnly={isEmailMatch}
               />
               {signatures.map((signature) => (

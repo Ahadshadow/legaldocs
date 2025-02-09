@@ -111,7 +111,9 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
   const [isDrawDialogOpen, setIsDrawDialogOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [convertedImages, setConvertedImages] = useState<Record<string, string>>({})
-  const [newSignatures, setNewSignatures] = useState<string[]>([])
+  // const [newSignatures, setNewSignatures] = useState<string[]>([])
+  const [newSignatures, setNewSignatures] = useState<Signature[]>([])
+
 
   useEffect(() => {
     console.log("SignaturePanel rendered")
@@ -122,7 +124,8 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
   useEffect(() => {
     const convertSignatures = async () => {
       const converted: Record<string, string> = {}
-      for (const signature of signatures) {
+      // for (const signature of signatures) {
+        for (const signature of newSignatures) {
         if (signature.type === "draw" || signature.type === "upload") {
           try {
             let base64Content = signature.content
@@ -146,7 +149,9 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
       console.log("Converted images:", converted)
     }
     convertSignatures()
-  }, [signatures])
+  // }, [signatures])
+}, [newSignatures])
+
 
   const handleSignatureCreate = async (
     type: "draw" | "type" | "upload",
@@ -167,7 +172,9 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
       }
       addSignature(newSignature)
       onSignatureAdd(newSignature)
-      setNewSignatures((prev) => [...prev, newSignature.id])
+      // setNewSignatures((prev) => [...prev, newSignature.id])
+      setNewSignatures((prev) => [...prev, newSignature])
+
       setIsDrawDialogOpen(false)
       console.log(`Signature added:`, newSignature)
 
@@ -236,16 +243,20 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
         </div>
         <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
 
-        {signatures.length > 0 && (
+        {/* {signatures.length > 0 && ( */}
+        {newSignatures.length > 0 && (
+
           <div className="mt-6">
             <h3 className="text-sm font-medium mb-2">Existing Signatures</h3>
-            <p className="text-xs text-muted-foreground mb-2">
+            {/* <p className="text-xs text-muted-foreground mb-2">
               {isEmailMatch
                 ? "These signatures are present in the document"
                 : "You can edit or delete these signatures"}
-            </p>
+            </p> */}
             <div className="space-y-2">
-              {signatures.map((signature) => (
+              {/* {signatures.map((signature) => ( */}
+              {newSignatures.map((signature) => (
+
                 <div key={signature.id} className="flex flex-col items-start p-2 bg-muted rounded-md">
                   <div className="w-full h-20 flex items-center justify-center overflow-hidden bg-white rounded mb-2">
                     {signature.type === "draw" || signature.type === "upload" ? (
@@ -270,16 +281,20 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
                     <span className="text-xs text-muted-foreground">
                       Type: {signature.type}, Position: ({signature.x.toFixed(2)}, {signature.y.toFixed(2)})
                     </span>
-                    {(!isEmailMatch || newSignatures.includes(signature.id)) && (
+                    {/* {(!isEmailMatch || newSignatures.includes(signature.id)) && ( */}
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => removeSignature(signature.id)}
+                        // onClick={() => removeSignature(signature.id)}
+                        onClick={() => {
+                          removeSignature(signature.id)
+                          setNewSignatures((prev) => prev.filter((sig) => sig.id !== signature.id))
+                        }}
                         className="h-8 w-8 p-0"
                       >
                         <FileSignature className="h-4 w-4" />
                       </Button>
-                    )}
+                    {/* )} */}
                   </div>
                 </div>
               ))}

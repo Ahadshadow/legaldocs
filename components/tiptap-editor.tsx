@@ -126,6 +126,14 @@ export function TiptapEditor({ content, onChange, className, readOnly, extension
       onChange(editor.getHTML())
     },
     editable: !readOnly,
+    editorProps: {
+      attributes: {
+        class: "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none whitespace-pre-wrap",
+      },
+    },
+    parseOptions: {
+      preserveWhitespace: "full",
+    },
   })
 
   useEffect(() => {
@@ -142,7 +150,7 @@ export function TiptapEditor({ content, onChange, className, readOnly, extension
 
   return (
     <div ref={editorRef} className={`w-full overflow-hidden ${className || ""}`}>
-      <EditorContent editor={editor} className="w-full" />
+      <EditorContent editor={editor} className={`w-full whitespace-pre-wrap ${className || ""}`} />
     </div>
   )
 }
