@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { redirect, useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { HelpCircle } from "lucide-react"
 import Sidebar from "../../../../../components/sidebarPdf"
 import DocumentActions from "../../../../../components/document-actions"
@@ -87,10 +87,14 @@ export default function LeaseAgreement() {
   }
 
   const handleInputChange = (fieldId, value) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      [fieldId]: value,
-    }))
+    setFormData((prevData) => {
+      const newData = {
+        ...prevData,
+        [fieldId]: value,
+      }
+      console.log("Updated formData:", newData)
+      return newData
+    })
   }
 
   const handleNext = () => {
@@ -167,23 +171,22 @@ export default function LeaseAgreement() {
     setCurrentStepIndex(documentData.steps.length - 1)
   }
 
-  if (isLoading) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>
-  }
-
-  if (error) {
-    return <div className="flex justify-center items-center min-h-screen text-red-500">Error: {error}</div>
-  }
-
-  if (!documentData || !documentData.steps || !Array.isArray(documentData.steps) || documentData.steps.length === 0) {
-    return <div className="flex justify-center items-center min-h-screen">No valid document data available</div>
-  }
-
-  const currentStep = documentData.steps[currentStepIndex]
-  const progress =
-    documentData.steps.length > 0 ? Math.round((completedSteps.length / documentData.steps.length) * 100) : 0
-
   const renderField = (field) => {
+    // Check if the field has a dependency
+    if (field.depends_on) {
+      // Find the field that this field depends on
+      const dependentField = currentStep.fields.find((f) => f.position === field.depends_on)
+      if (dependentField) {
+        const dependentFieldValue = formData[dependentField._id]
+        console.log(
+          `Field ${field.position} depends on ${field.depends_on} with value ${field.depends_on_value}. Current value: ${dependentFieldValue}`,
+        )
+        if (dependentFieldValue !== field.depends_on_value) {
+          return null // Do not render the field if the condition is not met
+        }
+      }
+    }
+
     switch (field.type) {
       case "text":
         return (
@@ -290,6 +293,26 @@ export default function LeaseAgreement() {
     }
   }
 
+  useEffect(() => {
+    console.log("Form Data Updated:", formData)
+  }, [formData])
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center min-h-screen">Loading...</div>
+  }
+
+  if (error) {
+    return <div className="flex justify-center items-center min-h-screen text-red-500">Error: {error}</div>
+  }
+
+  if (!documentData || !documentData.steps || !Array.isArray(documentData.steps) || documentData.steps.length === 0) {
+    return <div className="flex justify-center items-center min-h-screen">No valid document data available</div>
+  }
+
+  const currentStep = documentData.steps[currentStepIndex]
+  const progress =
+    documentData.steps.length > 0 ? Math.round((completedSteps.length / documentData.steps.length) * 100) : 0
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar
@@ -353,30 +376,43 @@ export default function LeaseAgreement() {
                       }}
                     >
                       <div className="space-y-4">
-                        {currentStep.fields.map((field) => (
-                          <div key={field._id} className="bg-white shadow-sm border border-gray-200 rounded-lg">
-                            <div className="p-4">
-                              <div className="flex items-center justify-between mb-2">
-                                <Label htmlFor={field.position} className="text-sm font-medium">
-                                  {field.label}
-                                </Label>
-                                {field.note && (
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger>
-                                        <HelpCircle className="w-4 h-4 text-gray-400" />
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p className="w-64 text-sm">{field.note}</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                )}
+                        {currentStep.fields.map((field) => {
+                          // Check dependencies before rendering the field container
+                          if (field.depends_on) {
+                            const dependentField = currentStep.fields.find((f) => f.position === field.depends_on)
+                            if (dependentField) {
+                              const dependentFieldValue = formData[dependentField._id]
+                              if (dependentFieldValue !== field.depends_on_value) {
+                                return null // Don't render the field container at all
+                              }
+                            }
+                          }
+
+                          return (
+                            <div key={field._id} className="bg-white shadow-sm border border-gray-200 rounded-lg">
+                              <div className="p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <Label htmlFor={field.position} className="text-sm font-medium">
+                                    {field.label}
+                                  </Label>
+                                  {field.note && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger>
+                                          <HelpCircle className="w-4 h-4 text-gray-400" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p className="w-64 text-sm">{field.note}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+                                </div>
+                                <div className="border-t border-gray-200 mt-2 pt-2">{renderField(field)}</div>
                               </div>
-                              <div className="border-t border-gray-200 mt-2 pt-2">{renderField(field)}</div>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
 
                       <div className="flex items-center justify-between mt-8">
@@ -411,11 +447,12 @@ export default function LeaseAgreement() {
             <div className="w-full lg:w-1/3">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-lg font-medium">{currentStep.name}</h3>
+                  <h3 className="text-lg font-medium">{currentStep.noteQuestion}</h3>
                   <HelpCircle className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 </div>
                 <div className="space-y-4 text-gray-500">
-                  <p className="text-sm">Complete the fields in this step to proceed with your lease agreement.</p>
+                  {/* <p className="text-sm font-medium">{currentStep.noteQuestion}</p> */}
+                  <p className="text-sm">{currentStep.noteAnswer}</p>
                 </div>
               </div>
             </div>
