@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { HelpCircle } from "lucide-react"
 import Sidebar from "../../../../../components/sidebarPdf"
 import { Input } from "../../../../../components/ui/input"
@@ -13,9 +13,11 @@ import { useToast } from "../../../../../components/ui/use-toast"
 import { Checkbox } from "../../../../../components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../../components/ui/select"
 import { DOCUMENT_DATA } from "../../../../../components/documentData"
+import { SC } from "../../../../../service/Api/serverCall"
+
+
 
 export default function InjuryDemandLetter() {
-  
   const { toast } = useToast()
   const router = useRouter()
 
@@ -45,7 +47,7 @@ export default function InjuryDemandLetter() {
         ...prevData,
         [fieldId]: value,
       }
-      // Force a re-render when "pay_breakdown_option" changesss
+      // Force a re-render when "pay_breakdown_option" changes
       if (fieldId === "pay_breakdown_option") {
         return { ...newData }
       }
@@ -94,6 +96,18 @@ export default function InjuryDemandLetter() {
   }
 
   const handleSave = async () => {
+    // Create a structured object for the response
+    const responseData = {
+      document_id: DOCUMENT_DATA.id, // Assuming this is the correct document ID
+      responses: Object.entries(formData).map(([fieldId, value]) => ({
+        field_id: fieldId,
+        value: Array.isArray(value) ? value.join(", ") : value,
+      })),
+    }
+
+    // Log the structured response data
+    console.log("Response Data:", responseData)
+
     toast({
       title: "Success",
       description: "Document saved successfully",
@@ -111,60 +125,80 @@ export default function InjuryDemandLetter() {
     return null
   }
 
-
   const shouldShowField = (field) => {
-
-    console.log("field", field);
-    
-    // Always show the "pay_breakdown_option" and "receiver_type" fields
-    if (field.uniqueKeyName === "pay_breakdown_option" || field.uniqueKeyName === "receiver_type") {
+    // Always show the receiver_type field and pay_breakdown_option field
+    if (field.uniqueKeyName === "receiver_type" || field.uniqueKeyName === "pay_breakdown_option") {
       return true
     }
 
-    // Check if this field is affected by the "pay_breakdown_option"
-    const breakdownOptionField = findFieldById("512ab2d0-3fae-428e-ae29-2d484d5ea9d8")
-    if (breakdownOptionField && formData[breakdownOptionField.uniqueKeyName] === "Yes") {
-      const isAffectedField = breakdownOptionField.affectedQuestion.some((affectedQ) => affectedQ.id === field.id)
-      if (isAffectedField) {
-        return true
+    // Check if this field is affected by the receiver_type field
+    const receiverTypeField = steps
+      .flatMap((step) => step.subsections)
+      .flatMap((subsection) => subsection.question)
+      .find((q) => q.uniqueKeyName === "receiver_type")
+
+    if (receiverTypeField && receiverTypeField.affectedQuestion) {
+      const affectingCondition = receiverTypeField.affectedQuestion.find((affected) => affected.id === field.id)
+
+      if (affectingCondition) {
+        const receiverTypeValue = formData["receiver_type"]
+        return affectingCondition.value.includes(receiverTypeValue)
       }
     }
 
-    // Check if this field is affected by the "receiver_type"
-    const receiverTypeField = findFieldById("12bc2d97-498f-4e0b-9410-79ed35a1677c")
-    if (receiverTypeField) {
-      const receiverType = formData[receiverTypeField.uniqueKeyName]
-      const isAffectedField = receiverTypeField.affectedQuestion.some((affectedQ) => affectedQ.id === field.id)
-      if (isAffectedField) {
-        if (receiverType === "An insurance company" && field.uniqueKeyName === "receiver_company_name") {
-          return true
-        }
-        if (receiverType === "An individual" && field.uniqueKeyName === "receiver_individual_name") {
-          return true
-        }
-        return false
+    // Check if this field is affected by the pay_breakdown_option field
+    if (field.uniqueKeyName === "pay_breakdown" || field.id === "cd4ff6b4-8733-4278-8d6f-0b249689494b") {
+      return formData["pay_breakdown_option"] === "Yes"
+    }
+
+    // Check if this field is affected by the pay_breakdown field
+    const payBreakdownField = steps
+      .flatMap((step) => step.subsections)
+      .flatMap((subsection) => subsection.question)
+      .find((q) => q.uniqueKeyName === "pay_breakdown")
+
+    if (payBreakdownField && payBreakdownField.affectedQuestion) {
+      const affectingCondition = payBreakdownField.affectedQuestion.find((affected) => affected.id === field.id)
+
+      if (affectingCondition) {
+        const payBreakdownValues = formData["pay_breakdown"] || []
+        return affectingCondition.value.some((v) => payBreakdownValues.includes(v))
       }
     }
 
-    // For other fields, check their own affectedQuestion logic
-    if (!field.affectedQuestion || field.affectedQuestion.length === 0) {
+    // For other fields, keep the existing logic
+    if (field.affectedQuestion && field.affectedQuestion.length > 0) {
       return true
     }
 
-    return field.affectedQuestion.some((condition) => {
-      const affectingField = findFieldById(condition.id)
-      if (!affectingField) return false
+    for (const step of steps) {
+      for (const subsection of step.subsections) {
+        for (const question of subsection.question) {
+          if (question.affectedQuestion && question.affectedQuestion.some((affected) => affected.id === field.id)) {
+            const affectingFieldValue = formData[question.uniqueKeyName]
+            const condition = question.affectedQuestion.find((affected) => affected.id === field.id)
 
-      const affectingFieldValue = formData[affectingField.uniqueKeyName]
+            if (!condition) continue
 
-      if (Array.isArray(affectingFieldValue)) {
-        // For checkboxes
-        return condition.value.some((v) => affectingFieldValue.includes(v))
-      } else {
-        // For radio buttons or other single-value fields
-        return condition.value.includes(affectingFieldValue)
+            if (affectingFieldValue === undefined) {
+              return false
+            }
+
+            if (typeof affectingFieldValue === "string") {
+              return condition.value.includes(affectingFieldValue)
+            }
+
+            if (Array.isArray(affectingFieldValue)) {
+              return condition.value.some((v) => affectingFieldValue.includes(v))
+            }
+
+            return false
+          }
+        }
       }
-    })
+    }
+
+    return true
   }
 
   const renderField = (field) => {
@@ -235,7 +269,7 @@ export default function InjuryDemandLetter() {
         return (
           <div key={field.id}>
             {field.list.map((option, index) => (
-              <div key={index} className="flex items-center space-x-2">
+              <div key={index} className="flex items-center space-x-2 my-2">
                 <Checkbox
                   id={`${field.id}-${index}`}
                   checked={(formData[field.uniqueKeyName] || []).includes(option.name)}
@@ -274,6 +308,7 @@ export default function InjuryDemandLetter() {
         onStepSelect={handleStepSelect}
         onPreview={handlePreview}
         progress={progress}
+        selectedCompensationTypes={formData["pay_breakdown"] || []}
       />
 
       <main className="flex-1 p-4 md:p-8 overflow-x-hidden">
@@ -394,4 +429,10 @@ export default function InjuryDemandLetter() {
     </div>
   )
 }
+
+
+
+
+
+
 

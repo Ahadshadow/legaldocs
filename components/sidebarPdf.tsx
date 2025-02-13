@@ -1,10 +1,28 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Menu, X, ChevronUp, ChevronDown } from "lucide-react"
+import { Menu, X, ChevronUp, ChevronDown } from 'lucide-react'
 import { cn } from "../lib/utils"
 
-export default function Sidebar({ steps, currentStep, completedSteps, onStepSelect, onPreview, progress }) {
+interface SidebarProps {
+  steps: any[];
+  currentStep: string;
+  completedSteps: string[];
+  onStepSelect: (stepId: string) => void;
+  onPreview: () => void;
+  progress: number;
+  selectedCompensationTypes: string[];
+}
+
+export default function Sidebar({
+  steps,
+  currentStep,
+  completedSteps,
+  onStepSelect,
+  onPreview,
+  progress,
+  selectedCompensationTypes = [],
+}: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [expandedSteps, setExpandedSteps] = useState<string[]>(["Parties"]) // Default expand first step
 
@@ -21,7 +39,7 @@ export default function Sidebar({ steps, currentStep, completedSteps, onStepSele
 
   const isStepCompleted = (stepName) => {
     const step = steps.find((s) => s.name === stepName)
-    return step?.subsections.every((subsection) => completedSteps.includes(`${stepName}-${subsection.name}`)) || false // Handle case where step might not exist
+    return step?.subsections.every((subsection) => completedSteps.includes(`${stepName}-${subsection.name}`)) || false
   }
 
   const isStepActive = (stepId) => {
@@ -35,6 +53,27 @@ export default function Sidebar({ steps, currentStep, completedSteps, onStepSele
   const isStepExpanded = (stepName: string) => {
     return expandedSteps.includes(stepName)
   }
+
+  // Function to check if a subsection should be shown based on compensation type
+  const shouldShowSubsection = (subsectionName: string) => {
+    // Always show non-compensation related sections
+    if (
+      !["Injuries/ Treatment", "Lost Wages/ Earnings", "Out-of-Pocket Expanses", "Pain and Suffering"].includes(subsectionName)
+    ) {
+      return true;
+    }
+
+    // Map subsection names to compensation types
+    const compensationMap = {
+      "Injuries/ Treatment": "Injuries/ treatment",
+      "Lost Wages/ Earnings": "Lost wages/ earnings",
+      "Out-of-Pocket Expanses": "Out-of-pocket expenses",
+      "Pain and Suffering": "Pain and suffering",
+    };
+
+    // Check if the corresponding compensation type is selected
+    return selectedCompensationTypes.includes(compensationMap[subsectionName]);
+  };
 
   return (
     <>
@@ -84,21 +123,25 @@ export default function Sidebar({ steps, currentStep, completedSteps, onStepSele
                 </button>
                 {isStepExpanded(step.name) && (
                   <div className="ml-4 relative pl-4 border-l-2 border-[#5586ff]/20">
-                    {step.subsections.map((subsection) => {
-                      const stepId = `${step.name}-${subsection.name}`
-                      return (
-                        <button
-                          key={stepId}
-                          onClick={() => onStepSelect(stepId)}
-                          className={cn(
-                            "w-full flex items-center p-2 rounded-lg text-sm",
-                            isStepActive(stepId) ? "bg-[#5586ff]/10 text-[#5586ff]" : "text-gray-700 hover:bg-gray-50",
-                          )}
-                        >
-                          {subsection.name}
-                        </button>
-                      )
-                    })}
+                    {step.subsections
+                      .filter((subsection) => shouldShowSubsection(subsection.name))
+                      .map((subsection) => {
+                        const stepId = `${step.name}-${subsection.name}`
+                        return (
+                          <button
+                            key={stepId}
+                            onClick={() => onStepSelect(stepId)}
+                            className={cn(
+                              "w-full flex items-center p-2 rounded-lg text-sm",
+                              isStepActive(stepId)
+                                ? "bg-[#5586ff]/10 text-[#5586ff]"
+                                : "text-gray-700 hover:bg-gray-50",
+                            )}
+                          >
+                            {subsection.name}
+                          </button>
+                        )
+                      })}
                   </div>
                 )}
               </div>
@@ -116,4 +159,3 @@ export default function Sidebar({ steps, currentStep, completedSteps, onStepSele
     </>
   )
 }
-
