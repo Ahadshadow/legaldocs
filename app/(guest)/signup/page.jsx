@@ -1,44 +1,50 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Button } from "../../../components/ui/button"
-import { Input } from "../../../components/ui/input"
-import { Label } from "../../../components/ui/label"
-import { Checkbox } from "../../../components/ui/checkbox"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../../components/ui/card"
-import { setUserData } from "../../../lib/utils"
-import { SC } from "../../../service/Api/serverCall"
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { Checkbox } from "../../../components/ui/checkbox";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../../../components/ui/card";
+import { SC } from "../../../service/Api/serverCall";
 
 export default function SignUp() {
-  const [firstName, setFirstName] = useState("")
-  const [lastName, setLastName] = useState("")
-  const [displayName, setDisplayName] = useState("")
-  const [email, setEmail] = useState("")
-  const [phone, setPhone] = useState("")
-  const [password, setPassword] = useState("")
-  const [passwordConfirmation, setPasswordConfirmation] = useState("")
-  const [agreeTerms, setAgreeTerms] = useState(false)
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleSignUp = async (e) => {
-    e.preventDefault()
-    setError("")
-    setIsLoading(true)
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
     if (password !== passwordConfirmation) {
-      setError("Passwords do not match.")
-      setIsLoading(false)
-      return
+      setError("Passwords do not match.");
+      setIsLoading(false);
+      return;
     }
 
     if (!agreeTerms) {
-      setError("You must agree to the terms of service and privacy policy.")
-      setIsLoading(false)
-      return
+      setError("You must agree to the terms of service and privacy policy.");
+      setIsLoading(false);
+      return;
     }
 
     try {
@@ -53,38 +59,29 @@ export default function SignUp() {
           password,
           password_confirmation: passwordConfirmation,
         },
-      })
+      });
 
-      if (response.data.token) {
-        const userData = {
-          email: email,
-          token: response.data.token,
-          firstName: firstName,
-          lastName: lastName,
-          displayName: displayName,
-          phone: phone,
-          ...response.data.user, // Assuming the API returns additional user data
-        }
-        setUserData(userData)
-        // Trigger a storage event to update other components
-        window.dispatchEvent(new Event("storage"))
-        router.push("/")
-      } else {
-        setError("Sign-up failed. Please try again.")
+      if (response.data.status === 201) {
+        // Redirect user to the Sign-In page after successful registration
+        router.push("/signin");
       }
     } catch (error) {
-      setError("An error occurred. Please try again.")
-      console.error("Sign-up error:", error)
+      setError("An error occurred. Please try again.");
+      console.error("Sign-up error:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Card className="w-full max-w-md mx-auto mt-20">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
-        <CardDescription className="text-center">Enter your information to create your account</CardDescription>
+        <CardTitle className="text-2xl font-bold text-center">
+          Create an account
+        </CardTitle>
+        <CardDescription className="text-center">
+          Enter your information to create your account
+        </CardDescription>
       </CardHeader>
       <form onSubmit={handleSignUp}>
         <CardContent className="space-y-4">
@@ -163,7 +160,11 @@ export default function SignUp() {
             />
           </div>
           <div className="flex items-center space-x-2">
-            <Checkbox id="terms" checked={agreeTerms} onCheckedChange={(checked) => setAgreeTerms(checked)} />
+            <Checkbox
+              id="terms"
+              checked={agreeTerms}
+              onCheckedChange={(checked) => setAgreeTerms(checked)}
+            />
             <label
               htmlFor="terms"
               className="text-sm text-gray-600 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -181,7 +182,11 @@ export default function SignUp() {
           {error && <p className="text-sm text-red-500">{error}</p>}
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full bg-[#6B7CFF] hover:bg-[#5A6AE6]" disabled={isLoading}>
+          <Button
+            type="submit"
+            className="w-full bg-[#6B7CFF] hover:bg-[#5A6AE6]"
+            disabled={isLoading}
+          >
             {isLoading ? "Creating account..." : "Create account"}
           </Button>
           <div className="text-center text-sm">
@@ -193,6 +198,5 @@ export default function SignUp() {
         </CardFooter>
       </form>
     </Card>
-  )
+  );
 }
-

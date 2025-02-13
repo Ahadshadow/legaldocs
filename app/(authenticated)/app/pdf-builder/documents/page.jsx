@@ -326,9 +326,9 @@ export default function LeaseAgreement() {
 
       <main className="flex-1 p-4 md:p-8 overflow-x-hidden">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-8">
+          {/* <div className="mb-8">
             <DocumentActions />
-          </div>
+          </div> */}
 
           <div className="flex flex-col lg:flex-row gap-8">
             <div className="w-full lg:w-2/3">

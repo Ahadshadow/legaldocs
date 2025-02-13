@@ -79,12 +79,12 @@ export default function Sidebar({ steps, currentStep, completedSteps, onStepSele
           </nav>
 
           <div className="space-y-4 pt-4">
-            <button
+            {/* <button
               onClick={onPreview}
               className="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
             >
               Preview
-            </button>
+            </button> */}
             <div className="pt-4 border-t">
               <div className="text-sm text-gray-600">Logged in as</div>
               <div className="text-sm text-blue-600">masughazal26@gmail.com</div>
