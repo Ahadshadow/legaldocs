@@ -45,7 +45,7 @@ export default function InjuryDemandLetter() {
         ...prevData,
         [fieldId]: value,
       }
-      // Force a re-render when "pay_breakdown_option" changes
+      // Force a re-render when "pay_breakdown_option" changesss
       if (fieldId === "pay_breakdown_option") {
         return { ...newData }
       }
