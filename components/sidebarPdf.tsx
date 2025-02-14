@@ -1,30 +1,89 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Menu, X, ChevronUp, ChevronDown } from 'lucide-react'
+import { Menu, X, ChevronDown, ChevronRight } from "lucide-react"
 import { cn } from "../lib/utils"
+import { Button } from "../components/ui/button"
 
-interface SidebarProps {
-  steps: any[];
-  currentStep: string;
-  completedSteps: string[];
-  onStepSelect: (stepId: string) => void;
-  onPreview: () => void;
-  progress: number;
-  selectedCompensationTypes: string[];
+const SidebarStep = ({ step, currentStep, currentSubsection, completedSteps, onStepSelect, onSubsectionSelect }) => {
+  const [isOpen, setIsOpen] = useState(false)
+
+  const isStepCompleted = (stepIndex, subsectionIndex) => {
+    return completedSteps.some((step) => step.stepIndex === stepIndex && step.subsectionIndex >= subsectionIndex)
+  }
+
+  const isCurrentStep = currentStep === step.id
+
+  useEffect(() => {
+    if (isCurrentStep) {
+      setIsOpen(true)
+    }
+  }, [isCurrentStep])
+
+  return (
+    <div className="mb-2">
+      <button
+        onClick={() => {
+          setIsOpen(!isOpen)
+          onStepSelect(step.id)
+        }}
+        className={cn(
+          "w-full flex items-center justify-between p-2 rounded-lg text-sm",
+          isCurrentStep ? "bg-[#5586ff]/10 text-[#5586ff]" : "text-gray-700 hover:bg-gray-50",
+        )}
+      >
+        <div className="flex items-center">
+          <div
+            className={`w-4 h-4 rounded-full mr-3 flex items-center justify-center
+            ${isStepCompleted(step.id, 0) ? "bg-[#5586ff]" : "border-2 border-gray-300"}`}
+          >
+            {isStepCompleted(step.id, 0) && <div className="w-2 h-2 rounded-full bg-white" />}
+          </div>
+          <span>{step.title}</span>
+        </div>
+        {step.subsections &&
+          step.subsections.length > 0 &&
+          (isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
+      </button>
+      {isOpen && step.subsections && step.subsections.length > 0 && (
+        <div className="ml-6 mt-1">
+          {step.subsections.map((subsection, index) => (
+            <button
+              key={index}
+              onClick={() => onSubsectionSelect(step.id, index)}
+              className={cn(
+                "w-full flex items-center p-2 rounded-lg text-sm mb-1",
+                currentStep === step.id && currentSubsection === index
+                  ? "bg-[#5586ff]/10 text-[#5586ff]"
+                  : "text-gray-700 hover:bg-gray-50",
+              )}
+            >
+              <div
+                className={`w-3 h-3 rounded-full mr-3 flex items-center justify-center
+                ${isStepCompleted(step.id, index) ? "bg-[#5586ff]" : "border-2 border-gray-300"}`}
+              >
+                {isStepCompleted(step.id, index) && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+              </div>
+              <span>{subsection.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function Sidebar({
   steps,
   currentStep,
+  currentSubsection,
   completedSteps,
   onStepSelect,
+  onSubsectionSelect,
   onPreview,
   progress,
-  selectedCompensationTypes = [],
-}: SidebarProps) {
+}) {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [expandedSteps, setExpandedSteps] = useState<string[]>(["Parties"]) // Default expand first step
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -36,44 +95,6 @@ export default function Sidebar({
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [isMobileOpen])
-
-  const isStepCompleted = (stepName) => {
-    const step = steps.find((s) => s.name === stepName)
-    return step?.subsections.every((subsection) => completedSteps.includes(`${stepName}-${subsection.name}`)) || false
-  }
-
-  const isStepActive = (stepId) => {
-    return currentStep === stepId
-  }
-
-  const toggleStep = (stepName: string) => {
-    setExpandedSteps((prev) => (prev.includes(stepName) ? prev.filter((s) => s !== stepName) : [...prev, stepName]))
-  }
-
-  const isStepExpanded = (stepName: string) => {
-    return expandedSteps.includes(stepName)
-  }
-
-  // Function to check if a subsection should be shown based on compensation type
-  const shouldShowSubsection = (subsectionName: string) => {
-    // Always show non-compensation related sections
-    if (
-      !["Injuries/ Treatment", "Lost Wages/ Earnings", "Out-of-Pocket Expanses", "Pain and Suffering"].includes(subsectionName)
-    ) {
-      return true;
-    }
-
-    // Map subsection names to compensation types
-    const compensationMap = {
-      "Injuries/ Treatment": "Injuries/ treatment",
-      "Lost Wages/ Earnings": "Lost wages/ earnings",
-      "Out-of-Pocket Expanses": "Out-of-pocket expenses",
-      "Pain and Suffering": "Pain and suffering",
-    };
-
-    // Check if the corresponding compensation type is selected
-    return selectedCompensationTypes.includes(compensationMap[subsectionName]);
-  };
 
   return (
     <>
@@ -92,8 +113,7 @@ export default function Sidebar({
       >
         <div className="h-full flex flex-col p-4">
           <div className="mb-6">
-            <h1 className="text-lg font-semibold mb-2">legaltemplates.</h1>
-            <div className="text-sm text-gray-600 mb-2">Personal Injury/ Insurance Payment Demand Letter</div>
+            <h1 className="text-lg font-semibold mb-2">Dynamic Form</h1>
             <div className="h-1 bg-gray-200 rounded">
               <div
                 className="h-full bg-[#5586ff] rounded transition-all duration-300"
@@ -105,53 +125,25 @@ export default function Sidebar({
 
           <nav className="flex-1 overflow-y-auto">
             {steps.map((step) => (
-              <div key={step.name} className="mb-1">
-                <button
-                  onClick={() => toggleStep(step.name)}
-                  className="w-full flex items-center justify-between p-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
-                >
-                  <div className="flex items-center">
-                    <div
-                      className={`w-4 h-4 rounded-full mr-3 flex items-center justify-center
-                      ${isStepCompleted(step.name) ? "bg-[#5586ff]" : "border-2 border-gray-300"}`}
-                    >
-                      {isStepCompleted(step.name) && <div className="w-2 h-2 rounded-full bg-white" />}
-                    </div>
-                    <span>{step.name}</span>
-                  </div>
-                  {isStepExpanded(step.name) ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-                {isStepExpanded(step.name) && (
-                  <div className="ml-4 relative pl-4 border-l-2 border-[#5586ff]/20">
-                    {step.subsections
-                      .filter((subsection) => shouldShowSubsection(subsection.name))
-                      .map((subsection) => {
-                        const stepId = `${step.name}-${subsection.name}`
-                        return (
-                          <button
-                            key={stepId}
-                            onClick={() => onStepSelect(stepId)}
-                            className={cn(
-                              "w-full flex items-center p-2 rounded-lg text-sm",
-                              isStepActive(stepId)
-                                ? "bg-[#5586ff]/10 text-[#5586ff]"
-                                : "text-gray-700 hover:bg-gray-50",
-                            )}
-                          >
-                            {subsection.name}
-                          </button>
-                        )
-                      })}
-                  </div>
-                )}
-              </div>
+              <SidebarStep
+                key={step.id}
+                step={step}
+                currentStep={currentStep}
+                currentSubsection={currentSubsection}
+                completedSteps={completedSteps}
+                onStepSelect={onStepSelect}
+                onSubsectionSelect={onSubsectionSelect}
+              />
             ))}
           </nav>
 
           <div className="space-y-4 pt-4">
+            <Button onClick={onPreview} className="w-full">
+              Preview
+            </Button>
             <div className="pt-4 border-t">
               <div className="text-sm text-gray-600">Logged in as</div>
-              <div className="text-sm text-blue-600">masughazal26@gmail.com</div>
+              <div className="text-sm text-blue-600">user@example.com</div>
             </div>
           </div>
         </div>
@@ -159,3 +151,4 @@ export default function Sidebar({
     </>
   )
 }
+

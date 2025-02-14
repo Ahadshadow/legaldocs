@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { HelpCircle } from "lucide-react"
 import Sidebar from "../../../../../components/sidebarPdf"
@@ -12,82 +12,242 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../
 import { useToast } from "../../../../../components/ui/use-toast"
 import { Checkbox } from "../../../../../components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../../components/ui/select"
-import { DOCUMENT_DATA } from "../../../../../components/documentData"
 import { SC } from "../../../../../service/Api/serverCall"
 
-
-
-export default function InjuryDemandLetter() {
+export default function DynamicForm({ params }) {
   const { toast } = useToast()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const selectedId = searchParams.get("selectedId")
 
+  const [documentData, setDocumentData] = useState(null)
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
-  const [currentSubStepIndex, setCurrentSubStepIndex] = useState(0)
+  const [currentSubsectionIndex, setCurrentSubsectionIndex] = useState(0)
   const [completedSteps, setCompletedSteps] = useState([])
   const [formData, setFormData] = useState({})
   const [isPreviewMode, setIsPreviewMode] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [affectingQuestions, setAffectingQuestions] = useState([])
+  const [breakdownTypes, setBreakdownTypes] = useState({})
+  const [breakdownQuestion, setBreakdownQuestion] = useState(null)
 
-  const steps = DOCUMENT_DATA.definition
-
-  const handleStepSelect = (stepId) => {
-    const [parentName, subStepName] = stepId.split("-")
-    const stepIndex = steps.findIndex((step) => step.name === parentName)
-    const subStepIndex = steps[stepIndex].subsections.findIndex((subsection) => subsection.name === subStepName)
-
-    if (stepIndex !== -1 && subStepIndex !== -1) {
-      setCurrentStepIndex(stepIndex)
-      setCurrentSubStepIndex(subStepIndex)
-      setIsPreviewMode(false)
+  useEffect(() => {
+    const fetchDocumentData = async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const response = await SC.getCall({ url: `document/${selectedId}` })
+        if (response.status) {
+          setDocumentData(response.data.data.steps)
+          initializeFormData(response.data.data.steps)
+        } else {
+          setError(response.message || "Failed to fetch document data")
+        }
+      } catch (error) {
+        setError(error.message || "Error fetching document data")
+      } finally {
+        setIsLoading(false)
+      }
     }
+
+    if (selectedId) {
+      fetchDocumentData()
+    }
+  }, [selectedId])
+
+  useEffect(() => {
+    if (documentData) {
+      console.log("Questions with affected questions:")
+      documentData.forEach((section) => {
+        section.subsections.forEach((subsection) => {
+          subsection.question.forEach((question) => {
+            if (question.affectedQuestion && question.affectedQuestion.length > 0) {
+              console.log(`${question.uniqueKeyName} (ID: ${question.id}):`)
+              question.affectedQuestion.forEach((affectedQ) => {
+                const affectedField = findFieldById(documentData, affectedQ.id)
+                if (affectedField) {
+                  console.log(`  - ${affectedField.questionToAsk} (ID: ${affectedField.id})`)
+                  console.log(`    Values: ${JSON.stringify(affectedQ.value)}`)
+                  console.log(`    Show Only If This Match Selected: ${affectedQ.showOnlyIfThisMatchSelected}`)
+                }
+              })
+            }
+          })
+        })
+      })
+
+      // Find the question that affects the breakdown subsections
+      const breakdownQuestion = documentData.flatMap((section) =>
+        section.subsections.flatMap((subsection) =>
+          subsection.question.find(
+            (question) =>
+              question.affectedQuestion &&
+              question.affectedQuestion.some(
+                (affected) =>
+                  affected.showOnlyIfThisMatchSelected && affected.showOnlyIfThisMatchSelected.includes("or"),
+              ),
+          ),
+        ),
+      )[0]
+
+      if (breakdownQuestion) {
+        const extractedBreakdownTypes = {}
+        breakdownQuestion.list.forEach((item) => {
+          extractedBreakdownTypes[item.name] = item.name.toLowerCase()
+        })
+        setBreakdownTypes(extractedBreakdownTypes)
+        setBreakdownQuestion(breakdownQuestion)
+      }
+    }
+  }, [documentData])
+
+  useEffect(() => {
+    if (documentData) {
+      const questions = documentData.flatMap((section) =>
+        section.subsections.flatMap((subsection) =>
+          subsection.question.filter((q) => q.affectedQuestion && q.affectedQuestion.length > 0),
+        ),
+      )
+      setAffectingQuestions(questions.map((q) => ({ id: q.id, key: q.uniqueKeyName })))
+    }
+  }, [documentData])
+
+  const initializeFormData = (data) => {
+    const initialData = {}
+    data.forEach((section) => {
+      section.subsections.forEach((subsection) => {
+        subsection.question.forEach((field) => {
+          initialData[field.uniqueKeyName] = field.type === "checkboxes" ? [] : ""
+        })
+      })
+    })
+    setFormData(initialData)
+  }
+
+  const findFieldById = (data, id) => {
+    for (const section of data) {
+      for (const subsection of section.subsections) {
+        const field = subsection.question.find((q) => q.id === id)
+        if (field) return field
+      }
+    }
+    return null
+  }
+
+  const shouldHideQuestion = (question) => {
+    for (const affectingQ of affectingQuestions) {
+      const affectingField = findFieldById(documentData, affectingQ.id)
+      if (affectingField && affectingField.affectedQuestion) {
+        const affectedQ = affectingField.affectedQuestion.find((q) => q.id === question.id)
+        if (affectedQ) {
+          const currentValue = formData[affectingQ.key]
+          if (Array.isArray(currentValue)) {
+            // For checkboxes (pay_breakdown)
+            if (!currentValue.some((value) => affectedQ.value.includes(value))) {
+              return true
+            }
+          } else {
+            // For other input types
+            if (!affectedQ.value.includes(currentValue)) {
+              return true
+            }
+          }
+        }
+      }
+    }
+    return false
+  }
+
+  const handleStepSelect = (stepIndex) => {
+    setCurrentStepIndex(stepIndex)
+    setCurrentSubsectionIndex(0)
+    setIsPreviewMode(false)
+  }
+
+  const handleSubsectionSelect = (stepIndex, subsectionIndex) => {
+    setCurrentStepIndex(stepIndex)
+    setCurrentSubsectionIndex(subsectionIndex)
+    setIsPreviewMode(false)
   }
 
   const handleInputChange = (fieldId, value) => {
-    setFormData((prevData) => {
-      const newData = {
-        ...prevData,
-        [fieldId]: value,
-      }
-      // Force a re-render when "pay_breakdown_option" changes
-      if (fieldId === "pay_breakdown_option") {
-        return { ...newData }
-      }
-      return newData
-    })
+    setFormData((prevData) => ({
+      ...prevData,
+      [fieldId]: value,
+    }))
   }
 
-  const handleNext = () => {
-    const currentStep = steps[currentStepIndex]
-    const currentSubStep = currentStep.subsections[currentSubStepIndex]
-    const stepId = `${currentStep.name}-${currentSubStep.name}`
-
-    if (!completedSteps.includes(stepId)) {
-      setCompletedSteps([...completedSteps, stepId])
+  const handleNextStep = () => {
+    let nextStepIndex = currentStepIndex + 1
+    while (
+      nextStepIndex < documentData.length &&
+      !documentData[nextStepIndex].subsections.some((sub) => sub.question && sub.question.length > 0)
+    ) {
+      nextStepIndex++
     }
-
-    // Try next sub-step in current step
-    if (currentSubStepIndex < currentStep.subsections.length - 1) {
-      setCurrentSubStepIndex(currentSubStepIndex + 1)
-    }
-    // Try first sub-step of next step
-    else if (currentStepIndex < steps.length - 1) {
-      setCurrentStepIndex(currentStepIndex + 1)
-      setCurrentSubStepIndex(0)
-    }
-    // If no more steps, show preview
-    else {
+    if (nextStepIndex < documentData.length) {
+      setCurrentStepIndex(nextStepIndex)
+      setCurrentSubsectionIndex(0)
+    } else {
       setIsPreviewMode(true)
     }
   }
 
-  const handleBack = () => {
-    // Try previous sub-step in current step
-    if (currentSubStepIndex > 0) {
-      setCurrentSubStepIndex(currentSubStepIndex - 1)
+  const handleNext = () => {
+    const currentSection = documentData[currentStepIndex]
+    if (currentSubsectionIndex < currentSection.subsections.length - 1) {
+      let nextSubsectionIndex = currentSubsectionIndex + 1
+      while (
+        nextSubsectionIndex < currentSection.subsections.length &&
+        (!currentSection.subsections[nextSubsectionIndex].question ||
+          currentSection.subsections[nextSubsectionIndex].question.length === 0)
+      ) {
+        nextSubsectionIndex++
+      }
+      if (nextSubsectionIndex < currentSection.subsections.length) {
+        setCurrentSubsectionIndex(nextSubsectionIndex)
+      } else {
+        handleNextStep()
+      }
+    } else {
+      handleNextStep()
     }
-    // Try last sub-step of previous step
-    else if (currentStepIndex > 0) {
-      setCurrentStepIndex(currentStepIndex - 1)
-      setCurrentSubStepIndex(steps[currentStepIndex - 1].subsections.length - 1)
+    setCompletedSteps([...completedSteps, { stepIndex: currentStepIndex, subsectionIndex: currentSubsectionIndex }])
+  }
+
+  const handlePrevStep = () => {
+    let prevStepIndex = currentStepIndex - 1
+    while (
+      prevStepIndex >= 0 &&
+      !documentData[prevStepIndex].subsections.some((sub) => sub.question && sub.question.length > 0)
+    ) {
+      prevStepIndex--
+    }
+    if (prevStepIndex >= 0) {
+      setCurrentStepIndex(prevStepIndex)
+      const lastSubsectionIndex = documentData[prevStepIndex].subsections.length - 1
+      setCurrentSubsectionIndex(lastSubsectionIndex)
+    }
+  }
+
+  const handleBack = () => {
+    if (currentSubsectionIndex > 0) {
+      let prevSubsectionIndex = currentSubsectionIndex - 1
+      while (
+        prevSubsectionIndex >= 0 &&
+        (!currentSection.subsections[prevSubsectionIndex].question ||
+          currentSection.subsections[prevSubsectionIndex].question.length === 0)
+      ) {
+        prevSubsectionIndex--
+      }
+      if (prevSubsectionIndex >= 0) {
+        setCurrentSubsectionIndex(prevSubsectionIndex)
+      } else {
+        handlePrevStep()
+      }
+    } else {
+      handlePrevStep()
     }
   }
 
@@ -96,182 +256,107 @@ export default function InjuryDemandLetter() {
   }
 
   const handleSave = async () => {
-    // Create a structured object for the response
-    const responseData = {
-      document_id: DOCUMENT_DATA.id, // Assuming this is the correct document ID
-      responses: Object.entries(formData).map(([fieldId, value]) => ({
-        field_id: fieldId,
-        value: Array.isArray(value) ? value.join(", ") : value,
-      })),
-    }
+    try {
+      // Deep clone the document data to avoid mutating the original
+      const submissionData = JSON.parse(JSON.stringify(documentData))
 
-    // Log the structured response data
-    console.log("Response Data:", responseData)
-
-    toast({
-      title: "Success",
-      description: "Document saved successfully",
-    })
-    router.push("/app/user-panel/documents")
-  }
-
-  const findFieldById = (id) => {
-    for (const step of steps) {
-      for (const subsection of step.subsections) {
-        const field = subsection.question.find((q) => q.id === id)
-        if (field) return field
-      }
-    }
-    return null
-  }
-
-  const shouldShowField = (field) => {
-    // Always show the receiver_type field and pay_breakdown_option field
-    if (field.uniqueKeyName === "receiver_type" || field.uniqueKeyName === "pay_breakdown_option") {
-      return true
-    }
-
-    // Check if this field is affected by the receiver_type field
-    const receiverTypeField = steps
-      .flatMap((step) => step.subsections)
-      .flatMap((subsection) => subsection.question)
-      .find((q) => q.uniqueKeyName === "receiver_type")
-
-    if (receiverTypeField && receiverTypeField.affectedQuestion) {
-      const affectingCondition = receiverTypeField.affectedQuestion.find((affected) => affected.id === field.id)
-
-      if (affectingCondition) {
-        const receiverTypeValue = formData["receiver_type"]
-        return affectingCondition.value.includes(receiverTypeValue)
-      }
-    }
-
-    // Check if this field is affected by the pay_breakdown_option field
-    if (field.uniqueKeyName === "pay_breakdown" || field.id === "cd4ff6b4-8733-4278-8d6f-0b249689494b") {
-      return formData["pay_breakdown_option"] === "Yes"
-    }
-
-    // Check if this field is affected by the pay_breakdown field
-    const payBreakdownField = steps
-      .flatMap((step) => step.subsections)
-      .flatMap((subsection) => subsection.question)
-      .find((q) => q.uniqueKeyName === "pay_breakdown")
-
-    if (payBreakdownField && payBreakdownField.affectedQuestion) {
-      const affectingCondition = payBreakdownField.affectedQuestion.find((affected) => affected.id === field.id)
-
-      if (affectingCondition) {
-        const payBreakdownValues = formData["pay_breakdown"] || []
-        return affectingCondition.value.some((v) => payBreakdownValues.includes(v))
-      }
-    }
-
-    // For other fields, keep the existing logic
-    if (field.affectedQuestion && field.affectedQuestion.length > 0) {
-      return true
-    }
-
-    for (const step of steps) {
-      for (const subsection of step.subsections) {
-        for (const question of subsection.question) {
-          if (question.affectedQuestion && question.affectedQuestion.some((affected) => affected.id === field.id)) {
-            const affectingFieldValue = formData[question.uniqueKeyName]
-            const condition = question.affectedQuestion.find((affected) => affected.id === field.id)
-
-            if (!condition) continue
-
-            if (affectingFieldValue === undefined) {
-              return false
+      // Add answers to the questions
+      submissionData.forEach((section) => {
+        section.subsections.forEach((subsection) => {
+          subsection.question.forEach((question) => {
+            const answer = formData[question.uniqueKeyName]
+            if (answer !== undefined) {
+              question.answer = answer
             }
+          })
+        })
+      })
 
-            if (typeof affectingFieldValue === "string") {
-              return condition.value.includes(affectingFieldValue)
-            }
-
-            if (Array.isArray(affectingFieldValue)) {
-              return condition.value.some((v) => affectingFieldValue.includes(v))
-            }
-
-            return false
-          }
-        }
+      // Prepare the final payload
+      const payload = {
+        steps: submissionData,
+        document_id: selectedId,
       }
-    }
 
-    return true
+      const response = await SC.postCall({
+        url: `document/${selectedId}/submit`,
+        data: payload,
+      })
+
+      if (response.status) {
+        toast({
+          title: "Success",
+          description: "Document saved successfully",
+        })
+        router.push("/app/user-panel/documents")
+      } else {
+        throw new Error(response.message || "Failed to save document")
+      }
+    } catch (error) {
+      console.error("Error saving document:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save document. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   const renderField = (field) => {
-    if (!shouldShowField(field)) {
-      return null
-    }
-
     switch (field.type) {
       case "textField":
-        if (field.selectionValue === "date") {
-          return (
-            <Input
-              key={field.id}
-              id={field.id}
-              type="date"
-              value={formData[field.uniqueKeyName] || ""}
-              onChange={(e) => handleInputChange(field.uniqueKeyName, e.target.value)}
-              required={field.isRequired}
-              placeholder={field.placeholder}
-            />
-          )
-        }
         return (
           <Input
-            key={field.id}
-            id={field.id}
+            key={field.uniqueKeyName}
+            id={field.uniqueKeyName}
+            type={field.selectionValue === "date" ? "date" : "text"}
             value={formData[field.uniqueKeyName] || ""}
             onChange={(e) => handleInputChange(field.uniqueKeyName, e.target.value)}
             required={field.isRequired}
             placeholder={field.placeholder}
           />
         )
-      case "radioButton":
-        return (
-          <RadioGroup
-            key={field.id}
-            value={formData[field.uniqueKeyName] || ""}
-            onValueChange={(value) => handleInputChange(field.uniqueKeyName, value)}
-          >
-            {field.list.map((option, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <RadioGroupItem value={option.name} id={`${field.id}-${index}`} />
-                <Label htmlFor={`${field.id}-${index}`}>{option.name}</Label>
-              </div>
-            ))}
-          </RadioGroup>
-        )
       case "dropdownList":
         return (
           <Select
-            key={field.id}
+            key={field.uniqueKeyName}
             value={formData[field.uniqueKeyName] || ""}
             onValueChange={(value) => handleInputChange(field.uniqueKeyName, value)}
           >
             <SelectTrigger>
-              <SelectValue placeholder={field.placeholder || "Select an option"} />
+              <SelectValue placeholder="Select an option" />
             </SelectTrigger>
             <SelectContent>
-              {field.list.map((option, index) => (
-                <SelectItem key={index} value={option.name}>
+              {field.list.map((option) => (
+                <SelectItem key={option.name} value={option.name}>
                   {option.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         )
+      case "radioButton":
+        return (
+          <RadioGroup
+            key={field.uniqueKeyName}
+            value={formData[field.uniqueKeyName] || ""}
+            onValueChange={(value) => handleInputChange(field.uniqueKeyName, value)}
+          >
+            {field.list.map((option, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <RadioGroupItem value={option.name} id={`${field.uniqueKeyName}-${index}`} />
+                <Label htmlFor={`${field.uniqueKeyName}-${index}`}>{option.name}</Label>
+              </div>
+            ))}
+          </RadioGroup>
+        )
       case "checkboxes":
         return (
-          <div key={field.id}>
+          <div key={field.uniqueKeyName}>
             {field.list.map((option, index) => (
               <div key={index} className="flex items-center space-x-2 my-2">
                 <Checkbox
-                  id={`${field.id}-${index}`}
+                  id={`${field.uniqueKeyName}-${index}`}
                   checked={(formData[field.uniqueKeyName] || []).includes(option.name)}
                   onCheckedChange={(checked) => {
                     const currentValues = formData[field.uniqueKeyName] || []
@@ -281,34 +366,58 @@ export default function InjuryDemandLetter() {
                     handleInputChange(field.uniqueKeyName, newValues)
                   }}
                 />
-                <Label htmlFor={`${field.id}-${index}`}>{option.name}</Label>
+                <Label htmlFor={`${field.uniqueKeyName}-${index}`}>{option.name}</Label>
               </div>
             ))}
           </div>
         )
       default:
-        return <div key={field.id}>Unsupported field type: {field.type}</div>
+        return <div key={field.uniqueKeyName}>Unsupported field type: {field.type}</div>
     }
   }
 
-  const currentStep = steps[currentStepIndex]
-  const currentSubStep = currentStep.subsections[currentSubStepIndex]
-  const currentStepId = `${currentStep.name}-${currentSubStep.name}`
+  if (isLoading) {
+    return <div className="flex justify-center items-center min-h-screen">Loading...</div>
+  }
 
-  // Calculate total number of sub-steps across all steps
-  const totalSubSteps = steps.reduce((total, step) => total + step.subsections.length, 0)
-  const progress = totalSubSteps > 0 ? Math.round((completedSteps.length / totalSubSteps) * 100) : 0
+  if (error) {
+    return <div className="flex justify-center items-center min-h-screen text-red-500">{error}</div>
+  }
+
+  if (!documentData) {
+    return <div className="flex justify-center items-center min-h-screen">No document data available.</div>
+  }
+
+  const currentSection = documentData[currentStepIndex]
+  const currentSubsection = currentSection.subsections[currentSubsectionIndex]
+  const progress = Math.round(
+    (completedSteps.length / documentData.reduce((acc, section) => acc + section.subsections.length, 0)) * 100,
+  )
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar
-        steps={steps}
-        currentStep={currentStepId}
+        steps={documentData
+          .filter((section) =>
+            section.subsections.some((subsection) => subsection.question && subsection.question.length > 0),
+          )
+          .map((section, index) => ({
+            id: index,
+            title: section.name,
+            subsections: section.subsections
+              .filter((sub) => sub.question && sub.question.length > 0)
+              .map((sub) => ({ name: sub.name })),
+          }))}
+        currentStep={currentStepIndex}
+        currentSubsection={currentSubsectionIndex}
         completedSteps={completedSteps}
         onStepSelect={handleStepSelect}
+        onSubsectionSelect={handleSubsectionSelect}
         onPreview={handlePreview}
         progress={progress}
-        selectedCompensationTypes={formData["pay_breakdown"] || []}
+        formData={formData}
+        breakdownTypes={breakdownTypes}
+        breakdownQuestion={breakdownQuestion}
       />
 
       <main className="flex-1 p-4 md:p-8 overflow-x-hidden">
@@ -329,10 +438,10 @@ export default function InjuryDemandLetter() {
                     </div>
                   </div>
                   <div className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-                    {steps.flatMap((step) =>
-                      step.subsections.flatMap((subsection) =>
-                        subsection.question.filter(shouldShowField).map((field) => (
-                          <div key={field.id} className="mb-4">
+                    {documentData.flatMap((section) =>
+                      section.subsections.flatMap((subsection) =>
+                        subsection.question.map((field) => (
+                          <div key={field.uniqueKeyName} className="mb-4">
                             <h3 className="font-semibold">{field.questionToAsk}</h3>
                             <p className="whitespace-pre-wrap break-words">
                               {Array.isArray(formData[field.uniqueKeyName])
@@ -348,8 +457,9 @@ export default function InjuryDemandLetter() {
               ) : (
                 <div className="w-full">
                   <div className="mb-8">
-                    <h2 className="text-2xl font-semibold mb-2">{currentStep.name}</h2>
-                    <h3 className="text-xl font-medium mb-6">{currentSubStep.name}</h3>
+                    <h2 className="text-2xl font-semibold mb-6">
+                      {currentSection.name} - {currentSubsection.name}
+                    </h2>
 
                     <form
                       onSubmit={(e) => {
@@ -358,13 +468,16 @@ export default function InjuryDemandLetter() {
                       }}
                     >
                       <div className="space-y-4">
-                        {currentSubStep.question.map(
+                        {currentSubsection.question.map(
                           (field) =>
-                            shouldShowField(field) && (
-                              <div key={field.id} className="bg-white shadow-sm border border-gray-200 rounded-lg">
+                            !shouldHideQuestion(field) && (
+                              <div
+                                key={field.uniqueKeyName}
+                                className="bg-white shadow-sm border border-gray-200 rounded-lg"
+                              >
                                 <div className="p-4">
                                   <div className="flex items-center justify-between mb-2">
-                                    <Label htmlFor={field.id} className="text-sm font-medium">
+                                    <Label htmlFor={field.uniqueKeyName} className="text-sm font-medium">
                                       {field.questionToAsk}
                                     </Label>
                                     {field.description && (
@@ -393,13 +506,14 @@ export default function InjuryDemandLetter() {
                           onClick={handleBack}
                           variant="ghost"
                           className="text-gray-600 hover:text-gray-800"
+                          disabled={currentStepIndex === 0 && currentSubsectionIndex === 0}
                         >
                           ← Back
                         </Button>
 
                         <Button type="submit" className="bg-red-500 text-white hover:bg-red-600">
-                          {currentStepIndex === steps.length - 1 &&
-                          currentSubStepIndex === currentStep.subsections.length - 1
+                          {currentStepIndex === documentData.length - 1 &&
+                          currentSubsectionIndex === currentSection.subsections.length - 1
                             ? "Preview"
                             : "Next"}
                         </Button>
@@ -409,30 +523,10 @@ export default function InjuryDemandLetter() {
                 </div>
               )}
             </div>
-            <div className="w-full lg:w-1/3">
-              {currentSubStep.FAQQuestion && currentSubStep.FAQAnswer && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-lg font-medium">{currentSubStep.FAQQuestion}</h3>
-                    <HelpCircle className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                  </div>
-                  <div
-                    className="space-y-4 text-gray-500 text-sm"
-                    dangerouslySetInnerHTML={{ __html: currentSubStep.FAQAnswer }}
-                  />
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </main>
     </div>
   )
 }
-
-
-
-
-
-
 
