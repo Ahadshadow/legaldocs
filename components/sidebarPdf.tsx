@@ -20,13 +20,26 @@ const SidebarStep = ({ step, currentStep, currentSubsection, completedSteps, onS
     }
   }, [isCurrentStep])
 
+  const visibleSubsections = step.subsections.filter(
+    (subsection) => subsection.totalQuestions > subsection.hiddenQuestions,
+  )
+
+  if (visibleSubsections.length === 0) {
+    return null // Hide the entire step if all subsections are hidden
+  }
+
+  const handleStepClick = () => {
+    setIsOpen(!isOpen)
+    if (visibleSubsections.length > 0) {
+      onStepSelect(step.id)
+      onSubsectionSelect(step.id, visibleSubsections[0].index)
+    }
+  }
+
   return (
     <div className="mb-2">
       <button
-        onClick={() => {
-          setIsOpen(!isOpen)
-          onStepSelect(step.id)
-        }}
+        onClick={handleStepClick}
         className={cn(
           "w-full flex items-center justify-between p-2 rounded-lg text-sm",
           isCurrentStep ? "bg-[#5586ff]/10 text-[#5586ff]" : "text-gray-700 hover:bg-gray-50",
@@ -41,31 +54,34 @@ const SidebarStep = ({ step, currentStep, currentSubsection, completedSteps, onS
           </div>
           <span>{step.title}</span>
         </div>
-        {step.subsections &&
-          step.subsections.length > 0 &&
+        {visibleSubsections.length > 0 &&
           (isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
       </button>
-      {isOpen && step.subsections && step.subsections.length > 0 && (
+      {isOpen && visibleSubsections.length > 0 && (
         <div className="ml-6 mt-1">
-          {step.subsections.map((subsection, index) => (
-            <button
-              key={index}
-              onClick={() => onSubsectionSelect(step.id, index)}
-              className={cn(
-                "w-full flex items-center p-2 rounded-lg text-sm mb-1",
-                currentStep === step.id && currentSubsection === index
-                  ? "bg-[#5586ff]/10 text-[#5586ff]"
-                  : "text-gray-700 hover:bg-gray-50",
-              )}
-            >
-              <div
-                className={`w-3 h-3 rounded-full mr-3 flex items-center justify-center
-                ${isStepCompleted(step.id, index) ? "bg-[#5586ff]" : "border-2 border-gray-300"}`}
+          {visibleSubsections.map((subsection) => (
+            <div key={subsection.index}>
+              <button
+                onClick={() => onSubsectionSelect(step.id, subsection.index)}
+                className={cn(
+                  "w-full flex items-center p-2 rounded-lg text-sm mb-1",
+                  currentStep === step.id && currentSubsection === subsection.index
+                    ? "bg-[#5586ff]/10 text-[#5586ff]"
+                    : "text-gray-700 hover:bg-gray-50",
+                )}
               >
-                {isStepCompleted(step.id, index) && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-              </div>
-              <span>{subsection.name}</span>
-            </button>
+                <div
+                  className={`w-3 h-3 rounded-full mr-3 flex items-center justify-center
+                  ${isStepCompleted(step.id, subsection.index) ? "bg-[#5586ff]" : "border-2 border-gray-300"}`}
+                >
+                  {isStepCompleted(step.id, subsection.index) && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </div>
+                <span>{subsection.name}</span>
+              </button>
+              {/* <div className="ml-6 text-xs text-gray-500">
+                Visible questions: {subsection.totalQuestions - subsection.hiddenQuestions}
+              </div> */}
+            </div>
           ))}
         </div>
       )}
@@ -96,6 +112,15 @@ export default function Sidebar({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [isMobileOpen])
 
+  const visibleSteps = steps
+    .map((step) => ({
+      ...step,
+      subsections: step.subsections
+        .filter((subsection) => subsection.totalQuestions > subsection.hiddenQuestions)
+        .map((subsection, index) => ({ ...subsection, index })),
+    }))
+    .filter((step) => step.subsections.length > 0)
+
   return (
     <>
       <button
@@ -124,7 +149,7 @@ export default function Sidebar({
           </div>
 
           <nav className="flex-1 overflow-y-auto">
-            {steps.map((step) => (
+            {visibleSteps.map((step) => (
               <SidebarStep
                 key={step.id}
                 step={step}
@@ -137,7 +162,7 @@ export default function Sidebar({
             ))}
           </nav>
 
-          <div className="space-y-4 pt-4">
+          {/* <div className="space-y-4 pt-4">
             <Button onClick={onPreview} className="w-full">
               Preview
             </Button>
@@ -145,7 +170,7 @@ export default function Sidebar({
               <div className="text-sm text-gray-600">Logged in as</div>
               <div className="text-sm text-blue-600">user@example.com</div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </>

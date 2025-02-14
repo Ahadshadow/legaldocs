@@ -117,7 +117,7 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData
       pageNumber: 1,
       rotation: 0,
       backgroundColor: "white",
-      content: initialData?.content || initialData?.document.document_data,
+      content: initialData?.content || initialData?.documentData,
     },
   ])
   const [currentPage, setCurrentPage] = useState(1)

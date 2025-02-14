@@ -155,7 +155,7 @@ export default function DocumentPage() {
           try {
             const response = await SC.getCall({ url: `submissions/${submissionId}` })
             if (response.status) {
-              setDocumentsData(response?.data)
+              setDocumentsData(response?.data.data)
               
             } else {
               throw new Error( "Failed to fetch submissions")
@@ -199,7 +199,7 @@ export default function DocumentPage() {
       
     
 
-// console.log(isEmailMatch, 'ismatch');
+console.log(documentsData, 'ismatch');
       
 
   if(documentsData === null ) return null

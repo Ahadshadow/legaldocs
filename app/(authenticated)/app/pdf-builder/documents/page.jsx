@@ -29,8 +29,8 @@ export default function DynamicForm({ params }) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [affectingQuestions, setAffectingQuestions] = useState([])
-  const [breakdownTypes, setBreakdownTypes] = useState({})
-  const [breakdownQuestion, setBreakdownQuestion] = useState(null)
+  const [hiddenQuestions, setHiddenQuestions] = useState({})
+  const [subsectionInfo, setSubsectionInfo] = useState({})
 
   useEffect(() => {
     const fetchDocumentData = async () => {
@@ -41,6 +41,7 @@ export default function DynamicForm({ params }) {
         if (response.status) {
           setDocumentData(response.data.data.steps)
           initializeFormData(response.data.data.steps)
+          initializeSubsectionInfo(response.data.data.steps)
         } else {
           setError(response.message || "Failed to fetch document data")
         }
@@ -58,52 +59,6 @@ export default function DynamicForm({ params }) {
 
   useEffect(() => {
     if (documentData) {
-      console.log("Questions with affected questions:")
-      documentData.forEach((section) => {
-        section.subsections.forEach((subsection) => {
-          subsection.question.forEach((question) => {
-            if (question.affectedQuestion && question.affectedQuestion.length > 0) {
-              console.log(`${question.uniqueKeyName} (ID: ${question.id}):`)
-              question.affectedQuestion.forEach((affectedQ) => {
-                const affectedField = findFieldById(documentData, affectedQ.id)
-                if (affectedField) {
-                  console.log(`  - ${affectedField.questionToAsk} (ID: ${affectedField.id})`)
-                  console.log(`    Values: ${JSON.stringify(affectedQ.value)}`)
-                  console.log(`    Show Only If This Match Selected: ${affectedQ.showOnlyIfThisMatchSelected}`)
-                }
-              })
-            }
-          })
-        })
-      })
-
-      // Find the question that affects the breakdown subsections
-      const breakdownQuestion = documentData.flatMap((section) =>
-        section.subsections.flatMap((subsection) =>
-          subsection.question.find(
-            (question) =>
-              question.affectedQuestion &&
-              question.affectedQuestion.some(
-                (affected) =>
-                  affected.showOnlyIfThisMatchSelected && affected.showOnlyIfThisMatchSelected.includes("or"),
-              ),
-          ),
-        ),
-      )[0]
-
-      if (breakdownQuestion) {
-        const extractedBreakdownTypes = {}
-        breakdownQuestion.list.forEach((item) => {
-          extractedBreakdownTypes[item.name] = item.name.toLowerCase()
-        })
-        setBreakdownTypes(extractedBreakdownTypes)
-        setBreakdownQuestion(breakdownQuestion)
-      }
-    }
-  }, [documentData])
-
-  useEffect(() => {
-    if (documentData) {
       const questions = documentData.flatMap((section) =>
         section.subsections.flatMap((subsection) =>
           subsection.question.filter((q) => q.affectedQuestion && q.affectedQuestion.length > 0),
@@ -112,6 +67,12 @@ export default function DynamicForm({ params }) {
       setAffectingQuestions(questions.map((q) => ({ id: q.id, key: q.uniqueKeyName })))
     }
   }, [documentData])
+
+  useEffect(() => {
+    if (documentData) {
+      updateHiddenQuestions()
+    }
+  }, [documentData, formData]) //Fixed unnecessary dependency
 
   const initializeFormData = (data) => {
     const initialData = {}
@@ -125,11 +86,25 @@ export default function DynamicForm({ params }) {
     setFormData(initialData)
   }
 
+  const initializeSubsectionInfo = (data) => {
+    const info = {}
+    data.forEach((section, sectionIndex) => {
+      info[sectionIndex] = {}
+      section.subsections.forEach((subsection, subsectionIndex) => {
+        info[sectionIndex][subsectionIndex] = {
+          totalQuestions: subsection.question.length,
+          hiddenQuestions: 0,
+        }
+      })
+    })
+    setSubsectionInfo(info)
+  }
+
   const findFieldById = (data, id) => {
     for (const section of data) {
       for (const subsection of section.subsections) {
         const field = subsection.question.find((q) => q.id === id)
-        if (field) return field
+        if (field) return { field, section, subsection }
       }
     }
     return null
@@ -138,8 +113,8 @@ export default function DynamicForm({ params }) {
   const shouldHideQuestion = (question) => {
     for (const affectingQ of affectingQuestions) {
       const affectingField = findFieldById(documentData, affectingQ.id)
-      if (affectingField && affectingField.affectedQuestion) {
-        const affectedQ = affectingField.affectedQuestion.find((q) => q.id === question.id)
+      if (affectingField && affectingField.field.affectedQuestion) {
+        const affectedQ = affectingField.field.affectedQuestion.find((q) => q.id === question.id)
         if (affectedQ) {
           const currentValue = formData[affectingQ.key]
           if (Array.isArray(currentValue)) {
@@ -157,6 +132,21 @@ export default function DynamicForm({ params }) {
       }
     }
     return false
+  }
+
+  const updateHiddenQuestions = () => {
+    const hidden = {}
+    const updatedSubsectionInfo = { ...subsectionInfo }
+    documentData.forEach((section, sectionIndex) => {
+      section.subsections.forEach((subsection, subsectionIndex) => {
+        const hiddenQuestionsCount = subsection.question.filter(shouldHideQuestion).length
+        if (!hidden[sectionIndex]) hidden[sectionIndex] = {}
+        hidden[sectionIndex][subsectionIndex] = hiddenQuestionsCount
+        updatedSubsectionInfo[sectionIndex][subsectionIndex].hiddenQuestions = hiddenQuestionsCount
+      })
+    })
+    setHiddenQuestions(hidden)
+    setSubsectionInfo(updatedSubsectionInfo)
   }
 
   const handleStepSelect = (stepIndex) => {
@@ -178,77 +168,64 @@ export default function DynamicForm({ params }) {
     }))
   }
 
-  const handleNextStep = () => {
-    let nextStepIndex = currentStepIndex + 1
-    while (
-      nextStepIndex < documentData.length &&
-      !documentData[nextStepIndex].subsections.some((sub) => sub.question && sub.question.length > 0)
-    ) {
-      nextStepIndex++
-    }
-    if (nextStepIndex < documentData.length) {
-      setCurrentStepIndex(nextStepIndex)
-      setCurrentSubsectionIndex(0)
-    } else {
-      setIsPreviewMode(true)
-    }
-  }
-
   const handleNext = () => {
-    const currentSection = documentData[currentStepIndex]
-    if (currentSubsectionIndex < currentSection.subsections.length - 1) {
-      let nextSubsectionIndex = currentSubsectionIndex + 1
-      while (
-        nextSubsectionIndex < currentSection.subsections.length &&
-        (!currentSection.subsections[nextSubsectionIndex].question ||
-          currentSection.subsections[nextSubsectionIndex].question.length === 0)
-      ) {
+    let nextStepIndex = currentStepIndex
+    let nextSubsectionIndex = currentSubsectionIndex
+
+    do {
+      if (nextSubsectionIndex < documentData[nextStepIndex].subsections.length - 1) {
         nextSubsectionIndex++
-      }
-      if (nextSubsectionIndex < currentSection.subsections.length) {
-        setCurrentSubsectionIndex(nextSubsectionIndex)
       } else {
-        handleNextStep()
+        nextStepIndex++
+        nextSubsectionIndex = 0
       }
-    } else {
-      handleNextStep()
-    }
+
+      if (nextStepIndex >= documentData.length) {
+        setIsPreviewMode(true)
+        return
+      }
+    } while (
+      subsectionInfo[nextStepIndex]?.[nextSubsectionIndex]?.totalQuestions ===
+      subsectionInfo[nextStepIndex]?.[nextSubsectionIndex]?.hiddenQuestions
+    )
+
+    setCurrentStepIndex(nextStepIndex)
+    setCurrentSubsectionIndex(nextSubsectionIndex)
     setCompletedSteps([...completedSteps, { stepIndex: currentStepIndex, subsectionIndex: currentSubsectionIndex }])
   }
 
-  const handlePrevStep = () => {
-    let prevStepIndex = currentStepIndex - 1
-    while (
-      prevStepIndex >= 0 &&
-      !documentData[prevStepIndex].subsections.some((sub) => sub.question && sub.question.length > 0)
-    ) {
-      prevStepIndex--
-    }
-    if (prevStepIndex >= 0) {
-      setCurrentStepIndex(prevStepIndex)
-      const lastSubsectionIndex = documentData[prevStepIndex].subsections.length - 1
-      setCurrentSubsectionIndex(lastSubsectionIndex)
-    }
+  const handleBack = () => {
+    let prevStepIndex = currentStepIndex
+    let prevSubsectionIndex = currentSubsectionIndex
+
+    do {
+      if (prevSubsectionIndex > 0) {
+        prevSubsectionIndex--
+      } else if (prevStepIndex > 0) {
+        prevStepIndex--
+        prevSubsectionIndex = documentData[prevStepIndex].subsections.length - 1
+      } else {
+        // We're at the first visible step/subsection
+        return
+      }
+    } while (
+      subsectionInfo[prevStepIndex]?.[prevSubsectionIndex]?.totalQuestions ===
+      subsectionInfo[prevStepIndex]?.[prevSubsectionIndex]?.hiddenQuestions
+    )
+
+    setCurrentStepIndex(prevStepIndex)
+    setCurrentSubsectionIndex(prevSubsectionIndex)
   }
 
-  const handleBack = () => {
-    if (currentSubsectionIndex > 0) {
-      let prevSubsectionIndex = currentSubsectionIndex - 1
-      while (
-        prevSubsectionIndex >= 0 &&
-        (!currentSection.subsections[prevSubsectionIndex].question ||
-          currentSection.subsections[prevSubsectionIndex].question.length === 0)
-      ) {
-        prevSubsectionIndex--
+  const findFirstVisibleStep = () => {
+    for (let i = 0; i < documentData.length; i++) {
+      for (let j = 0; j < documentData[i].subsections.length; j++) {
+        if (subsectionInfo[i]?.[j]?.totalQuestions > subsectionInfo[i]?.[j]?.hiddenQuestions) {
+          return { stepIndex: i, subsectionIndex: j }
+        }
       }
-      if (prevSubsectionIndex >= 0) {
-        setCurrentSubsectionIndex(prevSubsectionIndex)
-      } else {
-        handlePrevStep()
-      }
-    } else {
-      handlePrevStep()
     }
+    return { stepIndex: 0, subsectionIndex: 0 } // Fallback to first step if all are hidden
   }
 
   const handlePreview = () => {
@@ -257,10 +234,8 @@ export default function DynamicForm({ params }) {
 
   const handleSave = async () => {
     try {
-      // Deep clone the document data to avoid mutating the original
       const submissionData = JSON.parse(JSON.stringify(documentData))
 
-      // Add answers to the questions
       submissionData.forEach((section) => {
         section.subsections.forEach((subsection) => {
           subsection.question.forEach((question) => {
@@ -272,14 +247,13 @@ export default function DynamicForm({ params }) {
         })
       })
 
-      // Prepare the final payload
       const payload = {
         steps: submissionData,
         document_id: selectedId,
       }
 
       const response = await SC.postCall({
-        url: `document/${selectedId}/submit`,
+        url: `submissions`,
         data: payload,
       })
 
@@ -376,6 +350,15 @@ export default function DynamicForm({ params }) {
     }
   }
 
+  useEffect(() => {
+    if (documentData) {
+      updateHiddenQuestions()
+      const { stepIndex, subsectionIndex } = findFirstVisibleStep()
+      setCurrentStepIndex(stepIndex)
+      setCurrentSubsectionIndex(subsectionIndex)
+    }
+  }, [documentData]) //Fixed unnecessary dependency
+
   if (isLoading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>
   }
@@ -397,17 +380,15 @@ export default function DynamicForm({ params }) {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar
-        steps={documentData
-          .filter((section) =>
-            section.subsections.some((subsection) => subsection.question && subsection.question.length > 0),
-          )
-          .map((section, index) => ({
-            id: index,
-            title: section.name,
-            subsections: section.subsections
-              .filter((sub) => sub.question && sub.question.length > 0)
-              .map((sub) => ({ name: sub.name })),
-          }))}
+        steps={documentData.map((section, index) => ({
+          id: index,
+          title: section.name,
+          subsections: section.subsections.map((sub, subIndex) => ({
+            name: sub.name,
+            totalQuestions: subsectionInfo[index]?.[subIndex]?.totalQuestions || 0,
+            hiddenQuestions: subsectionInfo[index]?.[subIndex]?.hiddenQuestions || 0,
+          })),
+        }))}
         currentStep={currentStepIndex}
         currentSubsection={currentSubsectionIndex}
         completedSteps={completedSteps}
@@ -415,9 +396,6 @@ export default function DynamicForm({ params }) {
         onSubsectionSelect={handleSubsectionSelect}
         onPreview={handlePreview}
         progress={progress}
-        formData={formData}
-        breakdownTypes={breakdownTypes}
-        breakdownQuestion={breakdownQuestion}
       />
 
       <main className="flex-1 p-4 md:p-8 overflow-x-hidden">
