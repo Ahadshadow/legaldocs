@@ -78,9 +78,9 @@ const SidebarStep = ({ step, currentStep, currentSubsection, completedSteps, onS
                 </div>
                 <span>{subsection.name}</span>
               </button>
-              {/* <div className="ml-6 text-xs text-gray-500">
+              <div className="ml-6 text-xs text-gray-500">
                 Visible questions: {subsection.totalQuestions - subsection.hiddenQuestions}
-              </div> */}
+              </div>
             </div>
           ))}
         </div>

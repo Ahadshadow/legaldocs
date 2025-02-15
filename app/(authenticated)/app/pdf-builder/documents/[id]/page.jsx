@@ -284,6 +284,7 @@ export default function DynamicForm({ params }) {
   }
 
   const renderField = (field) => {
+    
     switch (field.type) {
       case "textField":
         return (

@@ -41,10 +41,11 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
 
   const handlePrint = useCallback(() => {
     if (editor) {
-      const contentDiv = document.querySelector(".document-viewer") as HTMLElement
+      const contentDiv = document.querySelector(".document-viewer")
       if (!contentDiv) {
         console.error("Could not find .document-viewer element")
-        alert("Error: Could not find document content. Please try again.")
+        
+        toast.error("Error: Could not find document content. Please try again.")
         return
       }
 
@@ -53,7 +54,8 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
         useCORS: true,
         logging: true,
         allowTaint: true,
-        ignoreElements: (element) => element.classList.contains("ProseMirror-gapcursor"),
+        ignoreElements: (element) =>
+          element.classList.contains("ProseMirror-gapcursor") || element.classList.contains("editor-only"),
       })
         .then((canvas) => {
           const imgData = canvas.toDataURL("image/png")
@@ -106,7 +108,9 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
 
         if (!contentDiv) {
           console.error("Could not find .document-viewer element")
-          alert("Error: Could not find document content. Please try again.")
+          // alert("Error: Could not find document content. Please try again.")\
+          toast.error("Error: Could not find document content. Please try again.")
+
           return
         }
 
@@ -127,7 +131,8 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
             useCORS: true,
             logging: true,
             allowTaint: true,
-            ignoreElements: (element) => element.classList.contains("ProseMirror-gapcursor"),
+            ignoreElements: (element) =>
+              element.classList.contains("ProseMirror-gapcursor") || element.classList.contains("editor-only"),
           })
             .then((canvas) => {
               console.log("HTML2Canvas successful")
@@ -165,7 +170,9 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
             })
             .catch((error) => {
               console.error("Error generating PDF:", error)
-              alert("Error generating PDF. Please check the console for details.")
+              // alert("Error generating PDF. Please check the console for details.")
+              toast.error("Error generating PDF. Please check the console for details.")
+
             })
         } else {
           try {
@@ -191,12 +198,16 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
             console.log("DOC saved successfully with signatures")
           } catch (error) {
             console.error("Error generating DOC:", error)
-            alert("Error generating DOC. Please check the console for details.")
+            // alert("Error generating DOC. Please check the console for details.")
+            toast.error("Error generating DOC. Please check the console for details.")
+
           }
         }
       } else {
         console.error("Editor is not available")
-        alert("Error: Editor is not available. Please try again.")
+        // alert("Error: Editor is not available. Please try again.")
+        toast.error("Error: Editor is not available. Please try again.")
+
       }
     },
     [editor, signatures],
