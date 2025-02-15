@@ -57,7 +57,7 @@ export default function SubcategoryPage({ params }) {
   return (
     <div className="max-w-[1400px] mx-auto px-6 py-8">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1 text-sm text-gray-500 mb-12">
+      {/* <nav className="flex items-center gap-1 text-sm text-gray-500 mb-12">
         <Link href="/" className="hover:text-gray-900 cursor-pointer">
           LegalTemplates
         </Link>
@@ -71,7 +71,7 @@ export default function SubcategoryPage({ params }) {
         </Link>
         <ChevronRight className="h-3 w-3" />
         <span>{subcategory.replace(/-/g, " ")}</span>
-      </nav>
+      </nav> */}
 
       <div className="grid md:grid-cols-[1fr,400px] gap-16">
         <div className="space-y-8">
@@ -107,7 +107,7 @@ export default function SubcategoryPage({ params }) {
               <CreateDocumentButton onClick={handleCreateDocument} />
             </div>
           </div>
-
+{/* 
           <div className="space-y-2">
             <p className="text-sm text-gray-500">Updated August 12, 2024</p>
             <p className="text-sm text-gray-500">
@@ -120,7 +120,7 @@ export default function SubcategoryPage({ params }) {
                 Susan Chai, Esq.
               </a>
             </p>
-          </div>
+          </div> */}
 
           <div>
             <p className="text-gray-600 leading-relaxed">
@@ -140,7 +140,7 @@ export default function SubcategoryPage({ params }) {
               className="w-full rounded-lg border border-gray-200"
             />
             <CreateDocumentButton fullWidth onClick={handleCreateDocument} />
-            <div className="flex items-center justify-between pt-2">
+            {/* <div className="flex items-center justify-between pt-2">
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-semibold text-gray-900">4.8</span>
                 <div className="flex gap-0.5">
@@ -151,7 +151,7 @@ export default function SubcategoryPage({ params }) {
                 <span className="text-sm text-gray-500">29,272 Ratings</span>
               </div>
               <div className="text-sm text-gray-500">409,178 Downloads</div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
