@@ -73,7 +73,7 @@ export default function UserDropdown() {
             <span>Dashboard</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        {/* <DropdownMenuItem>
           <Link
             href="app/user-panel/settings/user"
             className="flex w-full items-center"
@@ -81,7 +81,7 @@ export default function UserDropdown() {
             <Settings className="mr-2 h-4 w-4" />
             <span>User Settings</span>
           </Link>
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
         <DropdownMenuItem>
           <Link
             href="app/user-panel/billing"

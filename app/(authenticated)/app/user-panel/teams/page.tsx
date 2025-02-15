@@ -117,9 +117,9 @@ export default function TeamsPage() {
             <h1 className="text-3xl font-bold text-gray-900">Teams & Access</h1>
             <p className="text-gray-500 mt-1">Manage your member's access.</p>
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsCompanyModalOpen(true)}>
+          {/* <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsCompanyModalOpen(true)}>
             + Invite User
-          </Button>
+          </Button> */}
         </div>
 
         {/* Team Members List */}

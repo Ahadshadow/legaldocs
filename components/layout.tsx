@@ -1,33 +1,42 @@
-"use client"
+"use client";
 
-import { Button } from "./ui/button"
-import { Avatar, AvatarFallback } from "./ui/avatar"
-import { HelpCircle, Mail, Settings, Building2, Receipt, Palette, LogOut, Menu, X } from "lucide-react"
-import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { useState } from "react"
+import { Button } from "./ui/button";
+import { Avatar, AvatarFallback } from "./ui/avatar";
+import {
+  HelpCircle,
+  Mail,
+  Settings,
+  Building2,
+  Receipt,
+  Palette,
+  LogOut,
+  Menu,
+  X,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from "./ui/dropdown-menu"
-import { clearUserData, getUserData } from "../lib/utils"
+} from "./ui/dropdown-menu";
+import { clearUserData, getUserData } from "../lib/utils";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const userData = getUserData()
+  const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const userData = getUserData();
 
-  const router = useRouter()
+  const router = useRouter();
 
-const handleLogout = () => {
-  clearUserData()
-  window.dispatchEvent(new Event("storage")) // Notify other components
-  router.push("/") // Redirect to the home page
-}
-
+  const handleLogout = () => {
+    clearUserData();
+    window.dispatchEvent(new Event("storage")); // Notify other components
+    router.push("/"); // Redirect to the home page
+  };
 
   return (
     <div className="min-h-screen">
@@ -35,7 +44,11 @@ const handleLogout = () => {
       <header className="border-b">
         <div className="flex h-16 items-center px-4 justify-between">
           <div className="flex items-center gap-4 md:hidden">
-            <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(true)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
               <Menu className="h-5 w-5" />
             </Button>
           </div>
@@ -69,54 +82,100 @@ const handleLogout = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Avatar className="cursor-pointer">
-                <AvatarFallback>{userData?.email ? userData.email[0].toUpperCase() : "U"}</AvatarFallback>
-                  
+                  <AvatarFallback>
+                    {userData?.email ? userData.email[0].toUpperCase() : "U"}
+                  </AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64">
                 <div className="flex items-center gap-2 p-4">
                   <Avatar>
-                  <AvatarFallback>{userData?.email ? userData.email[0].toUpperCase() : "U"}</AvatarFallback>
-                    
+                    <AvatarFallback>
+                      {userData?.email ? userData.email[0].toUpperCase() : "U"}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
-                  <p className="text-sm">{userData?.email || "User"}</p>
-                    
-                    <Link href="/app/user-panel/pricing" className="text-sm text-blue-600">
+                    <p className="text-sm max-w-[160px] break-words">
+                      {userData?.email || "User"}
+                    </p>
+
+                    <Link
+                      href="/app/user-panel/pricing"
+                      className="text-sm text-blue-600"
+                    >
                       Upgrade Plan
                     </Link>
                   </div>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Link href="/app/user-panel/settings/user" className="flex w-full items-center">
+                {/* <DropdownMenuItem>
+                  <Link
+                    href="/app/user-panel/settings/user"
+                    className="flex w-full items-center"
+                  >
                     <Settings className="mr-2 h-4 w-4" />
                     <span>User Settings</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Link href="/app/user-panel/settings/company" className="flex w-full items-center">
+                  <Link
+                    href="/app/user-panel/settings/company"
+                    className="flex w-full items-center"
+                  >
                     <Building2 className="mr-2 h-4 w-4" />
                     <span>Company Settings</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Link href="/app/user-panel/billing" className="flex w-full items-center">
+                  <Link
+                    href="/app/user-panel/billing"
+                    className="flex w-full items-center"
+                  >
                     <Receipt className="mr-2 h-4 w-4" />
                     <span>Billing History</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Link href="/app/user-panel/branding" className="flex w-full items-center">
+                  <Link
+                    href="/app/user-panel/branding"
+                    className="flex w-full items-center"
+                  >
                     <Palette className="mr-2 h-4 w-4" />
                     <span>Branding</span>
+                  </Link>
+                </DropdownMenuItem> */}
+                <DropdownMenuItem>
+                  <Link
+                    href="/app/user-panel/mydocs"
+                    className="flex w-full items-center"
+                  >
+                    <Building2 className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
+                  </Link>
+                </DropdownMenuItem>
+                {/* <DropdownMenuItem>
+          <Link
+            href="app/user-panel/settings/user"
+            className="flex w-full items-center"
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            <span>User Settings</span>
+          </Link>
+        </DropdownMenuItem> */}
+                <DropdownMenuItem>
+                  <Link
+                    href="/app/user-panel/billing"
+                    className="flex w-full items-center"
+                  >
+                    <Receipt className="mr-2 h-4 w-4" />
+                    <span>Billing History</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Log Out</span>
-        </DropdownMenuItem>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log Out</span>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -142,7 +201,11 @@ const handleLogout = () => {
         >
           {/* Mobile Header */}
           <div className="flex items-center justify-between p-4 md:hidden border-b">
-            <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
               <X className="h-5 w-5" />
             </Button>
             <Button variant="outline" size="sm" asChild>
@@ -155,11 +218,18 @@ const handleLogout = () => {
             <Link
               href="/app/user-panel/mydocs"
               className={`flex items-center gap-2 px-3 py-2 rounded-md ${
-                pathname === "/app/user-panel/mydocs" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"
+                pathname === "/app/user-panel/mydocs"
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-gray-600 hover:bg-gray-100"
               }`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -172,11 +242,18 @@ const handleLogout = () => {
             <Link
               href="/app/user-panel/teams"
               className={`flex items-center gap-2 px-3 py-2 rounded-md ${
-                pathname === "/app/user-panel/teams" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"
+                pathname === "/app/user-panel/teams"
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-gray-600 hover:bg-gray-100"
               }`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -210,5 +287,5 @@ const handleLogout = () => {
         <main className="flex-1 p-4 md:p-6 overflow-x-hidden">{children}</main>
       </div>
     </div>
-  )
+  );
 }
