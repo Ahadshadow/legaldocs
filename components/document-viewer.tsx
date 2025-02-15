@@ -163,17 +163,22 @@ export function DocumentViewer({ isEmailMatch }: { isEmailMatch: boolean }) {
               // className="relative bg-white document-viewer pagination-wrapper border-none"
               className="relative bg-white document-viewer pagination-wrapper border-none whitespace-pre-wrap"
               style={{
-                width: "816px",
+                width: "794px", // A4 width
+                minHeight: "1123px", // A4 height (optional, for visual reference)
                 transform: `scale(${zoom / 100})`,
                 transformOrigin: "top center",
                 transition: "transform 0.3s ease-in-out",
-                boxShadow: "none",
+                boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)", // Light shadow for better visibility
+                margin: "0 auto", // Center the document
+                paddingTop: "150px", // Remove padding
+                // paddingBottom: '500px'
+
               }}
               onClick={(e) => handlePageClick(e, 0)}
             >
               <TiptapEditor
-                // content={pages[0].content}
-                content={pages[0].content.replace(/\\n/g, "\n").replace(/\\r/g, "\r")}
+                content={pages[0].content}
+                // content={pages[0].content.replace(/\\n/g, "\n").replace(/\\r/g, "\r")}
                 onChange={(newContent) => updatePageContent(pages[0].id, newContent)}
                 // className="prose max-w-none w-full"
                 className="prose max-w-none w-full whitespace-pre-wrap"

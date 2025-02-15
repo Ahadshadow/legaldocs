@@ -17,6 +17,7 @@ import { useDocument } from "./context/document-context"
 import { Draw } from "../extensions/draw-extension"
 import { Extension } from "@tiptap/core"
 import { CustomHorizontalRule } from "../extensions/horizontal-rule-extension"
+// import { QuestionNode } from "../extensions/question-node"
 
 interface TiptapEditorProps {
   content: string
@@ -76,7 +77,6 @@ const CustomPagination = Extension.create({
         }
       })
 
-      // Update the page count in the document context
       if (this.options.updatePageCount) {
         this.options.updatePageCount(pageBreaksAdded + 1)
       }
@@ -119,6 +119,7 @@ export function TiptapEditor({ content, onChange, className, readOnly, extension
       CustomPagination.configure({
         updatePageCount: updatePageCount,
       }),
+      // QuestionNode,
       ...extensions,
     ],
     content,
@@ -128,7 +129,7 @@ export function TiptapEditor({ content, onChange, className, readOnly, extension
     editable: !readOnly,
     editorProps: {
       attributes: {
-        class: "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none whitespace-pre-wrap",
+        class: "custom-tiptap-editor focus:outline-none",
       },
     },
     parseOptions: {
@@ -150,7 +151,10 @@ export function TiptapEditor({ content, onChange, className, readOnly, extension
 
   return (
     <div ref={editorRef} className={`w-full overflow-hidden ${className || ""}`}>
-      <EditorContent editor={editor} className={`w-full whitespace-pre-wrap ${className || ""}`} />
+      <EditorContent
+        editor={editor}
+        className={`w-full whitespace-pre-wrap custom-tiptap-content ${className || ""}`}
+      />
     </div>
   )
 }

@@ -13,6 +13,7 @@ import { useToast } from "../../../../../../components/ui/use-toast"
 import { Checkbox } from "../../../../../../components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../../../components/ui/select"
 import { SC } from "../../../../../../service/Api/serverCall"
+import { MultipleEntryListField } from "../../../../../../components/MultipleEntryListField"
 
 export default function DynamicForm({ params }) {
 
@@ -351,6 +352,15 @@ export default function DynamicForm({ params }) {
             ))}
           </div>
         )
+        case "multipleEntryList":
+          return (
+            <MultipleEntryListField
+              key={field.uniqueKeyName}
+              field={field}
+              value={formData[field.uniqueKeyName] || []}
+              onChange={(value) => handleInputChange(field.uniqueKeyName, value)}
+            />
+          )
       default:
         return <div key={field.uniqueKeyName}>Unsupported field type: {field.type}</div>
     }

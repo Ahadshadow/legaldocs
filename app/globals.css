@@ -128,3 +128,82 @@ hr {
   outline: 2px solid #68cef8;
 }
 
+.custom-tiptap-editor {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.custom-tiptap-content {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.custom-tiptap-content h1,
+.custom-tiptap-content h2,
+.custom-tiptap-content h3,
+.custom-tiptap-content h4,
+.custom-tiptap-content h5,
+.custom-tiptap-content h6 {
+  font-size: revert;
+  font-weight: revert;
+  margin: 0; /* Set to 0 */
+}
+
+.custom-tiptap-content p {
+  margin: 0; /* Set to 0 */
+}
+
+/* Remove spacing between sections */
+.custom-tiptap-content > div {
+  margin-bottom: 0; /* Set to 0 */
+}
+
+/* Ensure no extra space after the last paragraph in a section */
+.custom-tiptap-content > div > p:last-child {
+  margin-bottom: 0;
+}
+
+/* Remove specific spacing for numbered sections */
+.custom-tiptap-content h2 + p {
+  margin-top: 0; /* Set to 0 */
+}
+
+/* Add a small amount of spacing only between major sections */
+.custom-tiptap-content > div:not(:last-child) {
+  margin-bottom: 1rem; /* Add space only between major sections */
+}
+
+.page-break {
+  height: 20px;
+  margin: 10px 0;
+  border-top: 1px dashed #ccc;
+  position: relative;
+  user-select: none;
+  cursor: default;
+}
+
+.page-break::after {
+  content: "Page Break";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  padding: 0 10px;
+  font-size: 12px;
+  color: #666;
+}
+
+@media print {
+  .page-break {
+    height: 0;
+    margin: 0;
+    page-break-after: always;
+    border: none;
+  }
+
+  .page-break::after {
+    display: none;
+  }
+}
+
