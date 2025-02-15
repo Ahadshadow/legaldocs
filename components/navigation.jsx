@@ -78,8 +78,15 @@ export default function Navigation() {
 
   const handleSubcategorySelect = (subcategory) => {
     if (subcategory && subcategory.name && selectedCategory && selectedCategory.name) {
-      const categorySlug = selectedCategory.name.toLowerCase().replace(/\s+/g, "-");
-      const subcategorySlug = subcategory.name.toLowerCase().replace(/\s+/g, "-");
+      const categorySlug = selectedCategory.name
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/\//g, ""); // Remove slashes
+  
+      const subcategorySlug = subcategory.name
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/\//g, ""); // Remove slashes
   
       // Manually construct the query string
       const queryString = `?subcategoryId=${subcategory._id}`;
@@ -87,6 +94,7 @@ export default function Navigation() {
       router.push(`/${categorySlug}/${subcategorySlug}${queryString}`);
     }
   };
+  
 
   return (
     <nav className="border-b">
