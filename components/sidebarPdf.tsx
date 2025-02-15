@@ -138,7 +138,7 @@ export default function Sidebar({
       >
         <div className="h-full flex flex-col p-4">
           <div className="mb-6">
-            <h1 className="text-lg font-semibold mb-2">Dynamic Form</h1>
+            <h1 className="text-lg font-semibold mb-2">Steps (Optional)</h1>
             <div className="h-1 bg-gray-200 rounded">
               <div
                 className="h-full bg-[#5586ff] rounded transition-all duration-300"
