@@ -41,36 +41,59 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
 
   const handlePrint = useCallback(() => {
     if (editor) {
-      const content = editor.getHTML()
-      const printWindow = window.open("", "_blank")
-      if (printWindow) {
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Print Document</title>
-              <style>
-                body {
-                  font-family: Arial, sans-serif;
-                  line-height: 1.6;
-                  padding: 20px;
-                }
-              </style>
-            </head>
-            <body>
-              ${content}
-              <script>
-                window.onload = function() {
-                  window.print();
-                  window.onafterprint = function() {
-                    window.close();
-                  }
-                }
-              </script>
-            </body>
-          </html>
-        `)
-        printWindow.document.close()
+      const contentDiv = document.querySelector(".document-viewer") as HTMLElement
+      if (!contentDiv) {
+        console.error("Could not find .document-viewer element")
+        alert("Error: Could not find document content. Please try again.")
+        return
       }
+
+      html2canvas(contentDiv, {
+        scale: 2,
+        useCORS: true,
+        logging: true,
+        allowTaint: true,
+        ignoreElements: (element) => element.classList.contains("ProseMirror-gapcursor"),
+      })
+        .then((canvas) => {
+          const imgData = canvas.toDataURL("image/png")
+          const printWindow = window.open("", "_blank")
+          if (printWindow) {
+            printWindow.document.write(`
+            <html>
+              <head>
+                <title>Print Document</title>
+                <style>
+                  body {
+                    margin: 0;
+                    padding: 0;
+                  }
+                  img {
+                    width: 100%;
+                    height: auto;
+                  }
+                </style>
+              </head>
+              <body>
+                <img src="${imgData}" alt="Document content" />
+                <script>
+                  window.onload = function() {
+                    window.print();
+                    window.onafterprint = function() {
+                      window.close();
+                    }
+                  }
+                </script>
+              </body>
+            </html>
+          `)
+            printWindow.document.close()
+          }
+        })
+        .catch((error) => {
+          console.error("Error generating print preview:", error)
+          alert("Error generating print preview. Please try again.")
+        })
     }
   }, [editor])
 

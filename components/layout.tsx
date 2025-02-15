@@ -39,7 +39,7 @@ const handleLogout = () => {
               <Menu className="h-5 w-5" />
             </Button>
           </div>
-          <Link href="/app/user-panel/" className="font-semibold text-xl">
+          <Link href="/" className="font-semibold text-xl">
             legaltemplates.
           </Link>
           <div className="flex items-center gap-4">
@@ -186,7 +186,7 @@ const handleLogout = () => {
               </svg>
               Teams & Access
             </Link>
-            <Link
+            {/* <Link
               href="/app/user-panel/trash"
               className={`flex items-center gap-2 px-3 py-2 rounded-md ${
                 pathname === "/app/user-panel/trash" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"
@@ -202,7 +202,7 @@ const handleLogout = () => {
                 />
               </svg>
               Trash
-            </Link>
+            </Link> */}
           </div>
         </aside>
 

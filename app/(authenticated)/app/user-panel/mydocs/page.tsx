@@ -59,12 +59,12 @@ export default function DocumentsPage() {
 
   const tabs = [
     "All Documents",
-    "Draft",
-    "Actions Required",
-    "Waiting for Others",
-    "Completed",
-    "Declined",
-    "Cancelled",
+    // "Draft",
+    // "Actions Required",
+    // "Waiting for Others",
+    // "Completed",
+    // "Declined",
+    // "Cancelled",
   ];
 
   useEffect(() => {
@@ -121,18 +121,18 @@ export default function DocumentsPage() {
     switch (currentTab) {
       case "All Documents":
         return true;
-      case "Draft":
-        return submission.status === "draft";
-      case "Actions Required":
-        return submission.status === "pending";
-      case "Waiting for Others":
-        return submission.status === "waiting";
-      case "Completed":
-        return submission.status === "completed";
-      case "Declined":
-        return submission.status === "declined";
-      case "Cancelled":
-        return submission.status === "cancelled";
+      // case "Draft":
+      //   return submission.status === "draft";
+      // case "Actions Required":
+      //   return submission.status === "pending";
+      // case "Waiting for Others":
+      //   return submission.status === "waiting";
+      // case "Completed":
+      //   return submission.status === "completed";
+      // case "Declined":
+      //   return submission.status === "declined";
+      // case "Cancelled":
+      //   return submission.status === "cancelled";
       default:
         return false;
     }
@@ -195,10 +195,10 @@ export default function DocumentsPage() {
               <FileText className="mr-2 h-4 w-4" />
               <span>Choose Template</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setUploadDialogOpen(true)}>
+            {/* <DropdownMenuItem onClick={() => setUploadDialogOpen(true)}>
               <Upload className="mr-2 h-4 w-4" />
               <span>Upload File</span>
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
