@@ -28,8 +28,15 @@ export default function SubcategoryPage({ params }) {
       try {
         const response = await SC.getCall({ url: `documents/${subcategoryId}` });
 
+
+
         if (response.status) {
           setOptions(response.data.data.length > 0 ? response.data.data : []); // Set empty array if no documents
+          console.log("response.data.data", response.data.data);
+
+
+          setSelectedId(response.data.data[0]?._id)
+
         } else {
           console.error("Failed to fetch options:", response.message);
           setOptions([]); // Ensure empty state if there's an error
@@ -51,7 +58,7 @@ export default function SubcategoryPage({ params }) {
       console.error("No document selected.");
       return;
     }
-    router.push(`/app/pdf-builder/documents/${selectedId}`); 
+    router.push(`/app/pdf-builder/documents/${selectedId}`);
   };
 
   return (
@@ -86,7 +93,7 @@ export default function SubcategoryPage({ params }) {
 
           <div className="space-y-4">
             <div className="flex gap-4">
-              <CustomSelect onValueChange={(value) => setSelectedId(value)}>
+              <CustomSelect value={selectedId || null} onValueChange={(value) => setSelectedId(value)} >
                 <CustomSelectTrigger className="w-full">
                   <CustomSelectValue placeholder="Select a Template" />
                 </CustomSelectTrigger>
@@ -107,7 +114,7 @@ export default function SubcategoryPage({ params }) {
               <CreateDocumentButton onClick={handleCreateDocument} />
             </div>
           </div>
-{/* 
+          {/* 
           <div className="space-y-2">
             <p className="text-sm text-gray-500">Updated August 12, 2024</p>
             <p className="text-sm text-gray-500">
@@ -130,30 +137,33 @@ export default function SubcategoryPage({ params }) {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="p-6 space-y-6">
-            <Image
-              src="/placeholder.svg?height=800&width=600"
-              alt={`${subcategory.replace(/-/g, " ")} Preview`}
-              width={600}
-              height={800}
-              className="w-full rounded-lg border border-gray-200"
-            />
-            <CreateDocumentButton fullWidth onClick={handleCreateDocument} />
-            {/* <div className="flex items-center justify-between pt-2">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl font-semibold text-gray-900">4.8</span>
-                <div className="flex gap-0.5">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-[#4b62f9] text-[#4b62f9]" />
-                  ))}
-                </div>
-                <span className="text-sm text-gray-500">29,272 Ratings</span>
-              </div>
-              <div className="text-sm text-gray-500">409,178 Downloads</div>
-            </div> */}
-          </div>
+        {
+          selectedId && <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="p-6 space-y-6">
+              <Image
+                src="/placeholder.svg?height=800&width=600"
+                alt={`${subcategory.replace(/-/g, " ")} Preview`}
+                width={600}
+                height={800}
+                className="w-full rounded-lg border border-gray-200"
+              />
+              <CreateDocumentButton fullWidth onClick={handleCreateDocument} />
+              {/* <div className="flex items-center justify-between pt-2">
+      <div className="flex items-center gap-2">
+        <span className="text-2xl font-semibold text-gray-900">4.8</span>
+        <div className="flex gap-0.5">
+          {[...Array(5)].map((_, i) => (
+            <Star key={i} className="w-5 h-5 fill-[#4b62f9] text-[#4b62f9]" />
+          ))}
         </div>
+        <span className="text-sm text-gray-500">29,272 Ratings</span>
+      </div>
+      <div className="text-sm text-gray-500">409,178 Downloads</div>
+    </div> */}
+            </div>
+          </div>
+        }
+
       </div>
     </div>
   );
