@@ -231,7 +231,7 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
   return (
     <div className="flex items-center justify-between p-4 border-b">
       <div className="flex items-center gap-4">
-        <h1 className="text-lg font-semibold">Lease/Rental Agreement</h1>
+        <h1 className="text-lg font-semibold"> { isComplete.name || "Lease/Rental Agreement"} </h1>
       </div>
       <div className="flex items-center gap-2">
       {isComplete.status != "Complete" &&(
