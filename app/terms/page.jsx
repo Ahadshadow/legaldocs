@@ -5,7 +5,7 @@ export default function TermsAndConditions() {
     <div className="min-h-screen bg-[#F8F9FF]">
       <div className="container mx-auto px-4 py-16">
         <Card className="bg-white">
-          <CardContent className="p-8">
+          <CardContent className="p-8 pt-16">
             <h1 className="text-4xl font-bold mb-8">Terms and Conditions</h1>
             <div className="prose max-w-none">
               <p className="mb-4">Last updated: [Date]</p>

@@ -43,7 +43,7 @@ export default function Contact() {
           <div className="space-y-8">
             <Card className="bg-white">
               <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center pt-5 space-x-4">
                   <Mail className="h-6 w-6 text-[#6B7CFF]" />
                   <div>
                     <h3 className="font-semibold">Email</h3>
@@ -54,7 +54,7 @@ export default function Contact() {
             </Card>
             <Card className="bg-white">
               <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center pt-5 space-x-4">
                   <Phone className="h-6 w-6 text-[#6B7CFF]" />
                   <div>
                     <h3 className="font-semibold">Phone</h3>
@@ -65,7 +65,7 @@ export default function Contact() {
             </Card>
             <Card className="bg-white">
               <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center pt-5 space-x-4">
                   <MapPin className="h-6 w-6 text-[#6B7CFF]" />
                   <div>
                     <h3 className="font-semibold">Address</h3>

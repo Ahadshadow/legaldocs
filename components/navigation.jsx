@@ -131,9 +131,9 @@ export default function Navigation() {
             <Button variant="ghost" size="sm">
               <Search className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="sm" asChild>
+            {/* <Button variant="ghost" size="sm" asChild>
               <Link href="/support">Support</Link>
-            </Button>
+            </Button> */}
             {isLoggedIn ? (
               <UserDropdown />
             ) : (

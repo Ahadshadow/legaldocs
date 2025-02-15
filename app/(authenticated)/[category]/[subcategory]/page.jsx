@@ -28,12 +28,8 @@ export default function SubcategoryPage({ params }) {
       try {
         const response = await SC.getCall({ url: `documents/${subcategoryId}` });
 
-
-
         if (response.status) {
           setOptions(response.data.data.length > 0 ? response.data.data : []); // Set empty array if no documents
-          console.log("response.data.data", response.data.data);
-
 
           setSelectedId(response.data.data[0]?._id)
 

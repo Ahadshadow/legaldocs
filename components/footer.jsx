@@ -14,9 +14,9 @@ export default function Footer() {
             <p className="text-gray-400 mb-6">
               Don't waste your time with complex and costly legal services...
             </p>
-            <Button className="bg-[#6B7CFF] hover:bg-[#5A6AE6]">
+            {/* <Button className="bg-[#6B7CFF] hover:bg-[#5A6AE6]">
               Get Started
-            </Button>
+            </Button> */}
           </div>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 py-8 border-t border-gray-700">
@@ -26,7 +26,7 @@ export default function Footer() {
               <li><Link href="/about" className="text-gray-400 hover:text-white">About</Link></li>
               <li><Link href="/contact" className="text-gray-400 hover:text-white">Contact</Link></li>
               <li><Link href="/blog" className="text-gray-400 hover:text-white">Blog</Link></li>
-              <li><Link href="#" className="text-gray-400 hover:text-white">Careers</Link></li>
+              {/* <li><Link href="#" className="text-gray-400 hover:text-white">Careers</Link></li> */}
             </ul>
           </div>
           <div>
@@ -34,7 +34,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li><Link href="/privacy-policy" className="text-gray-400 hover:text-white">Privacy Policy</Link></li>
               <li><Link href="/terms" className="text-gray-400 hover:text-white">Terms of Service</Link></li>
-              <li><Link href="#" className="text-gray-400 hover:text-white">Cookie Policy</Link></li>
+              {/* <li><Link href="#" className="text-gray-400 hover:text-white">Cookie Policy</Link></li> */}
             </ul>
           </div>
         </div>
