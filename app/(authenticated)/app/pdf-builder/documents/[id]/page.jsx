@@ -3,16 +3,16 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { HelpCircle } from "lucide-react"
-import Sidebar from "../../../../../components/sidebarPdf"
-import { Input } from "../../../../../components/ui/input"
-import { RadioGroup, RadioGroupItem } from "../../../../../components/ui/radio-group-document"
-import { Label } from "../../../../../components/ui/label"
-import { Button } from "../../../../../components/ui/button"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../../../../components/ui/tooltip"
-import { useToast } from "../../../../../components/ui/use-toast"
-import { Checkbox } from "../../../../../components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../../components/ui/select"
-import { SC } from "../../../../../service/Api/serverCall"
+import Sidebar from "../../../../../../components/sidebarPdf"
+import { Input } from "../../../../../../components/ui/input"
+import { RadioGroup, RadioGroupItem } from "../../../../../../components/ui/radio-group-document"
+import { Label } from "../../../../../../components/ui/label"
+import { Button } from "../../../../../../components/ui/button"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../../../../../components/ui/tooltip"
+import { useToast } from "../../../../../../components/ui/use-toast"
+import { Checkbox } from "../../../../../../components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../../../components/ui/select"
+import { SC } from "../../../../../../service/Api/serverCall"
 
 export default function DynamicForm({ params }) {
 
@@ -20,8 +20,11 @@ export default function DynamicForm({ params }) {
   const router = useRouter()
 
 
-  const routeparam = new URLSearchParams(window.location.search);
-  const selectedId = routeparam.get("selectedId");
+  // const routeparam = new URLSearchParams(window.location.search);
+  // const selectedId = routeparam.get("selectedId");
+
+  const selectedId = params.id
+
 
   const [documentData, setDocumentData] = useState(null)
   const [currentStepIndex, setCurrentStepIndex] = useState(0)

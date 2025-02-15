@@ -56,7 +56,7 @@ const Tiptap = () => {
     return null
   }
 
-  const ToolbarButton = ({ onClick, disabled, icon: Icon, tooltip }: any) => (
+  const ToolbarButton = ({ onClick, disabled, icon: Icon, tooltip }) => (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>

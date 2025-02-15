@@ -196,7 +196,7 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
   
       if (response) {
         toast.success("Document submitted successfully");
-        router.push("/app/user-panel/documents")
+        router.push("/app/user-panel/mydocs")
       } else {
         throw new Error("Failed to submit document");
       }

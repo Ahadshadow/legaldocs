@@ -153,9 +153,9 @@ const handleLogout = () => {
           {/* Navigation Links */}
           <div className="space-y-2 p-4 md:p-0">
             <Link
-              href="/app/user-panel/documents"
+              href="/app/user-panel/mydocs"
               className={`flex items-center gap-2 px-3 py-2 rounded-md ${
-                pathname === "/app/user-panel/documents" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"
+                pathname === "/app/user-panel/mydocs" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"
               }`}
               onClick={() => setIsMobileMenuOpen(false)}
             >

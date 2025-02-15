@@ -51,7 +51,7 @@ export default function SubcategoryPage({ params }) {
       console.error("No document selected.");
       return;
     }
-    router.push(`/app/pdf-builder/documents?selectedId=${selectedId}`); 
+    router.push(`/app/pdf-builder/documents/${selectedId}`); 
   };
 
   return (

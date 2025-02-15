@@ -61,16 +61,17 @@
 
 "use client"
 
-import { DocumentHeader } from "../../../../../components/document-header"
-import { DocumentSidebar } from "../../../../../components/document-sidebar"
-import { DocumentToolbar } from "../../../../../components/document-toolbar"
-import { DocumentViewer } from "../../../../../components/document-viewer"
-import { DocumentProvider } from "../../../../../components/context/document-context"
+import { DocumentHeader } from "../../../../../../components/document-header"
+import { DocumentSidebar } from "../../../../../../components/document-sidebar"
+import { DocumentToolbar } from "../../../../../../components/document-toolbar"
+import { DocumentViewer } from "../../../../../../components/document-viewer"
+import { DocumentProvider } from "../../../../../../components/context/document-context"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
-import { SC } from "../../../../../service/Api/serverCall"
-import { useAuth } from "../../../../../hooks/useAuth"
-import { getUserData } from "../../../../../lib/utils"
+import { SC } from "../../../../../../service/Api/serverCall"
+import { useAuth } from "../../../../../../hooks/useAuth"
+import { getUserData } from "../../../../../../lib/utils"
+import { Toaster } from "sonner"
 
 // Hardcoded static content
 const staticDocumentsData = {
@@ -131,23 +132,23 @@ const staticDocumentsData = {
 }
 
 
+export default function DocumentPage({params}) {
+  const submissionId = params.id
 
-export default function DocumentPage() {
-  const searchParams = useSearchParams()
-  const submissionId = searchParams.get("submissionId")
+  
+
+  if (!submissionId) {
+    return <div>Error: No submission ID provided</div>
+  }
+  
     const [documentsData,  setDocumentsData] = useState(null)
 
     const [userData, setUserData] = useState<{ email: string; name?: string } | null>(null)
   const { isLoggedIn } = useAuth()
   const [isEmailMatch, setIsEmailMatch] = useState(false);
 
-  
-  
-  
 
-  if (!submissionId) {
-    return <div>Error: No submission ID provided</div>
-  }
+
 
   
   useEffect(() => {
@@ -205,6 +206,8 @@ console.log(documentsData, 'ismatch');
   if(documentsData === null ) return null
   return (
     <DocumentProvider initialData={documentsData}>
+        <Toaster />
+
       <div className="h-screen flex flex-col">
         <DocumentHeader submissionId={submissionId} isEmailMatch={isEmailMatch} isComplete={documentsData} />
         <div className="flex-1 flex overflow-hidden">

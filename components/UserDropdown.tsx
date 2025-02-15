@@ -60,7 +60,7 @@ export default function UserDropdown() {
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
-          <Link href="app/user-panel/documents" className="flex w-full items-center">
+          <Link href="app/user-panel/mydocs" className="flex w-full items-center">
             <Building2 className="mr-2 h-4 w-4" />
             <span>Dashboard</span>
           </Link>
