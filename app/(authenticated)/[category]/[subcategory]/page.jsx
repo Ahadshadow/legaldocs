@@ -22,6 +22,9 @@ export default function SubcategoryPage({ params }) {
   const searchParams = useSearchParams();
   const subcategoryId = searchParams.get("subcategoryId");
   const router = useRouter(); // Initialize router
+  const [filteredOption, setFilteredOption] = useState(null); // Store the filtered result
+
+
 
   useEffect(() => {
     async function fetchOptions() {
@@ -57,6 +60,15 @@ export default function SubcategoryPage({ params }) {
     router.push(`/app/pdf-builder/documents/${selectedId}`);
   };
 
+  useEffect(() => {
+    if (options && selectedId) {
+      const selectedOption = options.find((option) => option._id === selectedId);
+      setFilteredOption(selectedOption || null); // Set null if not found
+    }
+  }, [selectedId, options]); // Runs when selectedId or options change
+
+
+  
   return (
     <div className="max-w-[1400px] mx-auto px-6 py-8">
       {/* Breadcrumb */}
@@ -134,10 +146,10 @@ export default function SubcategoryPage({ params }) {
         </div>
 
         {
-          selectedId && <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          filteredOption  && <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="p-6 space-y-6">
               <Image
-                src="/placeholder.svg?height=800&width=600"
+                src={`https://legaldocs.unibyts.com/storage/${filteredOption?.image}`}
                 alt={`${subcategory.replace(/-/g, " ")} Preview`}
                 width={600}
                 height={800}

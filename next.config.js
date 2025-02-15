@@ -11,4 +11,7 @@ module.exports = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  images: {
+    domains: ["legaldocs.unibyts.com"], // Add the external image domain here
+  },
 }
