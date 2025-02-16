@@ -90,6 +90,7 @@ const SidebarStep = ({ step, currentStep, currentSubsection, completedSteps, onS
 }
 
 export default function Sidebar({
+  docName,
   steps,
   currentStep,
   currentSubsection,
@@ -138,7 +139,7 @@ export default function Sidebar({
       >
         <div className="h-full flex flex-col p-4">
           <div className="mb-6">
-            <h1 className="text-lg font-semibold mb-2">Dynamic Form</h1>
+            <h1 className="text-lg font-semibold mb-2">{docName || "Dynamic Form"}</h1>
             <div className="h-1 bg-gray-200 rounded">
               <div
                 className="h-full bg-[#5586ff] rounded transition-all duration-300"
@@ -158,6 +159,7 @@ export default function Sidebar({
                 completedSteps={completedSteps}
                 onStepSelect={onStepSelect}
                 onSubsectionSelect={onSubsectionSelect}
+                docName={docName}
               />
             ))}
           </nav>
