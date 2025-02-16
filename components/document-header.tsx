@@ -9,14 +9,13 @@ import html2canvas from "html2canvas"
 import { jsPDF } from "jspdf"
 import { useCallback } from "react"
 import { toast } from "sonner"
-import { SC } from "../service/Api/serverCall"
 import { useRouter } from "next/navigation"
+import { SC } from "../service/Api/serverCall"
 
-export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
-  const { editor, activeTool, signatures, prepareForSubmission, email } = useDocument()
+export function DocumentHeader({submissionId, isEmailMatch}) {
+  const { editor, activeTool, signatures, prepareForSubmission, email,  } = useDocument()
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
-
   const router = useRouter()
 
   useEffect(() => {
@@ -39,58 +38,49 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
     editor?.chain().focus().redo().run()
   }, [editor])
 
-  const handlePrint = useCallback(() => {
-    if (editor) {
-      const contentDiv = document.querySelector(".document-viewer") as HTMLElement;
-  
-      if (!contentDiv) {
-        console.error("Could not find .document-viewer element");
-        alert("Error: Could not find document content. Please try again.");
-        return;
-      }
-  
-      html2canvas(contentDiv, {
+  const handlePrint = useCallback(async () => {
+    const content = document.querySelector(".document-viewer") as HTMLElement
+    if (!content) return
+
+    const pageHeight = 1056 // Height of an A4 page in pixels at 96 DPI
+    const contentWidth = content.offsetWidth
+    const contentHeight = content.scrollHeight
+
+    const pdf = new jsPDF({
+      unit: "px",
+      format: "a4",
+      orientation: "portrait",
+    })
+
+    const pdfWidth = pdf.internal.pageSize.getWidth()
+    const pdfHeight = pdf.internal.pageSize.getHeight()
+    const scale = pdfWidth / contentWidth
+
+    let verticalOffset = 0
+    while (verticalOffset < contentHeight) {
+      const canvas = await html2canvas(content, {
         scale: 2,
-        useCORS: true
-      }).then((canvas) => {
-        const imgData = canvas.toDataURL("image/png");
-        
-        // Open a new window and add the image
-        const printWindow = window.open("", "_blank");
-        if (!printWindow) {
-          alert("Popup blocked! Please allow popups to print.");
-          return;
-        }
-  
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Print Document</title>
-              <style>
-                body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
-                img { width: 100%; height: auto; }
-              </style>
-            </head>
-            <body>
-              <img src="${imgData}" />
-              <script>
-                window.onload = function() {
-                  window.print();
-                  window.onafterprint = function() { window.close(); }
-                };
-              </script>
-            </body>
-          </html>
-        `);
-  
-        printWindow.document.close();
-      }).catch((error) => {
-        console.error("Error capturing document:", error);
-        alert("Error capturing document for printing.");
-      });
+        useCORS: true,
+        logging: true,
+        allowTaint: true,
+        ignoreElements: (element) => element.classList.contains("ProseMirror-gapcursor"),
+        windowWidth: contentWidth,
+        windowHeight: pageHeight,
+        y: verticalOffset,
+        height: pageHeight,
+      })
+
+      const imgData = canvas.toDataURL("image/png")
+      if (verticalOffset > 0) {
+        pdf.addPage()
+      }
+
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight)
+      verticalOffset += pageHeight
     }
-  }, [editor]);
-  
+
+    pdf.save("document.pdf")
+  }, [])
 
   const handleSave = useCallback(
     (format: "pdf" | "doc") => {
@@ -122,54 +112,43 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
             useCORS: true,
             logging: true,
             allowTaint: true,
-            ignoreElements: (element) => {
-              // Ignore empty pages and unnecessary elements
-              return (
-                element.classList.contains("ProseMirror-gapcursor") ||
-                element.classList.contains("editor-only") ||
-                (element.classList.contains("document-page") && !element.querySelector(".ProseMirror"))
-              )
-            },
+            ignoreElements: (element) => element.classList.contains("ProseMirror-gapcursor"),
           })
-          .then((canvas) => {
-            const imgData = canvas.toDataURL("image/png")
-            const pdf = new jsPDF("p", "mm", "a4")
-            const imgProps = pdf.getImageProperties(imgData)
-            const pdfWidth = pdf.internal.pageSize.getWidth()
-            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
-            const pageHeight = pdf.internal.pageSize.getHeight()
-  
-            let heightLeft = pdfHeight
-            let position = 0
-            let page = 1
-  
-            // Only add pages that have content
-            while (heightLeft > 0) {
-              if (position < 0 && heightLeft < pageHeight) {
-                // Skip empty pages
-                break
+            .then((canvas) => {
+              console.log("HTML2Canvas successful")
+              const imgData = canvas.toDataURL("image/png")
+              const pdf = new jsPDF("p", "mm", "a4")
+              const imgProps = pdf.getImageProperties(imgData)
+              const pdfWidth = pdf.internal.pageSize.getWidth()
+              const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
+              const pageHeight = pdf.internal.pageSize.getHeight()
+
+              let heightLeft = pdfHeight
+              let position = 0
+              let page = 1
+
+              while (heightLeft > 0) {
+                pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight)
+                heightLeft -= pageHeight
+                position -= pageHeight
+
+                if (heightLeft > 0) {
+                  pdf.addPage()
+                  page++
+                }
               }
-  
-              pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight)
-              heightLeft -= pageHeight
-              position -= pageHeight
-  
-              if (heightLeft > 0) {
-                pdf.addPage()
-                page++
-              }
-            }
-  
-            pdf.save("document.pdf")
-            console.log(`PDF saved successfully with ${page} page(s)`)
-          })
+
+              const blob = pdf.output("blob")
+              saveAs(blob, "document.pdf")
+              console.log(`PDF saved successfully with ${page} page(s)`)
+            })
             .catch((error) => {
               console.error("Error generating PDF:", error)
               alert("Error generating PDF. Please check the console for details.")
             })
         } else {
           try {
-            const content = contentDiv.innerHTML
+            const content = editor.getHTML().replace(/\n/g, "\\n").replace(/\r/g, "\\r")
             const signaturesHtml = signatures
               .map(
                 (sig) =>
@@ -203,67 +182,61 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
   )
 
   const handleSubmit = useCallback(async () => {
-    console.log("Current email:", email);
-    const data = prepareForSubmission();
-    console.log("Complete data payload for API:", data);
+    console.log("Current email:", email)
+    const data = prepareForSubmission()
+    console.log("Complete data payload for API:", data)
     try {
       const response = await SC.postCall({
         url: isEmailMatch ? "add-signature" : "send-signature-request",
         data: {
           ...data,
+          content: data.content.replace(/\n/g, "\\n").replace(/\r/g, "\\r"),
           email,
-          submission_id : submissionId,
+          submission_id: submissionId,
         },
       })
-  
-  
+
       if (response) {
-        toast.success("Document submitted successfully");
-        router.push("/app/user-panel/mydocs")
+        toast.success("Document submitted successfully")
+        router.push("/app/user-panel/documents")
       } else {
-        throw new Error("Failed to submit document");
+        throw new Error("Failed to submit document")
       }
     } catch (error) {
-      console.error("Error submitting document:", error);
-      toast.error("Failed to submit document");
+      console.error("Error submitting document:", error)
+      toast.error("Failed to submit document")
     }
-  }, [prepareForSubmission, email]);
+  }, [prepareForSubmission, email, isEmailMatch, submissionId, router])
+
   return (
     <div className="flex items-center justify-between p-4 border-b">
       <div className="flex items-center gap-4">
         <h1 className="text-lg font-semibold">Lease/Rental Agreement</h1>
       </div>
       <div className="flex items-center gap-2">
-      {isComplete.status != "Complete" &&(
-        <>
         <Button variant="outline" size="icon" onClick={handleUndo} disabled={!canUndo || activeTool === "signature"}>
           <Undo className="h-4 w-4" />
         </Button>
         <Button variant="outline" size="icon" onClick={handleRedo} disabled={!canRedo || activeTool === "signature"}>
           <Redo className="h-4 w-4" />
         </Button>
-        {/* <Button variant="outline" size="icon" onClick={handlePrint}> */}
-          {/* <Printer className="h-4 w-4" /> */}
-        {/* </Button> */}
-        </>
-      )}
+        {/* <Button variant="outline" size="icon" onClick={handlePrint}>
+          <Printer className="h-4 w-4" />
+        </Button> */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button>
               <Save className="h-4 w-4 mr-2" />
-          {isComplete.status != "Complete" ?
-              "Save & Print" : "Download"}
+              Save
               <ChevronDown className="h-4 w-4 ml-2" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-          
-            <DropdownMenuItem onClick={handlePrint}>{isComplete.status != "Complete" ? "Save" : "Download"} as PDF</DropdownMenuItem>
-            <DropdownMenuItem onClick={handlePrint}>Print</DropdownMenuItem>
+            <DropdownMenuItem onClick={handlePrint}>Save & Print</DropdownMenuItem>
+            {/* <DropdownMenuItem onClick={() => handleSave("doc")}>Save as DOC</DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
-        {isComplete.status != "Complete" &&
-        <Button onClick={handleSubmit}>Submit</Button> }
+        <Button onClick={handleSubmit}>Submit</Button>
       </div>
     </div>
   )

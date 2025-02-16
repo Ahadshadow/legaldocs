@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+
 import { useState, useEffect, useRef, useCallback } from "react"
 import { ScrollArea } from "../components/ui/scroll-area"
 import { ZoomInIcon as Zoom } from "lucide-react"
@@ -18,14 +19,12 @@ import { SignaturePanel } from "./signature-panel"
 import { DrawPanel } from "./draw-panel"
 import { HorizontalLinePanel } from "./horizontal-line-panel"
 import { DraggableSignature } from "./draggable-signature"
-// import { QuestionsAndStepsPanel } from "./questions-and-steps-panel"
 import "./document-viewer.css"
 
 export function DocumentViewer({ isEmailMatch }: { isEmailMatch: boolean }) {
   const [zoom, setZoom] = useState(100)
   const [currentPath, setCurrentPath] = useState<string>("")
   const [newSignatures, setNewSignatures] = useState<string[]>([])
-  const [pageCount, setPageCount] = useState(1)
   const {
     pages,
     updatePageContent,
@@ -47,13 +46,6 @@ export function DocumentViewer({ isEmailMatch }: { isEmailMatch: boolean }) {
   const [isDrawing, setIsDrawing] = useState(false)
   const [drawColor, setDrawColor] = useState("#000000")
   const [drawLineWidth, setDrawLineWidth] = useState(2)
-
-  // Calculate virtual pages based on content height
-  useEffect(() => {
-    if (editor) {
-      setPageCount(1)
-    }
-  }, [editor])
 
   const handlePageClick = (e: React.MouseEvent<HTMLDivElement>, pageIndex: number) => {
     if (activePanel === "comment") {
@@ -147,8 +139,6 @@ export function DocumentViewer({ isEmailMatch }: { isEmailMatch: boolean }) {
         return <DrawPanel setDrawColor={setDrawColor} setDrawLineWidth={setDrawLineWidth} />
       case "horizontalLine":
         return <HorizontalLinePanel />
-      case "questionsAndSteps":
-        // return <QuestionsAndStepsPanel />
       default:
         return null
     }
@@ -170,105 +160,90 @@ export function DocumentViewer({ isEmailMatch }: { isEmailMatch: boolean }) {
           <span className="text-sm">{zoom}%</span>
         </div>
         <ScrollArea className="flex-1 bg-gray-100">
-          <div className="flex flex-col items-center py-8 document-viewer">
+          <div className="flex flex-col items-center py-8">
             <div
-              key={0}
-              className="document-page"
+              id="document-content-for-print"
+              className="relative bg-white document-viewer pagination-wrapper border-none whitespace-pre-wrap"
               style={{
+                width: "816px",
                 transform: `scale(${zoom / 100})`,
                 transformOrigin: "top center",
                 transition: "transform 0.3s ease-in-out",
+                boxShadow: "none",
               }}
               onClick={(e) => handlePageClick(e, 0)}
             >
-              <div className="page-content">
-                <TiptapEditor
-                  content={pages[0].content.replace(/\n/g, "\n").replace(/\\r/g, "\r")}
-                  onChange={(newContent) => updatePageContent(pages[0].id, newContent)}
-                  className="prose max-w-none w-full whitespace-pre-wrap"
-                  readOnly={false}
+              <TiptapEditor
+                content={pages[0].content.replace(/\\n/g, "\n").replace(/\\r/g, "\r")}
+                onChange={(newContent) => updatePageContent(pages[0].id, newContent)}
+                className="prose max-w-none w-full whitespace-pre-wrap"
+                readOnly={false}
+              />
+              {signatures.map((signature) => (
+                <DraggableSignature
+                  key={signature.id}
+                  id={signature.id}
+                  initialX={signature.x}
+                  initialY={signature.y}
+                  content={signature.content}
+                  type={signature.type}
+                  onDelete={removeSignature}
+                  onPositionChange={(id, x, y) => updateSignature(id, { x, y })}
+                  onRotationChange={(id, rotation) => updateSignature(id, { rotation })}
+                  isEmailMatch={isEmailMatch}
+                  isNewSignature={newSignatures.includes(signature.id)}
                 />
-
-                {/* Signatures for this page */}
-                {/* <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1000 }}> */}
-                  {signatures.map((signature) => (
-                    <DraggableSignature
-                      key={signature.id}
-                      id={signature.id}
-                      initialX={signature.x}
-                      initialY={signature.y}
-                      content={signature.content}
-                      type={signature.type}
-                      onDelete={removeSignature}
-                      onPositionChange={(id, x, y) => updateSignature(id, { x, y })}
-                      onRotationChange={(id, rotation) => updateSignature(id, { rotation })}
-                      isEmailMatch={isEmailMatch}
-                      isNewSignature={newSignatures.includes(signature.id)}
-                    />
-                  ))}
-                {/* </div> */}
-
-                {/* Comments for this page */}
-                {comments
-                  .filter((comment) => Math.floor(((comment.y / 100) * 1123) / 1123) === 0)
-                  .map((comment) => (
-                    <div
-                      key={comment.id}
-                      className="absolute -ml-3 -mt-3"
-                      style={{
-                        left: `${comment.x}%`,
-                        top: `${comment.y % 1123}px`,
-                      }}
-                      onClick={(e) => handleCommentClick(e, comment.id)}
-                    >
-                      <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="cursor-pointer"
-                      >
-                        <path
-                          d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z"
-                          fill="#2563EB"
-                        />
-                      </svg>
-                    </div>
-                  ))}
-
-                {/* Drawings for this page */}
-                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 10 }}>
-                  {getDrawingsForPage(1).paths.map((path, pathIndex) => (
+              ))}
+              {comments.map((pageComment) => (
+                <div
+                  key={pageComment.id}
+                  className="absolute -ml-3 -mt-3"
+                  style={{
+                    left: `${pageComment.x}%`,
+                    top: `${pageComment.y}%`,
+                  }}
+                  onClick={(e) => handleCommentClick(e, pageComment.id)}
+                >
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="cursor-pointer"
+                  >
                     <path
-                      key={pathIndex}
-                      d={path}
-                      stroke={getDrawingsForPage(1).colors[pathIndex]}
-                      strokeWidth={getDrawingsForPage(1).lineWidths[pathIndex]}
-                      fill="none"
+                      d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z"
+                      fill="#2563EB"
                     />
-                  ))}
-                  {currentPath && activePanel === "draw" && 0 === currentPage - 1 && (
-                    <path d={currentPath} stroke={drawColor} strokeWidth={drawLineWidth} fill="none" />
-                  )}
-                </svg>
-
-                {/* Drawing canvas */}
-                {activePanel === "draw" && 0 === currentPage - 1 && (
-                  <canvas
-                    ref={canvasRef}
-                    className="absolute inset-0 w-full h-full"
-                    style={{ zIndex: 11 }}
-                    onMouseDown={startDrawing}
-                    onMouseMove={draw}
-                    onMouseUp={() => stopDrawing(0)}
-                    onMouseLeave={() => stopDrawing(0)}
+                  </svg>
+                </div>
+              ))}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 10 }}>
+                {getDrawingsForPage(currentPage).paths.map((path, pathIndex) => (
+                  <path
+                    key={pathIndex}
+                    d={path}
+                    stroke={getDrawingsForPage(currentPage).colors[pathIndex]}
+                    strokeWidth={getDrawingsForPage(currentPage).lineWidths[pathIndex]}
+                    fill="none"
                   />
+                ))}
+                {currentPath && activePanel === "draw" && (
+                  <path d={currentPath} stroke={drawColor} strokeWidth={drawLineWidth} fill="none" />
                 )}
-
-                {/* Page break indicator (except for last page) */}
-                {/*{0 < pageCount - 1 && <div className="page-break editor-only" />}*/}
-              </div>
+              </svg>
+              {activePanel === "draw" && (
+                <canvas
+                  ref={canvasRef}
+                  className="absolute inset-0 w-full h-full"
+                  style={{ zIndex: 11 }}
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={() => stopDrawing(0)}
+                  onMouseLeave={() => stopDrawing(0)}
+                />
+              )}
             </div>
           </div>
         </ScrollArea>
