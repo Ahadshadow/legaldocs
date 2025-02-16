@@ -41,84 +41,56 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
 
   const handlePrint = useCallback(() => {
     if (editor) {
-      const editorContent = editor.getHTML();
-      
-      const signaturesHtml = signatures
-        .map(
-          (sig) => `
-            <div style="
-              position: absolute;
-              left: ${sig.x}px;
-              top: ${sig.y}px;
-              transform: rotate(${sig.rotation || 0}deg);
-              z-index: 1000;
-              ${sig.type === 'text' ? 'font-family: cursive; font-size: 24px;' : ''}
-            ">
-              ${
-                sig.type === "draw" || sig.type === "upload"
-                  ? `<img src="${sig.content}" alt="Signature" style="max-width: 200px; max-height: 100px;" />`
-                  : sig.content
-              }
-            </div>
-          `
-        )
-        .join('');
+      const contentDiv = document.querySelector(".document-viewer") as HTMLElement;
   
-      const fullContent = `
-        <div style="position: relative; min-height: 100vh; width: calc(100% - 30px);">
-          ${editorContent}
-          ${signaturesHtml}
-        </div>
-      `;
+      if (!contentDiv) {
+        console.error("Could not find .document-viewer element");
+        alert("Error: Could not find document content. Please try again.");
+        return;
+      }
   
-      const printWindow = window.open("", "_blank");
-      if (printWindow) {
+      html2canvas(contentDiv, {
+        scale: 2,
+        useCORS: true
+      }).then((canvas) => {
+        const imgData = canvas.toDataURL("image/png");
+        
+        // Open a new window and add the image
+        const printWindow = window.open("", "_blank");
+        if (!printWindow) {
+          alert("Popup blocked! Please allow popups to print.");
+          return;
+        }
+  
         printWindow.document.write(`
           <html>
             <head>
-              <title>Document</title>
+              <title>Print Document</title>
               <style>
-                body {
-                  font-family: Arial, sans-serif;
-                  line-height: 1.6;
-                  padding: 20px;
-                  margin: 0;
-                }
-                img {
-                  max-width: 100%;
-                  height: auto;
-                }
-                @media print {
-                  body {
-                    padding: 0 15px !important;
-                    width: calc(100% - 30px);
-                  }
-                  .document-container {
-                    width: calc(100% - 30px);
-                    margin: 0 auto;
-                  }
-                }
+                body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+                img { width: 100%; height: auto; }
               </style>
             </head>
             <body>
-              <div class="document-container">
-                ${fullContent}
-              </div>
+              <img src="${imgData}" />
               <script>
                 window.onload = function() {
                   window.print();
-                  window.onafterprint = function() {
-                    window.close();
-                  }
-                }
+                  window.onafterprint = function() { window.close(); }
+                };
               </script>
             </body>
           </html>
         `);
+  
         printWindow.document.close();
-      }
+      }).catch((error) => {
+        console.error("Error capturing document:", error);
+        alert("Error capturing document for printing.");
+      });
     }
-  }, [editor, signatures]);
+  }, [editor]);
+  
 
   const handleSave = useCallback(
     (format: "pdf" | "doc") => {
