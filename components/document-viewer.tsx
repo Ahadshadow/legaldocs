@@ -190,23 +190,23 @@ export function DocumentViewer({ isEmailMatch }: { isEmailMatch: boolean }) {
                 />
 
                 {/* Signatures for this page */}
-                {signatures
-                  .filter((sig) => Math.floor(sig.y / 1123) === 0)
-                  .map((signature) => (
+                {/* <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1000 }}> */}
+                  {signatures.map((signature) => (
                     <DraggableSignature
                       key={signature.id}
                       id={signature.id}
                       initialX={signature.x}
-                      initialY={signature.y % 1123} // Adjust Y position relative to page
+                      initialY={signature.y}
                       content={signature.content}
                       type={signature.type}
                       onDelete={removeSignature}
-                      onPositionChange={(id, x, y) => updateSignature(id, { x, y: y + 0 * 1123 })}
+                      onPositionChange={(id, x, y) => updateSignature(id, { x, y })}
                       onRotationChange={(id, rotation) => updateSignature(id, { rotation })}
                       isEmailMatch={isEmailMatch}
                       isNewSignature={newSignatures.includes(signature.id)}
                     />
                   ))}
+                {/* </div> */}
 
                 {/* Comments for this page */}
                 {comments
