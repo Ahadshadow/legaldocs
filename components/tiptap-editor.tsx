@@ -134,6 +134,7 @@ export function TiptapEditor({ content, onChange, className, readOnly, extension
     },
     parseOptions: {
       preserveWhitespace: "full",
+      
     },
   })
 
@@ -148,6 +149,12 @@ export function TiptapEditor({ content, onChange, className, readOnly, extension
       editor.setEditable(!readOnly)
     }
   }, [editor, readOnly])
+
+  useEffect(() => {
+    if (editor && editor.isEmpty && content) {
+      editor.commands.setContent(content)
+    }
+  }, [editor, content])
 
   return (
     <div ref={editorRef} className={`w-full overflow-hidden ${className || ""}`}>

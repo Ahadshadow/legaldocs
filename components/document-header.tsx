@@ -41,61 +41,36 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
 
   const handlePrint = useCallback(() => {
     if (editor) {
-      const contentDiv = document.querySelector(".document-viewer")
-      if (!contentDiv) {
-        console.error("Could not find .document-viewer element")
-        
-        toast.error("Error: Could not find document content. Please try again.")
-        return
+      const content = editor.getHTML()
+      const printWindow = window.open("", "_blank")
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Document</title>
+              <style>
+                body {
+                  font-family: Arial, sans-serif;
+                  line-height: 1.6;
+                  padding: 20px;
+                }
+              </style>
+            </head>
+            <body>
+              ${content}
+              <script>
+                window.onload = function() {
+                  window.print();
+                  window.onafterprint = function() {
+                    window.close();
+                  }
+                }
+              </script>
+            </body>
+          </html>
+        `)
+        printWindow.document.close()
       }
-
-      html2canvas(contentDiv, {
-        scale: 2,
-        useCORS: true,
-        logging: true,
-        allowTaint: true,
-        ignoreElements: (element) =>
-          element.classList.contains("ProseMirror-gapcursor") || element.classList.contains("editor-only"),
-      })
-        .then((canvas) => {
-          const imgData = canvas.toDataURL("image/png")
-          const printWindow = window.open("", "_blank")
-          if (printWindow) {
-            printWindow.document.write(`
-            <html>
-              <head>
-                <title>Print Document</title>
-                <style>
-                  body {
-                    margin: 0;
-                    padding: 0;
-                  }
-                  img {
-                    width: 100%;
-                    height: auto;
-                  }
-                </style>
-              </head>
-              <body>
-                <img src="${imgData}" alt="Document content" />
-                <script>
-                  window.onload = function() {
-                    window.print();
-                    window.onafterprint = function() {
-                      window.close();
-                    }
-                  }
-                </script>
-              </body>
-            </html>
-          `)
-            printWindow.document.close()
-          }
-        })
-        .catch((error) => {
-          console.error("Error generating print preview:", error)
-          alert("Error generating print preview. Please try again.")
-        })
     }
   }, [editor])
 
@@ -108,9 +83,7 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
 
         if (!contentDiv) {
           console.error("Could not find .document-viewer element")
-          // alert("Error: Could not find document content. Please try again.")\
-          toast.error("Error: Could not find document content. Please try again.")
-
+          alert("Error: Could not find document content. Please try again.")
           return
         }
 
@@ -131,48 +104,50 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
             useCORS: true,
             logging: true,
             allowTaint: true,
-            ignoreElements: (element) =>
-              element.classList.contains("ProseMirror-gapcursor") || element.classList.contains("editor-only"),
+            ignoreElements: (element) => {
+              // Ignore empty pages and unnecessary elements
+              return (
+                element.classList.contains("ProseMirror-gapcursor") ||
+                element.classList.contains("editor-only") ||
+                (element.classList.contains("document-page") && !element.querySelector(".ProseMirror"))
+              )
+            },
           })
-            .then((canvas) => {
-              console.log("HTML2Canvas successful")
-              const imgData = canvas.toDataURL("image/png")
-              const pdf = new jsPDF("p", "mm", "a4")
-              const imgProps = pdf.getImageProperties(imgData)
-              const pdfWidth = pdf.internal.pageSize.getWidth()
-              const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
-              const pageHeight = pdf.internal.pageSize.getHeight()
-
-              let heightLeft = pdfHeight
-              let position = 0
-
-              // Only add pages if there's actual content
-              while (heightLeft > 0 && position > -pdfHeight) {
-                pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight)
-                heightLeft -= pageHeight
-                position -= pageHeight
-
-                if (heightLeft > 0) {
-                  pdf.addPage()
-                }
+          .then((canvas) => {
+            const imgData = canvas.toDataURL("image/png")
+            const pdf = new jsPDF("p", "mm", "a4")
+            const imgProps = pdf.getImageProperties(imgData)
+            const pdfWidth = pdf.internal.pageSize.getWidth()
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
+            const pageHeight = pdf.internal.pageSize.getHeight()
+  
+            let heightLeft = pdfHeight
+            let position = 0
+            let page = 1
+  
+            // Only add pages that have content
+            while (heightLeft > 0) {
+              if (position < 0 && heightLeft < pageHeight) {
+                // Skip empty pages
+                break
               }
-
-              const blob = pdf.output("blob")
-              // Remove any blank pages from the end of the PDF
-              const pdfReader = new FileReader()
-              pdfReader.onload = function () {
-                const pdfData = new Uint8Array(this.result as ArrayBuffer)
-                // Check for blank pages and remove them if found
-                saveAs(blob, "document.pdf")
+  
+              pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight)
+              heightLeft -= pageHeight
+              position -= pageHeight
+  
+              if (heightLeft > 0) {
+                pdf.addPage()
+                page++
               }
-              pdfReader.readAsArrayBuffer(blob)
-              console.log(`PDF saved successfully`)
-            })
+            }
+  
+            pdf.save("document.pdf")
+            console.log(`PDF saved successfully with ${page} page(s)`)
+          })
             .catch((error) => {
               console.error("Error generating PDF:", error)
-              // alert("Error generating PDF. Please check the console for details.")
-              toast.error("Error generating PDF. Please check the console for details.")
-
+              alert("Error generating PDF. Please check the console for details.")
             })
         } else {
           try {
@@ -198,16 +173,12 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
             console.log("DOC saved successfully with signatures")
           } catch (error) {
             console.error("Error generating DOC:", error)
-            // alert("Error generating DOC. Please check the console for details.")
-            toast.error("Error generating DOC. Please check the console for details.")
-
+            alert("Error generating DOC. Please check the console for details.")
           }
         }
       } else {
         console.error("Editor is not available")
-        // alert("Error: Editor is not available. Please try again.")
-        toast.error("Error: Editor is not available. Please try again.")
-
+        alert("Error: Editor is not available. Please try again.")
       }
     },
     [editor, signatures],
@@ -242,7 +213,7 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
   return (
     <div className="flex items-center justify-between p-4 border-b">
       <div className="flex items-center gap-4">
-        <h1 className="text-lg font-semibold"> { isComplete.document_name || "Lease/Rental Agreement"} </h1>
+        <h1 className="text-lg font-semibold">Lease/Rental Agreement</h1>
       </div>
       <div className="flex items-center gap-2">
       {isComplete.status != "Complete" &&(
@@ -253,22 +224,24 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
         <Button variant="outline" size="icon" onClick={handleRedo} disabled={!canRedo || activeTool === "signature"}>
           <Redo className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="icon" onClick={handlePrint}>
-          <Printer className="h-4 w-4" />
-        </Button></>)}
+        {/* <Button variant="outline" size="icon" onClick={handlePrint}> */}
+          {/* <Printer className="h-4 w-4" /> */}
+        {/* </Button> */}
+        </>
+      )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button>
               <Save className="h-4 w-4 mr-2" />
           {isComplete.status != "Complete" ?
-              "Save" : "Download"}
+              "Save & Print" : "Download"}
               <ChevronDown className="h-4 w-4 ml-2" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
           
-            <DropdownMenuItem onClick={() => handleSave("pdf")}>{isComplete.status != "Complete" ? "Save" : "Download"} as PDF</DropdownMenuItem>
-            {/* <DropdownMenuItem onClick={() => handleSave("doc")}>Save as DOC</DropdownMenuItem> */}
+            <DropdownMenuItem onClick={handlePrint}>{isComplete.status != "Complete" ? "Save" : "Download"} as PDF</DropdownMenuItem>
+            <DropdownMenuItem onClick={handlePrint}>Print</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         {isComplete.status != "Complete" &&
