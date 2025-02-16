@@ -170,50 +170,76 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
         x,
         y,
       }
+      setNewSignatures((prev) => [...prev, newSignature])
       addSignature(newSignature)
       onSignatureAdd(newSignature)
       // setNewSignatures((prev) => [...prev, newSignature.id])
-      setNewSignatures((prev) => [...prev, newSignature])
+      // setNewSignatures((prev) => [...prev, newSignature])
+
+       // Update convertedImages state for draw and upload types
+       if (type === "draw" || type === "upload") {
+        setConvertedImages((prev) => ({
+          ...prev,
+          [newSignature.id]: content,
+        }))
+      }
 
       setIsDrawDialogOpen(false)
       console.log(`Signature added:`, newSignature)
 
-      if (type === "draw" || type === "upload") {
-        try {
-          let base64Content = content
-          if (!base64Content.startsWith("data:image")) {
-            base64Content = `data:image/png;base64,${base64Content}`
-          }
-          setConvertedImages((prev) => {
-            const updated = { ...prev, [newSignature.id]: base64Content }
-            console.log("Updated converted images:", updated)
-            return updated
-          })
+      // if (type === "draw" || type === "upload") {
+      //   try {
+      //     let base64Content = content
+      //     if (!base64Content.startsWith("data:image")) {
+      //       base64Content = `data:image/png;base64,${base64Content}`
+      //     }
+      //     setConvertedImages((prev) => {
+      //       const updated = { ...prev, [newSignature.id]: base64Content }
+      //       console.log("Updated converted images:", updated)
+      //       return updated
+      //     })
 
-          // Validate base64 string
-          const img = new Image()
-          img.onload = () => console.log(`New image ${newSignature.id} loaded successfully`)
-          img.onerror = () => console.error(`Failed to load new image ${newSignature.id}`)
-          img.src = base64Content
-        } catch (error) {
-          console.error(`Error processing new signature ${newSignature.id}:`, error)
-        }
-      }
+      //     // Validate base64 string
+      //     const img = new Image()
+      //     img.onload = () => console.log(`New image ${newSignature.id} loaded successfully`)
+      //     img.onerror = () => console.error(`Failed to load new image ${newSignature.id}`)
+      //     img.src = base64Content
+      //   } catch (error) {
+      //     console.error(`Error processing new signature ${newSignature.id}:`, error)
+      //   }
+      // }
     }
   }
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          handleSignatureCreate("upload", event.target.result as string, e.nativeEvent as unknown as React.MouseEvent)
+// Update the handleImageUpload function
+const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0]
+  if (file) {
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        // Calculate center position of the document viewer
+        const documentViewer = document.querySelector(".document-viewer")
+        let clientX = window.innerWidth / 2
+        let clientY = window.innerHeight / 2
+        
+        if (documentViewer) {
+          const rect = documentViewer.getBoundingClientRect()
+          clientX = rect.left + rect.width / 2
+          clientY = rect.top + rect.height / 2
         }
+
+        // Create synthetic event with calculated coordinates
+        const syntheticEvent = {
+          clientX,
+          clientY,
+        } as React.MouseEvent
+        
+        handleSignatureCreate("upload", event.target.result as string, syntheticEvent)
       }
-      reader.readAsDataURL(file)
     }
+    reader.readAsDataURL(file)
   }
+}
 
   const handleTextSignature = () => {
     const text = prompt("Enter your signature text:")

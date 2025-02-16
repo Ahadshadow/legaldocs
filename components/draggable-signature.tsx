@@ -107,15 +107,17 @@ export function DraggableSignature({
 
   return (
     <div
-      ref={elementRef}
-      className={`absolute cursor-${canEdit ? "move" : "default"}`}
-      style={{
-        left: position.x,
-        top: position.y,
-        width: size.width,
-        height: size.height,
-        transform: `rotate(${rotation}deg)`,
-      }}
+    ref={elementRef}
+    className={`signature-item absolute cursor-${canEdit ? "move" : "default"}`}
+    
+    style={{
+      left: `${position.x}px`,
+      top: `${position.y}px`,
+      width: `${size.width}px`,
+      height: `${size.height}px`,
+      transform: `rotate(${rotation}deg)`,
+      zIndex: 1001, // Ensure it's above the signature layer
+    }}
       onMouseDown={canEdit ? handleMouseDown : undefined}
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => setShowControls(false)}
