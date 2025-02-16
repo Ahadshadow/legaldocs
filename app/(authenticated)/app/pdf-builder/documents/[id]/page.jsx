@@ -35,6 +35,7 @@ export default function DynamicForm({ params }) {
   const [isPreviewMode, setIsPreviewMode] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [docName, setdocName] = useState(null)
   const [affectingQuestions, setAffectingQuestions] = useState([])
   const [hiddenQuestions, setHiddenQuestions] = useState({})
   const [subsectionInfo, setSubsectionInfo] = useState({})
@@ -49,6 +50,7 @@ export default function DynamicForm({ params }) {
           setDocumentData(response.data.data.steps)
           initializeFormData(response.data.data.steps)
           initializeSubsectionInfo(response.data.data.steps)
+          setdocName(response.data.data.name)
         } else {
           setError(response.message || "Failed to fetch document data")
         }
@@ -394,6 +396,8 @@ export default function DynamicForm({ params }) {
     (completedSteps.length / documentData.reduce((acc, section) => acc + section.subsections.length, 0)) * 100,
   )
 
+  
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar
@@ -413,6 +417,7 @@ export default function DynamicForm({ params }) {
         onSubsectionSelect={handleSubsectionSelect}
         onPreview={handlePreview}
         progress={progress}
+        docName = {docName}
       />
 
       <main className="flex-1 p-4 md:p-8 overflow-x-hidden">
