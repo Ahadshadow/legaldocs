@@ -5,7 +5,7 @@ import { Menu, X, ChevronDown, ChevronRight } from "lucide-react"
 import { cn } from "../lib/utils"
 import { Button } from "../components/ui/button"
 
-const SidebarStep = ({ step, currentStep, currentSubsection, completedSteps, onStepSelect, onSubsectionSelect }) => {
+const SidebarStep = ({ step, currentStep, currentSubsection, completedSteps, onStepSelect, onSubsectionSelect, docName }) => {
   const [isOpen, setIsOpen] = useState(false)
 
   const isStepCompleted = (stepIndex, subsectionIndex) => {

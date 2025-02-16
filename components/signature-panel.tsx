@@ -1,9 +1,11 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
+
 import { Button } from "../components/ui/button"
 import { useDocument } from "./context/document-context"
-import { FileSignature, Pen, Upload, Type } from "lucide-react"
+// import { FileSignature, Pen, Upload, Type } from "lucide-react"
+import { Pen, Upload, Type, Trash2 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog"
 import { nanoid } from "nanoid"
 
@@ -107,7 +109,8 @@ interface SignaturePanelProps {
 }
 
 export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelProps) {
-  const { setActivePanel, addSignature, removeSignature, signatures, email, currentPage } = useDocument()
+  const { setActivePanel, addSignature, removeSignature, updateSignature, signatures, email, currentPage } =
+    useDocument()
   const [isDrawDialogOpen, setIsDrawDialogOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [convertedImages, setConvertedImages] = useState<Record<string, string>>({})
@@ -151,26 +154,12 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
   const handleSignatureCreate = async (
     type: "draw" | "type" | "upload",
     content: string,
-    event: React.MouseEvent | React.TouchEvent | null,
+    event: React.MouseEvent | React.TouchEvent,
   ) => {
-    try {
-      const viewer = document.querySelector(".document-viewer")
-      const rect = viewer?.getBoundingClientRect()
-      if (!rect) {
-        console.error("Could not find .document-viewer element")
-        return
-      }
-
-      const scrollTop = viewer?.scrollTop || 0
-      let x = rect.width / 2
-      let y = rect.height / 2
-      if (event) {
-        x = ("clientX" in event ? event.clientX : event.touches[0].clientX) - rect.left
-        y = ("clientY" in event ? event.clientY : event.touches[0].clientY) - rect.top + scrollTop
-      }
-
-      console.log(`Creating signature at position: (${x}, ${y})`)
-
+    const rect = document.querySelector(".document-viewer")?.getBoundingClientRect()
+    if (rect) {
+      const x = ("clientX" in event ? event.clientX : event.touches[0].clientX) - rect.left
+      const y = ("clientY" in event ? event.clientY : event.touches[0].clientY) - rect.top
       const newSignature: NewSignature = {
         id: nanoid(),
         pageId: currentPage,
@@ -179,24 +168,33 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
         x,
         y,
       }
-
-      // Add the new signature to both local state and global context
-      setNewSignatures((prev) => [...prev, newSignature])
       addSignature(newSignature)
       onSignatureAdd(newSignature)
-
-      // Update convertedImages state for draw and upload types
-      if (type === "draw" || type === "upload") {
-        setConvertedImages((prev) => ({
-          ...prev,
-          [newSignature.id]: content,
-        }))
-      }
-
+      setNewSignatures((prev) => [...prev, newSignature])
       setIsDrawDialogOpen(false)
       console.log(`Signature added:`, newSignature)
-    } catch (error) {
-      console.error("Error creating signature:", error)
+
+      if (type === "draw" || type === "upload") {
+        try {
+          let base64Content = content
+          if (!base64Content.startsWith("data:image")) {
+            base64Content = `data:image/png;base64,${base64Content}`
+          }
+          setConvertedImages((prev) => {
+            const updated = { ...prev, [newSignature.id]: base64Content }
+            console.log("Updated converted images:", updated)
+            return updated
+          })
+
+          // Validate base64 string
+          const img = new Image()
+          img.onload = () => console.log(`New image ${newSignature.id} loaded successfully`)
+          img.onerror = () => console.error(`Failed to load new image ${newSignature.id}`)
+          img.src = base64Content
+        } catch (error) {
+          console.error(`Error processing new signature ${newSignature.id}:`, error)
+        }
+      }
     }
   }
 
@@ -206,8 +204,7 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
       const reader = new FileReader()
       reader.onload = (event) => {
         if (event.target?.result) {
-          const content = event.target.result as string
-          handleSignatureCreate("upload", content, null)
+          handleSignatureCreate("upload", event.target.result as string, e.nativeEvent as unknown as React.MouseEvent)
         }
       }
       reader.readAsDataURL(file)
@@ -217,16 +214,18 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
   const handleTextSignature = () => {
     const text = prompt("Enter your signature text:")
     if (text) {
-      handleSignatureCreate("type", text, null)
+      const event = { clientX: window.innerWidth / 2, clientY: window.innerHeight / 2 } as React.MouseEvent
+      handleSignatureCreate("type", text, event)
     }
   }
 
-  useEffect(() => {
-    console.log(
-      "Signatures updated:",
-      signatures.map((sig) => ({ ...sig, x: sig.x.toFixed(0), y: sig.y.toFixed(0) })),
-    )
-  }, [signatures])
+  const handlePositionUpdate = useCallback(
+    (id: string, x: number, y: number) => {
+      updateSignature(id, { x, y })
+      setNewSignatures((prev) => prev.map((sig) => (sig.id === id ? { ...sig, x, y } : sig)))
+    },
+    [updateSignature],
+  )
 
   return (
     <div className="w-[280px] border-l bg-white flex flex-col h-full">
@@ -275,7 +274,7 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
                   </div>
                   <div className="w-full flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">
-                      Type: {signature.type}, Position: ({signature.x.toFixed(0)}, {signature.y.toFixed(0)})
+                      {/* Type: {signature.type}, Position: ({signature.x.toFixed(2)}, {signature.y.toFixed(2)}) */}
                     </span>
                     <Button
                       variant="ghost"
@@ -283,15 +282,10 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
                       onClick={() => {
                         removeSignature(signature.id)
                         setNewSignatures((prev) => prev.filter((sig) => sig.id !== signature.id))
-                        setConvertedImages((prev) => {
-                          const updated = { ...prev }
-                          delete updated[signature.id]
-                          return updated
-                        })
                       }}
                       className="h-8 w-8 p-0"
                     >
-                      <FileSignature className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>

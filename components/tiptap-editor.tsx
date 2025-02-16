@@ -18,6 +18,14 @@ import { Draw } from "../extensions/draw-extension"
 import { Extension } from "@tiptap/core"
 import { CustomHorizontalRule } from "../extensions/horizontal-rule-extension"
 
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    pageBreak: {
+      insertPageBreak: () => ReturnType
+    }
+  }
+}
+
 interface TiptapEditorProps {
   content: string
   onChange: (content: string) => void
@@ -33,16 +41,17 @@ const PageBreak = Extension.create({
   name: "pageBreak",
   addCommands() {
     return {
-      setPageBreak:
+      insertPageBreak:
         () =>
-        ({ chain }) => {
-          return chain()
-            .insertContent(
+          ({ chain }) => {
+            return chain()
+              .insertContent(
               `<div class="page-break-container" contenteditable="false">
                 <div class="page-break-line"></div>
               </div>`,
             )
             .run()
+
         },
     }
   },
@@ -81,8 +90,16 @@ const CustomPagination = Extension.create({
 
           // Only add page break if we're not at a section start and have significant content
           if (remainingSpace < nodeHeight && !node.textContent.match(/^\d+\.\s/) && currentHeight > pageHeight * 0.1) {
-            editor.chain().focus().insertContentAt(pos, '<div class="content-spacer"></div>').setPageBreak().run()
-            currentHeight = nodeHeight
+            editor
+              .chain()
+              .focus()
+              .insertContentAt(pos, '<div class="content-spacer"></div>')
+              .insertContent(
+                `<div class="page-break-container" contenteditable="false">
+                  <div class="page-break-line"></div>
+                </div>`,
+              )
+              .run()
           } else {
             currentHeight += nodeHeight
           }

@@ -14,7 +14,6 @@ import { Trash2, UserPlus } from "lucide-react"
 import { Button } from "../components/ui/button"
 import { Label } from "../components/ui/label"
 import AddSignerForm from "./add-signer-form"
-
 interface SignerSelectionDialogProps {
   isOpen: boolean
   onClose: () => void
@@ -35,21 +34,23 @@ export function SignerSelectionDialog({ isOpen, onClose, onSelect }: SignerSelec
   const [selectedEmail, setSelectedEmail] = useState("")
 
   const handleAddSigner = (name: string, email: string) => {
-    setSigners([
-      ...signers,
-      {
-        id: Math.random().toString(36).substr(2, 9),
-        name,
-        email,
-        isSelected: true,
-      },
-    ])
+    const newSigner = {
+      id: Math.random().toString(36).substr(2, 9),
+      name,
+      email,
+      isSelected: true,
+    }
+    setSigners([...signers, newSigner])
+    setSelectedEmail(email) // Auto-select new signer
+    setEmail(email) // Update email in document context
   }
 
   const handleDeleteSigner = (id: string) => {
+    const signerToDelete = signers.find((signer) => signer.id === id)
     setSigners(signers.filter((signer) => signer.id !== id))
-    if (signers.length === 1) {
+    if (signerToDelete && signerToDelete.email === selectedEmail) {
       setSelectedEmail("")
+      setEmail("") // Clear email in document context
     }
   }
 
@@ -84,6 +85,7 @@ export function SignerSelectionDialog({ isOpen, onClose, onSelect }: SignerSelec
                       checked={signer.email === selectedEmail}
                       onChange={() => {
                         setSelectedEmail(signer.email)
+                        setEmail(signer.email) // Update email in document context
                       }}
                       className="rounded-full"
                     />
@@ -94,7 +96,13 @@ export function SignerSelectionDialog({ isOpen, onClose, onSelect }: SignerSelec
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleDeleteSigner(signer.id)}
+                      onClick={() => {
+                        handleDeleteSigner(signer.id)
+                        if (selectedEmail === signer.email) {
+                          setSelectedEmail("") // Clear selected email if deleted signer was selected
+                          setEmail("") // Clear email in document context
+                        }
+                      }}
                       className="h-8 w-8"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -103,12 +111,10 @@ export function SignerSelectionDialog({ isOpen, onClose, onSelect }: SignerSelec
                 ))}
               </div>
             )}
-            {signers.length === 0 && (
-              <Button variant="outline" className="w-full" onClick={() => setIsAddSignerOpen(true)}>
-                <UserPlus className="h-4 w-4 mr-2" />
-                Add Signer
-              </Button>
-            )}
+            <Button variant="outline" className="w-full" onClick={() => setIsAddSignerOpen(true)}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add Signer
+            </Button>
           </div>
           <DialogFooter>
             <Button onClick={handleSelect} disabled={!selectedEmail}>

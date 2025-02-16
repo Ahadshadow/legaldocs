@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "../components/ui/button"
 import { Trash2, RotateCw, RotateCcw } from "lucide-react"
 import type React from "react"
+import { useDocument } from "./context/document-context"
 
 interface DraggableSignatureProps {
   id: string
@@ -39,6 +40,8 @@ export function DraggableSignature({
   const elementRef = useRef<HTMLDivElement>(null)
   const dragStart = useRef({ x: 0, y: 0 })
   const initialSize = useRef({ width: 0, height: 0 })
+  const { updateSignature } = useDocument()
+
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -50,6 +53,7 @@ export function DraggableSignature({
           y: position.y + dy,
         }
         setPosition(newPosition)
+        updateSignature(id, { x: newPosition.x, y: newPosition.y })
         onPositionChange(id, newPosition.x, newPosition.y)
         dragStart.current = { x: e.clientX, y: e.clientY }
       } else if (isResizing && elementRef.current) {
@@ -80,7 +84,8 @@ export function DraggableSignature({
       document.removeEventListener("mousemove", handleMouseMove)
       document.removeEventListener("mouseup", handleMouseUp)
     }
-  }, [id, isDragging, isResizing, onPositionChange, position.x, position.y])
+}, [id, isDragging, isResizing, onPositionChange, position.x, position.y, updateSignature])
+
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault()

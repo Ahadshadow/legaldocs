@@ -12,7 +12,9 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { SC } from "../service/Api/serverCall"
 
-export function DocumentHeader({submissionId, isEmailMatch}) {
+export function DocumentHeader({submissionId, isEmailMatch , isComplete , Heading}) {
+  console.log(Heading,'heading');
+
   const { editor, activeTool, signatures, prepareForSubmission, email,  } = useDocument()
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
@@ -208,10 +210,12 @@ export function DocumentHeader({submissionId, isEmailMatch}) {
     }
   }, [prepareForSubmission, email, isEmailMatch, submissionId, router])
 
+  
+
   return (
     <div className="flex items-center justify-between p-4 border-b">
       <div className="flex items-center gap-4">
-        <h1 className="text-lg font-semibold">Lease/Rental Agreement</h1>
+        <h1 className="text-lg font-semibold">{Heading}</h1>
       </div>
       <div className="flex items-center gap-2">
         <Button variant="outline" size="icon" onClick={handleUndo} disabled={!canUndo || activeTool === "signature"}>

@@ -145,7 +145,7 @@ export default function DocumentPage({params}) {
       
     
 
-console.log(documentsData, 'ismatch');
+const Heading = documentsData?.document_name
       
 
   if(documentsData === null ) return null
@@ -154,7 +154,7 @@ console.log(documentsData, 'ismatch');
         <Toaster />
 
       <div className="h-screen flex flex-col">
-        <DocumentHeader submissionId={submissionId} isEmailMatch={isEmailMatch} isComplete={documentsData} />
+        <DocumentHeader submissionId={submissionId} isEmailMatch={isEmailMatch} isComplete={documentsData} Heading={Heading} />
         <div className="flex-1 flex overflow-hidden">
           <DocumentSidebar isEmailMatch={isEmailMatch} isComplete={documentsData} />
           <div className="flex-1 flex flex-col overflow-hidden">
