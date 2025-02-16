@@ -41,8 +41,37 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
 
   const handlePrint = useCallback(() => {
     if (editor) {
-      const content = editor.getHTML()
-      const printWindow = window.open("", "_blank")
+      const editorContent = editor.getHTML();
+      
+      const signaturesHtml = signatures
+        .map(
+          (sig) => `
+            <div style="
+              position: absolute;
+              left: ${sig.x}px;
+              top: ${sig.y}px;
+              transform: rotate(${sig.rotation || 0}deg);
+              z-index: 1000;
+              ${sig.type === 'text' ? 'font-family: cursive; font-size: 24px;' : ''}
+            ">
+              ${
+                sig.type === "draw" || sig.type === "upload"
+                  ? `<img src="${sig.content}" alt="Signature" style="max-width: 200px; max-height: 100px;" />`
+                  : sig.content
+              }
+            </div>
+          `
+        )
+        .join('');
+  
+      const fullContent = `
+        <div style="position: relative; min-height: 100vh; width: calc(100% - 30px);">
+          ${editorContent}
+          ${signaturesHtml}
+        </div>
+      `;
+  
+      const printWindow = window.open("", "_blank");
       if (printWindow) {
         printWindow.document.write(`
           <html>
@@ -53,11 +82,28 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
                   font-family: Arial, sans-serif;
                   line-height: 1.6;
                   padding: 20px;
+                  margin: 0;
+                }
+                img {
+                  max-width: 100%;
+                  height: auto;
+                }
+                @media print {
+                  body {
+                    padding: 0 15px !important;
+                    width: calc(100% - 30px);
+                  }
+                  .document-container {
+                    width: calc(100% - 30px);
+                    margin: 0 auto;
+                  }
                 }
               </style>
             </head>
             <body>
-              ${content}
+              <div class="document-container">
+                ${fullContent}
+              </div>
               <script>
                 window.onload = function() {
                   window.print();
@@ -68,11 +114,11 @@ export function DocumentHeader({submissionId, isEmailMatch, isComplete}) {
               </script>
             </body>
           </html>
-        `)
-        printWindow.document.close()
+        `);
+        printWindow.document.close();
       }
     }
-  }, [editor])
+  }, [editor, signatures]);
 
   const handleSave = useCallback(
     (format: "pdf" | "doc") => {

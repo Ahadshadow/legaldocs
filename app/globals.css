@@ -246,5 +246,14 @@ hr {
   .editor-only {
     display: none !important;
   }
+  body {
+    padding: 0 15px !important;
+    width: calc(100% - 30px);
+  }
 }
+.document-container {
+  width: calc(100% - 30px);
+  margin: 0 auto;
+}
+
 
