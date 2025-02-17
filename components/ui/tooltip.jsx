@@ -20,6 +20,8 @@ const TooltipContent = React.forwardRef(({ className, sideOffset = 4, ...props }
       className
     )}
     {...props}
+    asChild
+
   />
 ))
 TooltipContent.displayName = TooltipPrimitive.Content.displayName

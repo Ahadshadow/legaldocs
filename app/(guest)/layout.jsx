@@ -1,6 +1,13 @@
+
+import { Toaster } from "sonner"
+
 export default function GuestLayout({
   children,
 }) {
-  return <>{children}</>
+  return <>
+  
+  <Toaster />
+  
+  {children}</>
 }
 

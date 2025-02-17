@@ -81,7 +81,7 @@ export default function DocumentGrid() {
               key={sub._id}
               href={href}
               onClick={(e) => handleClick(e, href)}
-              className="flex flex-col items-center justify-center p-6 bg-white border rounded-lg hover:border-[#6B7CFF] transition-colors cursor-pointer"
+              className="flex flex-col items-center justify-center p-6 bg-white border rounded-lg hover:border-[#6B7CFF] transition-colors cursor-pointer min-w-[130px]"
             >
               <Icon className="h-8 w-8 text-[#6B7CFF] mb-3" />
               <span className="text-sm text-center text-gray-600">{sub.name}</span>

@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "../../../components/ui/card";
 import { SC } from "../../../service/Api/serverCall";
+import { toast } from "sonner";
 
 export default function SignUp() {
   const [firstName, setFirstName] = useState("");
@@ -61,8 +62,11 @@ export default function SignUp() {
         },
       });
 
-      if (response.data.status === 201) {
-        // Redirect user to the Sign-In page after successful registration
+
+      
+      if (response.status === 201) {
+
+        toast.success(response.data?.message)
         router.push("/signin");
       }
     } catch (error) {

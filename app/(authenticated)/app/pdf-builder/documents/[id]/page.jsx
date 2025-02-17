@@ -480,14 +480,24 @@ export default function DynamicForm({ params }) {
                                     <Label htmlFor={field.uniqueKeyName} className="text-sm font-medium">
                                       {field.questionToAsk}
                                     </Label>
-                                    {field.description && (
-                                      <TooltipProvider>
+                                    {/* {field.description && ( */}
+                                    {true && (
+                                      <TooltipProvider >
                                         <Tooltip>
                                           <TooltipTrigger>
+                                          <button type="button"
+                                          
+                                          onClick={(e) => {
+                                            e.preventDefault() // Prevents default form submission
+                                            e.stopPropagation() // Stops the event from bubbling up
+                                          }}
+                                          >
                                             <HelpCircle className="w-4 h-4 text-gray-400" />
+                                            </button>
                                           </TooltipTrigger>
                                           <TooltipContent>
-                                            <p className="w-64 text-sm">{field.description}</p>
+                                            {/* <p className="w-64 text-sm">{field.description}</p> */}
+                                            <p className="w-64 text-sm">ahad sad  sda</p>
                                           </TooltipContent>
                                         </Tooltip>
                                       </TooltipProvider>
