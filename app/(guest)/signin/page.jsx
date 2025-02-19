@@ -30,7 +30,7 @@ export default function SignIn() {
 
       if (response.data.token) {
         const userData = {
-          email: email,
+          email:  email.toLowerCase(),
           token: response.data.token,
           ...response.data.user, // Assuming the API returns additional user data
         }

@@ -213,7 +213,7 @@ hr {
   overflow: visible;
 }
 
-.page-break {
+/* .page-break {
   position: relative;
   height: 20px;
   background: #f3f4f6;
@@ -235,11 +235,10 @@ hr {
   padding: 0 8px;
 }
 
-/* Remove any margin/padding that might cause gaps */
 .custom-tiptap-editor .ProseMirror {
   margin: 0;
   padding: 0;
-}
+} */
 
 /* Hide editor-only elements when printing */
 @media print {
@@ -256,4 +255,136 @@ hr {
   margin: 0 auto;
 }
 
+
+
+
+
+/* Update page break styles */
+.page-break-container {
+  position: relative;
+  width: 100%;
+  height: 40px;
+  margin: 20px 0;
+  page-break-before: always;
+  page-break-after: avoid;
+  clear: both;
+  pointer-events: none;
+  user-select: none;
+  display: none; /* Added from updates */
+  height: 0; /* Added from updates */
+  margin: 0; /* Added from updates */
+  padding: 0; /* Added from updates */
+}
+
+.page-break-container.needed {
+  /* Added from updates */
+  display: block;
+  height: 20px;
+  margin: 10px 0;
+}
+
+.page-break-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  border-top: 2px dashed #ccc;
+  margin: 0;
+}
+
+.page-break-line::after {
+  content: "Page Break";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 0 10px;
+  font-size: 11px;
+  color: #666;
+}
+
+.content-spacer {
+  height: 20px;
+  width: 100%;
+  clear: both;
+  pointer-events: none;
+}
+
+/* Print-specific styles */
+@media print {
+  .page-break-container {
+    height: 0;
+    margin: 0;
+    padding: 0;
+    page-break-before: always;
+    border: none;
+    display: none; /* Added from updates */
+    break-before: page; /* Added from updates */
+  }
+  .page-break-container.needed {
+    /* Added from updates */
+    display: none;
+    height: 0;
+    margin: 0;
+    break-before: page;
+  }
+
+  .page-break-line,
+  .content-spacer {
+    display: none;
+  }
+
+  /* Prevent content duplication */
+  .ProseMirror p {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Ensure sections start on new pages */
+  h2[id^="section-"] {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  /* Keep related content together */
+  h1 + p,
+  h2 + p {
+    page-break-before: avoid;
+    break-before: avoid;
+  }
+  .document-viewer {
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none;
+  }
+}
+
+/* Keep existing styles */
+.document-viewer {
+  padding: 40px !important;
+  margin: 0 auto !important;
+  background-color: white;
+  width: 816px;
+  min-height: 1056px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  display: flex; /* Added from updates */
+  flex-direction: column; /* Added from updates */
+}
+
+/* Reduce spacing between sections */
+.document-viewer h1 {
+  margin-bottom: 1rem;
+}
+
+.document-viewer h2 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.document-viewer p {
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
 

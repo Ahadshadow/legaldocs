@@ -117,7 +117,6 @@ export function DocumentViewer({ isEmailMatch }: { isEmailMatch: boolean }) {
   }, [])
 
   const renderActivePanel = () => {
-    console.log("Active Panel:", activePanel)
     switch (activePanel) {
       case "format":
         return <TextFormattingPanel />
@@ -163,20 +162,19 @@ export function DocumentViewer({ isEmailMatch }: { isEmailMatch: boolean }) {
           <div className="flex flex-col items-center py-8">
             <div
               id="document-content-for-print"
-              className="relative bg-white document-viewer pagination-wrapper border-none whitespace-pre-wrap"
+              className="relative bg-white document-viewer"
               style={{
                 width: "816px",
                 transform: `scale(${zoom / 100})`,
                 transformOrigin: "top center",
                 transition: "transform 0.3s ease-in-out",
-                boxShadow: "none",
               }}
               onClick={(e) => handlePageClick(e, 0)}
             >
               <TiptapEditor
-                content={pages[0].content.replace(/\\n/g, "\n").replace(/\\r/g, "\r")}
+                content={pages[0].content.replace(/\n/g, "\n").replace(/\\r/g, "\r")}
                 onChange={(newContent) => updatePageContent(pages[0].id, newContent)}
-                className="prose max-w-none w-full whitespace-pre-wrap"
+                className="prose max-w-none w-full"
                 readOnly={false}
               />
               {signatures.map((signature) => (
@@ -252,4 +250,5 @@ export function DocumentViewer({ isEmailMatch }: { isEmailMatch: boolean }) {
     </div>
   )
 }
+
 

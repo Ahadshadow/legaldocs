@@ -55,7 +55,7 @@ export default function SignUp() {
           first_name: firstName,
           last_name: lastName,
           display_name: displayName,
-          email,
+          email:  email.toLowerCase(),
           phone,
           password,
           password_confirmation: passwordConfirmation,

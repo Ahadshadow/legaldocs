@@ -25,6 +25,7 @@
     "@radix-ui/react-switch": "^1.1.2",
     "@radix-ui/react-toast": "^1.2.5",
     "@radix-ui/react-tooltip": "^1.1.6",
+    "@react-pdf/renderer": "^4.2.2",
     "@syncfusion/ej2-react-documenteditor": "^28.1.38",
     "@syncfusion/ej2-react-grids": "^28.1.38",
     "@tiptap/extension-bold": "^2.11.2",
