@@ -1,3 +1,4 @@
+// Version 462
 "use client"
 
 import { useEffect, useRef } from "react"
@@ -15,16 +16,56 @@ import Image from "@tiptap/extension-image"
 import { Redact } from "../extensions/redact-extension"
 import { useDocument } from "./context/document-context"
 import { Draw } from "../extensions/draw-extension"
-import { Extension } from "@tiptap/core"
 import { CustomHorizontalRule } from "../extensions/horizontal-rule-extension"
+import { CustomPagination } from "../extensions/custom-pagination"
+import { Node, mergeAttributes } from "@tiptap/core"
 
-declare module "@tiptap/core" {
-  interface Commands<ReturnType> {
-    pageBreak: {
-      insertPageBreak: () => ReturnType
+const CustomQuestion = Node.create({
+  name: "customQuestion",
+  group: "inline",
+  inline: true,
+  atom: true,
+
+  addAttributes() {
+    return {
+      step: {
+        default: null,
+      },
+      question: {
+        default: null,
+      },
+      type: {
+        default: null,
+      },
     }
-  }
-}
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: 'span[data-type="custom-question"]',
+      },
+    ]
+  },
+
+  renderHTML({ node, HTMLAttributes }) {
+    const attrs = mergeAttributes(HTMLAttributes, { "data-type": "custom-question" })
+    return ["span", attrs, `{{${node.attrs.step} | ${node.attrs.question} | ${node.attrs.type}}}`]
+  },
+
+  addCommands() {
+    return {
+      setCustomQuestion:
+        (step, question, type) =>
+        ({ commands }) => {
+          return commands.insertContent({
+            type: this.name,
+            attrs: { step, question, type },
+          })
+        },
+    }
+  },
+})
 
 interface TiptapEditorProps {
   content: string
@@ -34,91 +75,36 @@ interface TiptapEditorProps {
   extensions?: any[]
 }
 
-// Track processed nodes to prevent duplication
-const processedNodes = new Set<string>()
-
-const PageBreak = Extension.create({
-  name: "pageBreak",
-  addCommands() {
-    return {
-      insertPageBreak:
-        () =>
-          ({ chain }) => {
-            return chain()
-              .insertContent(
-              `<div class="page-break-container" contenteditable="false">
-                <div class="page-break-line"></div>
-              </div>`,
-            )
-            .run()
-
-        },
-    }
-  },
-})
-
-const CustomPagination = Extension.create({
-  name: "customPagination",
-  addStorage() {
-    return {
-      processedNodes: new Set(),
-    }
-  },
-
-  onUpdate() {
-    const { editor } = this
-    if (!editor) return
-
-    // Clear processed nodes on each update
-    this.storage.processedNodes.clear()
-
-    setTimeout(() => {
-      const editorElement = editor.view.dom
-      const pageHeight = 1056 // A4 height in pixels
-      const pageBreakPadding = 40 // Reduced padding
-      let currentHeight = 0
-
-      const processNode = (node: any, pos: number) => {
-        if (!node || this.storage.processedNodes.has(node.attrs?.id)) return
-
-        if (node.type.name === "paragraph" || node.type.name === "heading") {
-          const element = editorElement.querySelector(`[data-node-id="${node.attrs?.id}"]`)
-          if (!element) return
-
-          const nodeHeight = (element as HTMLElement).offsetHeight
-          const remainingSpace = pageHeight - pageBreakPadding - currentHeight
-
-          // Only add page break if we're not at a section start and have significant content
-          if (remainingSpace < nodeHeight && !node.textContent.match(/^\d+\.\s/) && currentHeight > pageHeight * 0.1) {
-            editor
-              .chain()
-              .focus()
-              .insertContentAt(pos, '<div class="content-spacer"></div>')
-              .insertContent(
-                `<div class="page-break-container" contenteditable="false">
-                  <div class="page-break-line"></div>
-                </div>`,
-              )
-              .run()
-          } else {
-            currentHeight += nodeHeight
-          }
-
-          this.storage.processedNodes.add(node.attrs?.id)
-        }
-      }
-
-      // Process nodes in order
-      editor.state.doc.descendants((node, pos) => {
-        processNode(node, pos)
-      })
-    }, 100) // Increased delay to ensure proper rendering
-  },
-})
-
 export function TiptapEditor({ content, onChange, className, readOnly, extensions = [] }: TiptapEditorProps) {
   const { setEditor } = useDocument()
   const editorRef = useRef<HTMLDivElement>(null)
+
+  const sanitizeContent = (html: string): string => {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, "text/html")
+
+    const cleanNode = (node: Node): void => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (node.textContent) {
+          node.textContent = node.textContent
+            .replace(/([^\s$])\1{3,}/g, "$1$1$1") // Limit repeated characters to 3
+            .replace(/\s+/g, " ") // Normalize whitespace
+            .replace(/\$+/g, "$") // Fix repeated dollar signs
+            .trim()
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as Element
+        if (element.tagName === "P" && !element.textContent?.trim()) {
+          element.remove()
+        } else {
+          Array.from(element.childNodes).forEach(cleanNode)
+        }
+      }
+    }
+
+    cleanNode(doc.body)
+    return doc.body.innerHTML
+  }
 
   const editor = useEditor({
     extensions: [
@@ -149,43 +135,22 @@ export function TiptapEditor({ content, onChange, className, readOnly, extension
       Draw,
       CustomHorizontalRule,
       CustomPagination,
-      PageBreak,
+      CustomQuestion,
       ...extensions,
     ],
-    content,
+    content: sanitizeContent(content),
     onUpdate: ({ editor }) => {
-      // Remove any duplicate content before triggering onChange
-      const cleanContent = removeDuplicateContent(editor.getHTML())
+      const cleanContent = sanitizeContent(editor.getHTML())
       onChange(cleanContent)
     },
     editable: !readOnly,
     editorProps: {
       attributes: {
         class: "prose mx-auto focus:outline-none",
-        style: "max-width: 100%; padding: 0; margin: 0; font-size: 12px;",
+        style: "max-width: 100%; padding: 0; margin: 0; font-size: 12px; line-height: 1.5;",
       },
     },
   })
-
-  // Function to remove duplicate content
-  const removeDuplicateContent = (html: string) => {
-    const tempDiv = document.createElement("div")
-    tempDiv.innerHTML = html
-
-    // Remove duplicate paragraphs
-    const paragraphs = tempDiv.getElementsByTagName("p")
-    const seen = new Set<string>()
-    Array.from(paragraphs).forEach((p) => {
-      const content = p.textContent?.trim()
-      if (content && seen.has(content)) {
-        p.remove()
-      } else if (content) {
-        seen.add(content)
-      }
-    })
-
-    return tempDiv.innerHTML
-  }
 
   useEffect(() => {
     if (editor) {
@@ -202,7 +167,23 @@ export function TiptapEditor({ content, onChange, className, readOnly, extension
   return (
     <div ref={editorRef} className={`w-full overflow-hidden ${className || ""}`}>
       <EditorContent editor={editor} className={`w-full whitespace-pre-wrap ${className || ""}`} />
+      <style jsx global>
+        {globalStyles}
+      </style>
     </div>
   )
 }
+
+const globalStyles = `
+.ProseMirror span[data-type="custom-question"] {
+  background-color: #f0f9ff;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-weight: medium;
+  color: #0066cc;
+  display: inline-block;
+  margin: 0 2px;
+  border: 1px solid #e6f3ff;
+}
+`
 

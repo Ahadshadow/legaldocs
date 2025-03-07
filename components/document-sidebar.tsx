@@ -35,10 +35,13 @@ import {
   Replace,
   FileOutput,
   FilePlus2,
+  FormInput,
 } from "lucide-react"
 import { useDocument } from "./context/document-context"
 import { toast } from "sonner"
 import { useState, useRef } from "react"
+import { QuestionsStepsPanel } from "./questions-steps-panel"
+import { SignaturePanel } from "./signature-panel"
 
 interface SidebarButtonProps {
   icon: React.ReactNode
@@ -325,7 +328,7 @@ function PageActions({ pageId, isEditable }: PageActionsProps) {
   )
 }
 
-export function DocumentSidebar({isEmailMatch , isComplete}) {
+export function DocumentSidebar({ isEmailMatch }: { isEmailMatch: boolean }) {
   const { activeTool, setActiveTool, copyPage, deletePage, rotatePage, extractPage } = useDocument()
   const [selectedPages, setSelectedPages] = useState<number[]>([])
   const [isSelectionMode, setIsSelectionMode] = useState(false)
@@ -337,8 +340,21 @@ export function DocumentSidebar({isEmailMatch , isComplete}) {
     setSelectedPages((prev) => (prev.includes(pageId) ? prev.filter((id) => id !== pageId) : [...prev, pageId]))
   }
 
-  console.log(isComplete, 'all');
-  
+  const handleSignatureAdd = () => {
+    // Placeholder function for adding a signature
+    console.log("Signature added")
+  }
+
+  const renderActivePanel = () => {
+    switch (activeTool) {
+      case "signature":
+        return <SignaturePanel isEmailMatch={isEmailMatch} onSignatureAdd={handleSignatureAdd} />
+      case "formBuilder":
+        return <QuestionsStepsPanel />
+      default:
+        return null
+    }
+  }
 
   return (
     <div className="h-full flex flex-shrink-0 overflow-hidden">
@@ -353,16 +369,22 @@ export function DocumentSidebar({isEmailMatch , isComplete}) {
                 onClick={() => setActiveTool(activeTool === "edit" ? null : "edit")}
               />
             )}
-            {isComplete.status != "Complete" ?
             <SidebarButton
               icon={<FileSignature />}
               label="Signature"
               active={activeTool === "signature"}
               onClick={() => setActiveTool(activeTool === "signature" ? null : "signature")}
-            /> : null}
+            />
+            <SidebarButton
+              icon={<FormInput />}
+              label="Questions & Steps"
+              active={activeTool === "formBuilder"}
+              onClick={() => setActiveTool(activeTool === "formBuilder" ? null : "formBuilder")}
+            />
           </div>
         </div>
       </div>
+      {renderActivePanel()}
     </div>
   )
 }
