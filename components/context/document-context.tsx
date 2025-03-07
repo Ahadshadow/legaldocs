@@ -37,7 +37,7 @@ interface DocumentContextType {
   insertPage: (beforeId: number, backgroundColor: string) => void
   updatePageContent: (pageId: number, newContent: string) => void
   viewerRef: React.RefObject<HTMLDivElement>
-  activeTool: string | "edit" | "signature" | "formBuilder" | null
+  activeTool: string
   setActiveTool: (tool: string) => void
   isFormatPanelOpen: boolean
   setIsFormatPanelOpen: React.Dispatch<React.SetStateAction<boolean>>
@@ -117,12 +117,12 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData
       pageNumber: 1,
       rotation: 0,
       backgroundColor: "white",
-      content: initialData?.content || "",
+      content: initialData?.content || initialData?.documentData,
     },
   ])
   const [currentPage, setCurrentPage] = useState(1)
   const viewerRef = useRef<HTMLDivElement>(null)
-  const [activeTool, setActiveTool] = useState<string | "edit" | "signature" | "formBuilder" | null>("edit")
+  const [activeTool, setActiveTool] = useState<string>("edit")
   const [isFormatPanelOpen, setIsFormatPanelOpen] = useState(false)
   const [activeToolbarItem, setActiveToolbarItem] = useState<string | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
@@ -137,7 +137,7 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData
   const [signatures, setSignatures] = useState<Signature[]>(initialData?.signatures || [])
   const [contentPages, setContentPages] = useState<string[]>([])
   const [pageCount, setPageCount] = useState(1)
-  const [email, setEmail] = useState<string>(initialData?.email || "")
+  const [email, setEmail] = useState<string>(initialData?.signatureRequestEmail || "")
 
   const addPage = useCallback(() => {
     setPages((prevPages) => [

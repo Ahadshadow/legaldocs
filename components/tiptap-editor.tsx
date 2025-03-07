@@ -18,7 +18,15 @@ import { useDocument } from "./context/document-context"
 import { Draw } from "../extensions/draw-extension"
 import { CustomHorizontalRule } from "../extensions/horizontal-rule-extension"
 import { CustomPagination } from "../extensions/custom-pagination"
-import { Node, mergeAttributes } from "@tiptap/core"
+import { Node, RawCommands, mergeAttributes } from "@tiptap/core"
+
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    customQuestion: {
+      setCustomQuestion: (step: string, question: string, type: string) => ReturnType
+    }
+  }
+}
 
 const CustomQuestion = Node.create({
   name: "customQuestion",
@@ -55,16 +63,16 @@ const CustomQuestion = Node.create({
 
   addCommands() {
     return {
-      setCustomQuestion:
-        (step, question, type) =>
-        ({ commands }) => {
-          return commands.insertContent({
-            type: this.name,
-            attrs: { step, question, type },
-          })
-        },
-    }
-  },
+        setCustomQuestion:
+            (step: any, question: any, type: any) =>
+            ({ commands }: { commands: any }) => {
+                return commands.insertContent({
+                    type: this.name,
+                    attrs: { step, question, type },
+                });
+            },
+    } as Partial<RawCommands>;
+}
 })
 
 interface TiptapEditorProps {
@@ -80,31 +88,32 @@ export function TiptapEditor({ content, onChange, className, readOnly, extension
   const editorRef = useRef<HTMLDivElement>(null)
 
   const sanitizeContent = (html: string): string => {
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(html, "text/html")
-
-    const cleanNode = (node: Node): void => {
-      if (node.nodeType === Node.TEXT_NODE) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+  
+    const cleanNode = (node: ChildNode): void => {
+      if (node.nodeType === 3) { // TEXT_NODE
         if (node.textContent) {
           node.textContent = node.textContent
             .replace(/([^\s$])\1{3,}/g, "$1$1$1") // Limit repeated characters to 3
             .replace(/\s+/g, " ") // Normalize whitespace
             .replace(/\$+/g, "$") // Fix repeated dollar signs
-            .trim()
+            .trim();
         }
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        const element = node as Element
+      } else if (node.nodeType === 1) { // ELEMENT_NODE
+        const element = node as HTMLElement;
         if (element.tagName === "P" && !element.textContent?.trim()) {
-          element.remove()
+          element.remove();
         } else {
-          Array.from(element.childNodes).forEach(cleanNode)
+          Array.from(element.childNodes).forEach((child) => cleanNode(child as ChildNode));
         }
       }
-    }
-
-    cleanNode(doc.body)
-    return doc.body.innerHTML
-  }
+    };
+    
+    cleanNode(doc.body);
+    return doc.body.innerHTML;
+  };
+  
 
   const editor = useEditor({
     extensions: [
