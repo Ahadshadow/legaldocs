@@ -354,7 +354,7 @@ hr {
     page-break-before: avoid;
     break-before: avoid;
   }
-  .document-viewer {
+  .document-viewer { 
     padding: 0 !important;
     margin: 0 !important;
     box-shadow: none;
@@ -386,5 +386,9 @@ hr {
 .document-viewer p {
   margin-bottom: 0.75rem;
   line-height: 1.5;
+}
+
+.ProseMirror [contenteditable="false"] {
+  justify-content: normal !important;
 }
 

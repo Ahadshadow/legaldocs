@@ -18,12 +18,13 @@ import { useDocument } from "./context/document-context"
 import { Draw } from "../extensions/draw-extension"
 import { CustomHorizontalRule } from "../extensions/horizontal-rule-extension"
 import { CustomPagination } from "../extensions/custom-pagination"
-import { Node, RawCommands, mergeAttributes } from "@tiptap/core"
+import { Node, mergeAttributes } from "@tiptap/core"
+import { generateAttribute } from "../lib/utils"
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     customQuestion: {
-      setCustomQuestion: (step: string, question: string, type: string) => ReturnType
+      setCustomQuestion: (question: string, type: string) => ReturnType
     }
   }
 }
@@ -36,13 +37,13 @@ const CustomQuestion = Node.create({
 
   addAttributes() {
     return {
-      step: {
-        default: null,
-      },
       question: {
         default: null,
       },
       type: {
+        default: null,
+      },
+      attribute: {
         default: null,
       },
     }
@@ -57,22 +58,26 @@ const CustomQuestion = Node.create({
   },
 
   renderHTML({ node, HTMLAttributes }) {
-    const attrs = mergeAttributes(HTMLAttributes, { "data-type": "custom-question" })
-    return ["span", attrs, `{{${node.attrs.step} | ${node.attrs.question} | ${node.attrs.type}}}`]
+    const attrs = mergeAttributes(HTMLAttributes, {
+      "data-type": "custom-question",
+      "data-dependency": node.attrs.dependence ? "true" : "false",
+    })
+    return ["span", attrs, `{{% ${node.attrs.attribute} | ${node.attrs.type} | underscore %}}`]
   },
 
   addCommands() {
     return {
-        setCustomQuestion:
-            (step: any, question: any, type: any) =>
-            ({ commands }: { commands: any }) => {
-                return commands.insertContent({
-                    type: this.name,
-                    attrs: { step, question, type },
-                });
-            },
-    } as Partial<RawCommands>;
-}
+      setCustomQuestion:
+        (question, type) =>
+        ({ commands }) => {
+          const attribute = generateAttribute(question)
+          return commands.insertContent({
+            type: this.name,
+            attrs: { question, type, attribute },
+          })
+        },
+    }
+  },
 })
 
 interface TiptapEditorProps {
@@ -95,10 +100,10 @@ export function TiptapEditor({ content, onChange, className, readOnly, extension
       if (node.nodeType === 3) { // TEXT_NODE
         if (node.textContent) {
           node.textContent = node.textContent
-            .replace(/([^\s$])\1{3,}/g, "$1$1$1") // Limit repeated characters to 3
-            .replace(/\s+/g, " ") // Normalize whitespace
-            .replace(/\$+/g, "$") // Fix repeated dollar signs
-            .trim();
+            // .replace(/([^\s$])\1{3,}/g, "$1$1$1") // Limit repeated characters to 3
+            // .replace(/\s+/g, " ") // Normalize whitespace
+            // .replace(/\$+/g, "$") // Fix repeated dollar signs
+            // .trim();
         }
       } else if (node.nodeType === 1) { // ELEMENT_NODE
         const element = node as HTMLElement;
@@ -113,7 +118,6 @@ export function TiptapEditor({ content, onChange, className, readOnly, extension
     cleanNode(doc.body);
     return doc.body.innerHTML;
   };
-  
 
   const editor = useEditor({
     extensions: [
@@ -184,15 +188,78 @@ export function TiptapEditor({ content, onChange, className, readOnly, extension
 }
 
 const globalStyles = `
-.ProseMirror span[data-type="custom-question"] {
-  background-color: #f0f9ff;
-  border-radius: 4px;
-  padding: 2px 4px;
-  font-weight: medium;
-  color: #0066cc;
-  display: inline-block;
-  margin: 0 2px;
-  border: 1px solid #e6f3ff;
+/* Base styling for all question formats - more comprehensive selectors */
+.ProseMirror span[data-type="custom-question"],
+.ProseMirror code,
+.ProseMirror *:has(code),
+.ProseMirror *:contains("{{% "),
+.ProseMirror *:contains("%}}"),
+.ProseMirror *:contains("if"),
+.ProseMirror *:contains("endif"),
+.ProseMirror p:has(span:contains("{%")),
+.ProseMirror p:has(span:contains("%}")),
+.ProseMirror p:has(span:contains("underscore")),
+.ProseMirror span:contains("underscore") {
+  background-color: #f0f9ff !important;
+  border-radius: 4px !important;
+  padding: 2px 4px !important;
+  font-weight: medium !important;
+  color: #0066cc !important;
+  display: inline !important;
+  margin: 0 2px !important;
+  border: 1px solid #e6f3ff !important;
+  font-family: monospace !important;
+  width: auto !important;
+  max-width: fit-content !important;
+}
+
+/* Direct targeting for the specific format with commas */
+.ProseMirror *:contains("if"),
+.ProseMirror *:contains("=="),
+.ProseMirror *:contains("endif") {
+  background-color: #f0f9ff !important;
+  border: 1px solid #e6f3ff !important;
+  display: inline !important;
+}
+
+/* Ensure no nested backgrounds */
+.ProseMirror span[data-type="custom-question"] span,
+.ProseMirror *:contains("{{% ") span,
+.ProseMirror *:contains("%}}") span,
+.ProseMirror *:contains("if") span,
+.ProseMirror *:contains("endif") span {
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Consistent text color */
+.ProseMirror span[data-type="custom-question"] *,
+.ProseMirror *:contains("{{% ") *,
+.ProseMirror *:contains("%}}") *,
+.ProseMirror *:contains("if") *,
+.ProseMirror *:contains("endif") * {
+  color: #0066cc !important;
+}
+
+/* Ensure inline code blocks maintain styling */
+.ProseMirror code {
+  background-color: #f0f9ff !important;
+  color: #0066cc !important;
+  display: inline !important;
+}
+
+/* Direct targeting for the specific problematic format */
+.ProseMirror p:contains("{{% if"),
+.ProseMirror span:contains("{{% if") {
+  background-color: #f0f9ff !important;
+  border-radius: 4px !important;
+  padding: 2px 4px !important;
+  border: 1px solid #e6f3ff !important;
+  display: inline !important;
+  width: auto !important;
 }
 `
+
 
