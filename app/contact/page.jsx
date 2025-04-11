@@ -1,11 +1,37 @@
-import { Button } from "../../components/ui/button"
-import { Input } from "../../components/ui/input"
-import { Label } from "../../components/ui/label"
-import { Textarea } from "../../components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
-import { Mail, Phone, MapPin } from 'lucide-react'
+
+
+"use client"
+
+import { useState } from "react";
+import { useDropzone } from "react-dropzone";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { Textarea } from "../../components/ui/textarea";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
+import { Mail, Phone, MapPin, Upload, X } from "lucide-react";
 
 export default function Contact() {
+  const [files, setFiles] = useState([]);
+
+  const { getRootProps, getInputProps } = useDropzone({
+    accept: "image/*",
+    onDrop: (acceptedFiles) => {
+      setFiles((prevFiles) => [
+        ...prevFiles,
+        ...acceptedFiles.map((file) =>
+          Object.assign(file, {
+            preview: URL.createObjectURL(file),
+          })
+        ),
+      ]);
+    },
+  });
+
+  const removeImage = (fileName) => {
+    setFiles(files.filter((file) => file.name !== fileName));
+  };
+
   return (
     <div className="min-h-screen bg-[#F8F9FF]">
       <div className="container mx-auto px-4 py-16">
@@ -34,6 +60,33 @@ export default function Contact() {
                   <Label htmlFor="message">Message</Label>
                   <Textarea id="message" placeholder="Your message" rows={5} />
                 </div>
+
+                {/* Drag and Drop Image Upload */}
+                <div className="space-y-2">
+                  <Label>Upload Image</Label>
+                  <div
+                    {...getRootProps()}
+                    className="border-2 border-dashed border-gray-300 p-6 rounded-lg text-center cursor-pointer bg-gray-100 hover:bg-gray-200"
+                  >
+                    <input {...getInputProps()} />
+                    <Upload className="h-10 w-10 mx-auto text-gray-500" />
+                    <p className="text-gray-600">Drag & drop images here, or click to select</p>
+                  </div>
+                  <div className="flex flex-wrap gap-4 mt-4">
+                    {files.map((file) => (
+                      <div key={file.name} className="relative">
+                        <img src={file.preview} alt={file.name} className="w-20 h-20 object-cover rounded-md" />
+                        <button 
+                          className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1" 
+                          onClick={() => removeImage(file.name)}
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <Button type="submit" className="w-full bg-[#6B7CFF] hover:bg-[#5A6AE6] text-white">
                   Send Message
                 </Button>
@@ -78,6 +131,6 @@ export default function Contact() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 

@@ -1,9 +1,10 @@
 "use client";
+
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import { ChevronRight, ChevronDown, Search, LightbulbIcon } from "lucide-react";
+import PropTypes from "prop-types";
 import Link from "next/link";
-import { ChevronRight, Star } from 'lucide-react';
-import PropTypes from 'prop-types';
+import Image from "next/image";
 import { CreateDocumentButton } from "../../../../components/create-documents-buttons";
 import {
   CustomSelect,
@@ -14,40 +15,96 @@ import {
 } from "../../../../components/ui/custom-select";
 import { SC } from "../../../../service/Api/serverCall";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Input } from "../../../../components/ui/input";
+import { getSubcategoriesByCategoryId } from "../../../../service/navigationService";
+import { Button } from "../../../../components/ui/button";
+
+
+// Separate DocumentItem component
+function DocumentItem({ title , id}) {
+  return (
+    <div className="p-6 hover:bg-gray-50">
+      <h2 className="mb-2 text-lg font-medium">
+        <Link href={`/app/pdf-builder/documents/${id}`} className="text-gray-900 hover:text-primary">
+          {title}
+        </Link>
+      </h2>
+    </div>
+  )
+}
+
 
 export default function SubcategoryPage({ params }) {
   const { category, subcategory } = params;
-  const [options, setOptions] = useState(null); // null indicates loading state
-  const [selectedId, setSelectedId] = useState(null); // Store selected ID
+  const [options, setOptions] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
   const searchParams = useSearchParams();
+  const isViewAll = searchParams.get("viewAll") === "true";
   const subcategoryId = searchParams.get("subcategoryId");
-  const router = useRouter(); // Initialize router
-  const [filteredOption, setFilteredOption] = useState(null); // Store the filtered result
+  const router = useRouter();
+  const [filteredOption, setFilteredOption] = useState(null);
+  const [faqOpen, setFaqOpen] = useState(null); // To track open FAQ items
+  const [activeSection, setActiveSection] = useState("Business Formation")
+  const [error, setError] = useState(null)
+  const [subcategories, setSubcategories] = useState([])
+  const [documents, setDocuments] = useState([])
 
+  
+    const [subLoading, setSubLoading] = useState(false)
+  
+  const categoryId = subcategory.replace(/-/g, " ");
+
+
+  console.log(documents , 'documents');
+  
+
+
+  
+  
+    useEffect(() => {
+      async function fetchSubcategories() {
+        if (isViewAll) {
+          // setSubLoading(true)
+          try {
+            const response = await getSubcategoriesByCategoryId(categoryId)
+            if (response && response.status) {
+              setSubcategories(response.data || [])
+            } else {
+              setSubcategories([])
+            }
+          } catch (err) {
+            console.error("Error loading subcategories:", err)
+            setSubcategories([])
+            setError("Failed to load subcategories")
+          }
+          setSubLoading(false)
+        } else {
+          setSubcategories([])
+        }
+      }
+      fetchSubcategories()
+    }, [categoryId])
 
 
   useEffect(() => {
     async function fetchOptions() {
       try {
         const response = await SC.getCall({ url: `documents/${subcategoryId}` });
-
         if (response.status) {
-          setOptions(response.data.data.length > 0 ? response.data.data : []); // Set empty array if no documents
-
-          setSelectedId(response.data.data[0]?._id)
-
+          setOptions(response.data.data.length > 0 ? response.data.data : []);
+          setSelectedId(response.data.data[0]?._id);
         } else {
           console.error("Failed to fetch options:", response.message);
-          setOptions([]); // Ensure empty state if there's an error
+          setOptions([]);
         }
       } catch (error) {
         console.error("Error fetching options:", error);
-        setOptions([]); // Handle network errors gracefully
+        setOptions([]);
       }
     }
 
     if (subcategoryId) {
-      setOptions(null); // Reset to loading state on subcategory change
+      setOptions(null);
       fetchOptions();
     }
   }, [subcategoryId]);
@@ -63,30 +120,111 @@ export default function SubcategoryPage({ params }) {
   useEffect(() => {
     if (options && selectedId) {
       const selectedOption = options.find((option) => option._id === selectedId);
-      setFilteredOption(selectedOption || null); // Set null if not found
+      setFilteredOption(selectedOption || null);
     }
-  }, [selectedId, options]); // Runs when selectedId or options change
+  }, [selectedId, options]);
+
+  // FAQ Data
+  const faqItems = [
+    {
+      question: "What is a lease agreement?",
+      answer: "A lease agreement is a contract between a landlord and tenant outlining the rental terms for a property."
+    },
+    {
+      question: "Can I edit my lease agreement template?",
+      answer: "Yes! Our templates are customizable. You can fill in details and make necessary changes before finalizing."
+    },
+    {
+      question: "Is this lease agreement legally binding?",
+      answer: "Yes, once signed by both parties, it becomes legally enforceable."
+    },
+    {
+      question: "Do I need a lawyer to create a lease agreement?",
+      answer: "Not necessarily. Our templates are designed to be legally sound, but you may consult a lawyer for additional modifications."
+    },
+  ];
 
 
   
+  useEffect(() => {
+    async function fetchSDocuments() {
+      if (isViewAll) {
+        // setSubLoading(true)
+        try {
+          const response = await SC.getCall({ url: `documents/${activeSection.id}` });
+          if (response && response.status) {
+            setDocuments(response.data.data || [])
+          } else {
+            setDocuments([])
+          }
+        } catch (err) {
+          console.error("Error loading Documents:", err)
+          setDocuments([])
+          setError("Failed to load Documents")
+        }
+        setSubLoading(false)
+      } else {
+        setDocuments([])
+      }
+    }
+    fetchSDocuments()
+  }, [activeSection])
+
+
+
+
+
   return (
+    <>
+      {/* Header */}
+      {/* <header className="bg-gray-900 text-white p-4 flex justify-center items-center">
+        <div className="flex items-center gap-4">
+          <p>Would you like to continue working on your Employee Non-Disclosure Agreement?</p>
+          <Button className="bg-indigo-500 hover:bg-indigo-600">Continue Editing</Button>
+        </div>
+      </header> */}
+
+      {/* Main Content */}
+      {isViewAll && (
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="py-12 px-4 md:px-8 max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div>
+            <h1 className="text-4xl font-bold text-gray-800 mb-4">
+  {category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()}: Legal Documents & Contracts
+</h1>
+              <p className="text-gray-600 text-lg mb-4">Make Your Legal Document in Minutes.</p>
+            </div>
+            <div className="flex justify-center md:justify-end">
+              <Image
+                src="/placeholder.svg?height=200&width=200"
+                alt="Document illustration"
+                width={200}
+                height={200}
+                className="text-blue-200"
+              />
+            </div>
+          </div>
+        </section>
+        </main>)}
     <div className="max-w-[1400px] mx-auto px-6 py-8">
-      {/* Breadcrumb */}
-      {/* <nav className="flex items-center gap-1 text-sm text-gray-500 mb-12">
-        <Link href="/" className="hover:text-gray-900 cursor-pointer">
-          LegalTemplates
-        </Link>
-        <ChevronRight className="h-3 w-3" />
-        <Link href="/real-estate" className="hover:text-gray-900 cursor-pointer">
-          Real Estate
-        </Link>
-        <ChevronRight className="h-3 w-3" />
-        <Link href={`/real-estate/${category}`} className="hover:text-gray-900 cursor-pointer">
-          {category.replace(/-/g, " ")}
-        </Link>
-        <ChevronRight className="h-3 w-3" />
-        <span>{subcategory.replace(/-/g, " ")}</span>
-      </nav> */}
+
+      {!isViewAll && (
+        <>
+
+          {/* Breadcrumb */}
+      <nav className="flex items-center gap-1 text-sm text-gray-500 mb-12">
+      <Link href="/" className="hover:text-gray-900 cursor-pointer">
+        LegalTemplates
+      </Link>
+      <ChevronRight className="h-3 w-3" />
+      <Link href={`/real-estate/${category}`} className="hover:text-gray-900 cursor-pointer">
+        {category.replace(/-/g, " ")}
+      </Link>
+      <ChevronRight className="h-3 w-3" />
+      <span>{subcategory.replace(/-/g, " ")}</span>
+    </nav>
 
       <div className="grid md:grid-cols-[1fr,400px] gap-16">
         <div className="space-y-8">
@@ -95,13 +233,13 @@ export default function SubcategoryPage({ params }) {
               {subcategory.replace(/-/g, " ")} Templates
             </h1>
             <p className="text-xl text-gray-600">
-              Use our {subcategory.replace(/-/g, " ")} to manage your {category.replace(/-/g, " ")} property.
+              Use our {subcategory.replace(/-/g, " ")} templates to manage your {category.replace(/-/g, " ")} property.
             </p>
           </div>
 
           <div className="space-y-4">
             <div className="flex gap-4">
-              <CustomSelect value={selectedId || null} onValueChange={(value) => setSelectedId(value)} >
+              <CustomSelect value={selectedId || null} onValueChange={(value) => setSelectedId(value)}>
                 <CustomSelectTrigger className="w-full">
                   <CustomSelectValue placeholder="Select a Template" />
                 </CustomSelectTrigger>
@@ -120,33 +258,36 @@ export default function SubcategoryPage({ params }) {
                 </CustomSelectContent>
               </CustomSelect>
               <CreateDocumentButton onClick={handleCreateDocument} />
+              
             </div>
-          </div>
-          {/* 
-          <div className="space-y-2">
-            <p className="text-sm text-gray-500">Updated August 12, 2024</p>
-            <p className="text-sm text-gray-500">
-              Written by{" "}
-              <a href="#" className="text-[#4b62f9] hover:underline">
-                Jana Freer
-              </a>{" "}
-              | Reviewed by{" "}
-              <a href="#" className="text-[#4b62f9] hover:underline">
-                Susan Chai, Esq.
-              </a>
-            </p>
-          </div> */}
 
-          <div>
-            <p className="text-gray-600 leading-relaxed">
-              A <span className="text-gray-900">{subcategory.replace(/-/g, " ")}</span> is a legally binding contract that outlines the obligations and rights of the
-              parties involved. It establishes the terms of the agreement and helps you avoid disputes and address issues when they arise.
-            </p>
+
+
+              {/* Frequently Asked Questions Section */}
+      <div style={{marginTop: " 100px"}}>
+        <h2 className="text-2xl font-bold text-gray-900">Frequently Asked Questions</h2>
+        <div className="mt-4 space-y-4">
+          {faqItems.map((faq, index) => (
+            <div key={index} className="border-b border-gray-300">
+              <button
+                className="w-full flex justify-between items-center py-3 text-lg text-gray-800 font-medium focus:outline-none"
+                onClick={() => setFaqOpen(faqOpen === index ? null : index)}
+              >
+                {faq.question}
+                <ChevronDown className={`h-5 w-5 transform transition-transform ${faqOpen === index ? "rotate-180" : ""}`} />
+              </button>
+              {faqOpen === index && (
+                <p className="pb-3 text-gray-600">{faq.answer}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
           </div>
         </div>
 
-        {
-          filteredOption  && <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        {filteredOption && (
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="p-6 space-y-6">
               <Image
                 src={`https://legaldocs.unibyts.com/storage/${filteredOption?.image}`}
@@ -156,24 +297,81 @@ export default function SubcategoryPage({ params }) {
                 className="w-full rounded-lg border border-gray-200"
               />
               <CreateDocumentButton fullWidth onClick={handleCreateDocument} />
-              {/* <div className="flex items-center justify-between pt-2">
-      <div className="flex items-center gap-2">
-        <span className="text-2xl font-semibold text-gray-900">4.8</span>
-        <div className="flex gap-0.5">
-          {[...Array(5)].map((_, i) => (
-            <Star key={i} className="w-5 h-5 fill-[#4b62f9] text-[#4b62f9]" />
-          ))}
-        </div>
-        <span className="text-sm text-gray-500">29,272 Ratings</span>
-      </div>
-      <div className="text-sm text-gray-500">409,178 Downloads</div>
-    </div> */}
             </div>
           </div>
-        }
+        )}
+      </div>  </>)}
 
-      </div>
+
+      {isViewAll && (
+  <div className="flex min-h-screen flex-col md:flex-row">
+    {/* Sidebar Navigation */}
+    <aside className="w-full border-r md:w-64">
+      <nav className="flex flex-col">
+        {subLoading ? (
+          <p className="p-4 text-gray-600">Loading...</p>
+        ) : subcategories.length > 0 ? (
+          subcategories.map((sub, index) => (
+            <button
+              key={`nav-${index}`}
+              onClick={() => setActiveSection({ name: sub.name, id: sub._id })}
+              className={`border-l-4 px-6 py-4 font-medium text-left ${
+                activeSection.name === sub.name
+                  ? "border-primary text-primary"
+                  : "border-transparent text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              {sub.name}
+            </button>
+          ))
+        ) : (
+          <p className="p-4 text-gray-600">No subcategories available.</p>
+        )}
+      </nav>
+    </aside>
+
+    {/* Main Content */}
+    {/* Main Content */}
+<main className="flex-1 p-6">
+  {/* Search Bar */}
+  <div className="mb-6">
+    <div className="relative">
+      <Input type="text" placeholder="Search documents..." className="w-full pl-10" />
+      <Search className="absolute left-3 top-3 h-5 w-5 text-gray-500" />
     </div>
+  </div>
+
+  {activeSection && (
+    <>
+      <div className="rounded-lg overflow-hidden border">
+        {/* Header */}
+        <div className="bg-[#f0f2fa] p-6">
+          <h1 className="text-2xl font-medium text-gray-600">{activeSection.name}</h1>
+        </div>
+
+        {/* Document List */}
+        {documents.length > 0 ? (
+          <div className="divide-y">
+            {documents.map((item, index) => (
+              <DocumentItem key={`doc-${index}`} title={item.name} id={item._id} />
+            ))}
+          </div>
+        ) : (
+          <div className="p-6 text-gray-600 text-center">
+            No documents available.
+          </div>
+        )}
+      </div>
+    </>
+  )}
+</main>
+
+  </div>
+)}
+
+      
+    </div>
+    </>
   );
 }
 

@@ -27,11 +27,16 @@ export default function UserDropdown() {
   useEffect(() => {
     if (isLoggedIn) {
       const data = getUserData();
+      console.log(data , "data");
+      
       setUserData(data);
     } else {
       setUserData(null);
     }
   }, [isLoggedIn]);
+
+
+
 
   const handleLogout = () => {
     clearUserData();

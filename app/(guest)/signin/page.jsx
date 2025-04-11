@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { signIn } from 'next-auth/react';
 import { useRouter } from "next/navigation"
 import { Button } from "../../../components/ui/button"
 import { Input } from "../../../components/ui/input"
@@ -16,6 +17,16 @@ export default function SignIn() {
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+
+  const handleSignInWithGoogle = async (providerId) => {
+    setIsLoading(true);
+    const res = await signIn(providerId, { callbackUrl: "/" });
+    setIsLoading(false);
+  
+    if (!res?.ok) {
+      setError("Sign-in failed. Please try again.");
+    }
+  };
 
   const handleSignIn = async (e) => {
     e.preventDefault()
@@ -89,6 +100,15 @@ export default function SignIn() {
           <Button type="submit" className="w-full bg-[#6B7CFF] hover:bg-[#5A6AE6]" disabled={isLoading}>
             {isLoading ? "Signing in..." : "Sign in"}
           </Button>
+
+          <Button
+              type="button"
+              className="w-full bg-blue-500 text-white"
+              onClick={() => handleSignInWithGoogle('google')}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Loading...' : 'Sign in with Google'}
+            </Button>
           <div className="text-center text-sm">
             Don't have an account?{" "}
             <Link href="/signup" className="text-[#6B7CFF] hover:underline">

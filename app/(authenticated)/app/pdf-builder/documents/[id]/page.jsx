@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { HelpCircle } from "lucide-react"
 import Sidebar from "../../../../../../components/sidebarPdf"
 import { Input } from "../../../../../../components/ui/input"
@@ -16,16 +16,13 @@ import { SC } from "../../../../../../service/Api/serverCall"
 import { MultipleEntryListField } from "../../../../../../components/MultipleEntryListField"
 
 export default function DynamicForm({ params }) {
-
   const { toast } = useToast()
   const router = useRouter()
-
 
   // const routeparam = new URLSearchParams(window.location.search);
   // const selectedId = routeparam.get("selectedId");
 
   const selectedId = params.id
-
 
   const [documentData, setDocumentData] = useState(null)
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
@@ -286,7 +283,6 @@ export default function DynamicForm({ params }) {
   }
 
   const renderField = (field) => {
-    
     switch (field.type) {
       case "textField":
         return (
@@ -355,15 +351,15 @@ export default function DynamicForm({ params }) {
             ))}
           </div>
         )
-        case "multipleEntryList":
-          return (
-            <MultipleEntryListField
-              key={field.uniqueKeyName}
-              field={field}
-              value={formData[field.uniqueKeyName] || []}
-              onChange={(value) => handleInputChange(field.uniqueKeyName, value)}
-            />
-          )
+      case "multipleEntryList":
+        return (
+          <MultipleEntryListField
+            key={field.uniqueKeyName}
+            field={field}
+            value={formData[field.uniqueKeyName] || []}
+            onChange={(value) => handleInputChange(field.uniqueKeyName, value)}
+          />
+        )
       default:
         return <div key={field.uniqueKeyName}>Unsupported field type: {field.type}</div>
     }
@@ -396,10 +392,8 @@ export default function DynamicForm({ params }) {
     (completedSteps.length / documentData.reduce((acc, section) => acc + section.subsections.length, 0)) * 100,
   )
 
-  
-
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-[calc(100vh-9rem)] bg-gray-50 overflow-hidden">
       <Sidebar
         steps={documentData.map((section, index) => ({
           id: index,
@@ -417,10 +411,10 @@ export default function DynamicForm({ params }) {
         onSubsectionSelect={handleSubsectionSelect}
         onPreview={handlePreview}
         progress={progress}
-        docName = {docName}
+        docName={docName}
       />
 
-      <main className="flex-1 p-4 md:p-8 overflow-x-hidden">
+      <main className="flex-1 p-4 md:p-8 overflow-y-auto h-screen">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col lg:flex-row gap-8">
             <div className="w-full lg:w-2/3">
@@ -455,7 +449,7 @@ export default function DynamicForm({ params }) {
                   </div>
                 </div>
               ) : (
-                <div className="w-full">
+                <div className="w-full max-h-[calc(100vh-120px)]">
                   <div className="mb-8">
                     <h2 className="text-2xl font-semibold mb-6">
                       {currentSection.name} - {currentSubsection.name}
@@ -482,22 +476,22 @@ export default function DynamicForm({ params }) {
                                     </Label>
                                     {/* {field.description && ( */}
                                     {true && (
-                                      <TooltipProvider >
+                                      <TooltipProvider>
                                         <Tooltip>
                                           <TooltipTrigger>
-                                          <button type="button"
-                                          
-                                          onClick={(e) => {
-                                            e.preventDefault() // Prevents default form submission
-                                            e.stopPropagation() // Stops the event from bubbling up
-                                          }}
-                                          >
-                                            <HelpCircle className="w-4 h-4 text-gray-400" />
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.preventDefault() // Prevents default form submission
+                                                e.stopPropagation() // Stops the event from bubbling up
+                                              }}
+                                            >
+                                              <HelpCircle className="w-4 h-4 text-gray-400" />
                                             </button>
                                           </TooltipTrigger>
                                           <TooltipContent>
                                             {/* <p className="w-64 text-sm">{field.description}</p> */}
-                                            <p className="w-64 text-sm">ahad sad  sda</p>
+                                            <p className="w-64 text-sm">ahad sad sda</p>
                                           </TooltipContent>
                                         </Tooltip>
                                       </TooltipProvider>

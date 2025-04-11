@@ -37,7 +37,7 @@
     "components/navigationService.js",
     "components/navigationService.js",
     "lib/AuthWrapper.jsx",
-    "app/layout.jsx",
+    "app/layout.jsx", "app/ClientLayout.jsx",
   ],
   "exclude": [
     "node_modules"

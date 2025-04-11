@@ -24,7 +24,7 @@ export default function Navigation() {
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [subcategories, setSubcategories] = useState([])
   const [isLoading, setIsLoading] = useState(true)
-  const [subLoading, setSubLoading] = useState(false) // New state for subcategories loading
+  const [subLoading, setSubLoading] = useState(false)
   const [error, setError] = useState(null)
   const router = useRouter()
 
@@ -51,7 +51,7 @@ export default function Navigation() {
   useEffect(() => {
     async function fetchSubcategories() {
       if (selectedCategory && selectedCategory._id) {
-        setSubLoading(true) // Start loading
+        setSubLoading(true)
         try {
           const response = await getSubcategoriesByCategoryId(selectedCategory._id)
           if (response && response.status) {
@@ -64,7 +64,7 @@ export default function Navigation() {
           setSubcategories([])
           setError("Failed to load subcategories")
         }
-        setSubLoading(false) // Stop loading
+        setSubLoading(false)
       } else {
         setSubcategories([])
       }
@@ -73,27 +73,18 @@ export default function Navigation() {
   }, [selectedCategory])
 
   const handleCategorySelect = (category) => {
-    setSelectedCategory(category) // Set category when hovering
+    setSelectedCategory(category)
   }
 
   const handleSubcategorySelect = (subcategory) => {
     if (subcategory && subcategory.name && selectedCategory && selectedCategory.name) {
-      const categorySlug = selectedCategory.name
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/\//g, ""); // Remove slashes
-  
-      const subcategorySlug = subcategory.name
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/\//g, ""); // Remove slashes
-  
-      // Manually construct the query string
+      const categorySlug = selectedCategory.name.toLowerCase().replace(/\s+/g, "-").replace(/\//g, "");
+      const subcategorySlug = subcategory.name.toLowerCase().replace(/\s+/g, "-").replace(/\//g, "");
       const queryString = `?subcategoryId=${subcategory._id}`;
-  
       router.push(`/${categorySlug}/${subcategorySlug}${queryString}`);
     }
-  };
+  }
+
   
 
   return (
@@ -116,15 +107,28 @@ export default function Navigation() {
                         {subLoading ? (
                           <div className="text-sm text-gray-500">Loading...</div>
                         ) : subcategories.length > 0 ? (
-                          subcategories.map((subcategory) => (
-                            <div
-                              key={subcategory._id}
-                              className="p-2 cursor-pointer hover:text-[#6B7CFF]"
-                              onClick={() => handleSubcategorySelect(subcategory)}
-                            >
-                              {subcategory.name}
-                            </div>
-                          ))
+                          <>
+                            {subcategories.slice(0, 5).map((subcategory) => (
+                              <div
+                                key={subcategory._id}
+                                className="p-2 cursor-pointer hover:text-[#6B7CFF]"
+                                onClick={() => handleSubcategorySelect(subcategory)}
+                              >
+                                {subcategory.name}
+                              </div>
+                            ))}
+                          {subcategories.length > 5 && (
+  <div
+    className="p-2 cursor-pointer text-[#6B7CFF] hover:underline"
+    onClick={() => {
+      const categorySlug = category.name.toLowerCase().replace(/\s+/g, "-").replace(/\//g, "")
+      router.push(`/${categorySlug}/${category._id}?viewAll=true`)
+    }}
+  >
+    View All
+  </div>
+)}
+                          </>
                         ) : (
                           <div className="text-sm text-gray-500">No subcategories available</div>
                         )}
@@ -139,9 +143,6 @@ export default function Navigation() {
             <Button variant="ghost" size="sm">
               <Search className="h-5 w-5" />
             </Button>
-            {/* <Button variant="ghost" size="sm" asChild>
-              <Link href="/support">Support</Link>
-            </Button> */}
             {isLoggedIn ? (
               <UserDropdown />
             ) : (
