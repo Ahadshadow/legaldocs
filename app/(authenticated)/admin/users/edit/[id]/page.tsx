@@ -2,16 +2,21 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Input } from "../../../../../components/ui/input"
-import { Button } from "../../../../../components/ui/button"
-import { Label } from "../../../../../components/ui/label"
-import { toast } from "../../../../../components/ui/use-toast"
-import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue  } from "../../../../../components/ui/select"
+// import { Input } from "../../../../../../components/ui/input"
+import { Button } from "../../../../../../components/ui/button"
+// import { Label } from "../../../../../../components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../../../components/ui/select"
+import { toast } from "../../../../../../components/ui/use-toast"
+import { Input } from "../../../../../../components/ui/input"
+import { Label } from "../../../../../../components/ui/label"
 
-export default function AddUser() {
+
+export default function EditUser({ params }: { params: { id: string } }) {
   const router = useRouter()
+  const { id } = params
+
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     firstName: "",
@@ -19,17 +24,84 @@ export default function AddUser() {
     displayName: "",
     email: "",
     phone: "",
-    type: "User",
-    password: "",
+    type: "",
     slug: "",
   })
 
-   async function createUser(data: any) {
-    console.log("Creating user:", data)
-    // Replace with actual API call
-    return { id: Date.now().toString(), ...data, slug: data.displayName.toLowerCase().replace(/\s+/g, "-") }
+
+ async function updateUser(id: string, data: any) {
+  console.log("Updating user:", id, data)
+  // Replace with actual API call
+  return { id, ...data }
+}
+
+  async function fetchUsers() {
+    // Mock data - replace with actual API call
+    return [
+      { id: "1", name: "Test User", slug: "test-user", email: "test@example.com", phone: "N/A", type: "Admin" },
+      {
+        id: "2",
+        name: "Abdulahad Tahir",
+        slug: "abdulahad-tahir",
+        email: "abdulahadtahir433@gmail.com",
+        phone: "+923044688919",
+        type: "User",
+      },
+      { id: "3", name: "ahad 2", slug: "ahad-2", email: "sahdowahad@gmail.com", phone: "03044688919", type: "User" },
+      {
+        id: "4",
+        name: "Masub Ghazali",
+        slug: "masub-ghazali",
+        email: "masubghazali26@gmail.com",
+        phone: "+923245658644",
+        type: "User",
+      },
+      { id: "5", name: "Andrej kutnar", slug: "andrej-kutnar", email: "andro822@gmail.com", phone: "+386", type: "User" },
+    ]
   }
   
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const users = await fetchUsers()
+        const user = users.find((u: any) => u.id === id)
+
+        if (user) {
+          // Split name into first and last name if needed
+          const nameParts = user.name.split(" ")
+          const firstName = nameParts[0] || ""
+          const lastName = nameParts.slice(1).join(" ") || ""
+
+          setFormData({
+            firstName,
+            lastName,
+            displayName: user.name,
+            email: user.email,
+            phone: user.phone,
+            type: user.type,
+            slug: user.slug,
+          })
+        } else {
+          toast({
+            title: "Error",
+            description: "User not found",
+            variant: "destructive",
+          })
+          router.push("/admin/users/list")
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load user",
+          variant: "destructive",
+        })
+      }
+    }
+
+    loadUser()
+  }, [id, router])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
     setFormData({
@@ -50,16 +122,22 @@ export default function AddUser() {
     setIsLoading(true)
 
     try {
-      await createUser(formData)
+      // Combine first and last name for the full name
+      const userData = {
+        ...formData,
+        name: `${formData.firstName} ${formData.lastName}`.trim(),
+      }
+
+      await updateUser(id, userData)
       toast({
         title: "Success",
-        description: "User created successfully",
+        description: "User updated successfully",
       })
       router.push("/admin/users/list")
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to create user",
+        description: "Failed to update user",
         variant: "destructive",
       })
     } finally {
@@ -70,7 +148,7 @@ export default function AddUser() {
   return (
     <div className="p-6">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-xl font-medium mb-6">Add User</h1>
+        <h1 className="text-xl font-medium mb-6">Edit User</h1>
 
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
@@ -119,9 +197,7 @@ export default function AddUser() {
               onChange={handleChange}
               required
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              URL-friendly version of the display name (auto-generated if left empty)
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">URL-friendly version of the display name</p>
           </div>
 
           <div>
@@ -162,22 +238,15 @@ export default function AddUser() {
             </Select>
           </div>
 
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="********"
-              className="mt-1"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          <div className="flex gap-4">
+            <Button type="submit" className="bg-black hover:bg-black/90" disabled={isLoading}>
+              {isLoading ? "Updating..." : "Update"}
+            </Button>
 
-          <Button type="submit" className="bg-black hover:bg-black/90" disabled={isLoading}>
-            {isLoading ? "Submitting..." : "Submit"}
-          </Button>
+            <Button type="button" variant="outline" onClick={() => router.push("/admin/users/list")}>
+              Cancel
+            </Button>
+          </div>
         </form>
       </div>
     </div>
