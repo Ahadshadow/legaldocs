@@ -36,7 +36,7 @@ export default function SignIn() {
     try {
       const response = await SC.postCall({
         url: "login",
-        data: { email, password },
+        data: { email: email.toLowerCase(), password },
       })
 
       if (response.data.token) {
@@ -45,6 +45,9 @@ export default function SignIn() {
           token: response.data.token,
           ...response.data.user, // Assuming the API returns additional user data
         }
+
+        console.log("userData", userData);
+        
         setUserData(userData)
         // Trigger a storage event to update other components
         window.dispatchEvent(new Event("storage"))

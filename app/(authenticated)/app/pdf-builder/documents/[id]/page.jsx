@@ -43,10 +43,19 @@ export default function DynamicForm({ params }) {
       setError(null)
       try {
         const response = await SC.getCall({ url: `document/${selectedId}` })
+
+        // console.log("response", response);/
+        
         if (response.status) {
-          setDocumentData(response.data.data.steps)
-          initializeFormData(response.data.data.steps)
-          initializeSubsectionInfo(response.data.data.steps)
+
+          const steps = response.data.data?.[0]?.steps
+
+
+          // console.log("steps", steps);
+          
+          setDocumentData(steps)
+          initializeFormData(steps)
+          initializeSubsectionInfo(steps)
           setdocName(response.data.data.name)
         } else {
           setError(response.message || "Failed to fetch document data")
@@ -82,21 +91,21 @@ export default function DynamicForm({ params }) {
 
   const initializeFormData = (data) => {
     const initialData = {}
-    data.forEach((section) => {
-      section.subsections.forEach((subsection) => {
-        subsection.question.forEach((field) => {
-          initialData[field.uniqueKeyName] = field.type === "checkboxes" ? [] : ""
-        })
-      })
-    })
+    // data?.forEach((section) => {
+    //   section.subsections?.forEach((subsection) => {
+    //     subsection.question?.forEach((field) => {
+    //       initialData[field.uniqueKeyName] = field.type === "checkboxes" ? [] : ""
+    //     })
+    //   })
+    // })
     setFormData(initialData)
   }
 
   const initializeSubsectionInfo = (data) => {
     const info = {}
-    data.forEach((section, sectionIndex) => {
+    data?.forEach((section, sectionIndex) => {
       info[sectionIndex] = {}
-      section.subsections.forEach((subsection, subsectionIndex) => {
+      section.subsections?.forEach((subsection, subsectionIndex) => {
         info[sectionIndex][subsectionIndex] = {
           totalQuestions: subsection.question.length,
           hiddenQuestions: 0,
@@ -143,8 +152,8 @@ export default function DynamicForm({ params }) {
   const updateHiddenQuestions = () => {
     const hidden = {}
     const updatedSubsectionInfo = { ...subsectionInfo }
-    documentData.forEach((section, sectionIndex) => {
-      section.subsections.forEach((subsection, subsectionIndex) => {
+    documentData?.forEach((section, sectionIndex) => {
+      section.subsections?.forEach((subsection, subsectionIndex) => {
         const hiddenQuestionsCount = subsection.question.filter(shouldHideQuestion).length
         if (!hidden[sectionIndex]) hidden[sectionIndex] = {}
         hidden[sectionIndex][subsectionIndex] = hiddenQuestionsCount
@@ -242,9 +251,9 @@ export default function DynamicForm({ params }) {
     try {
       const submissionData = JSON.parse(JSON.stringify(documentData))
 
-      submissionData.forEach((section) => {
-        section.subsections.forEach((subsection) => {
-          subsection.question.forEach((question) => {
+      submissionData?.forEach((section) => {
+        section.subsections?.forEach((subsection) => {
+          subsection.question?.forEach((question) => {
             const answer = formData[question.uniqueKeyName]
             if (answer !== undefined) {
               question.answer = answer

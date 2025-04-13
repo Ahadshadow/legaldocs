@@ -10,15 +10,18 @@ import { Button } from "../components/ui/button"
 const inter = Inter({ subsets: ["latin"] })
 
 export default function RootLayout({ children }) {
+
+
+
   const pathname = usePathname()
-  const hideNavigation = pathname === "/signin" || pathname.includes("user-panel")
+  const hideNavigation = pathname === "/signin" || pathname.includes("user-panel") 
 
   return (
     <html lang="en">
       <body className={inter.className}>
         <AuthWrapper>  
           {!hideNavigation && <Navigation />}
-          {!hideNavigation && (
+          {/* {!hideNavigation && (
             <header className="bg-gray-900 text-white p-4 flex justify-center items-center">
               <div className="flex items-center gap-4">
                 <p>Would you like to continue working on your Employee Non-Disclosure Agreement?</p>
@@ -27,7 +30,7 @@ export default function RootLayout({ children }) {
 </Button>
               </div>
             </header>
-          )}
+          )} */}
         
           {children}
         </AuthWrapper>

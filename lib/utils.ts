@@ -11,8 +11,12 @@ export const setUserData = (userData: { email: string; token: string; [key: stri
 
 export const getUserData = () => {
   if (typeof window !== "undefined") {
-    const userData = localStorage.getItem("userData");
-    return userData ? JSON.parse(userData) : null;
+    const userData = JSON.parse(localStorage.getItem("userData"))
+
+      const isAdmin = userData && userData.type === "Admin"
+      const isUser = userData && userData.type === "User"
+    
+    return userData ? { ...userData, isAdmin, isUser } : null;
   }
   return null;
 };

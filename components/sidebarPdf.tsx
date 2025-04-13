@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Menu, X, ChevronDown, ChevronRight } from "lucide-react"
-import { cn } from "../lib/utils"
+import { cn, getUserData } from "../lib/utils"
 import { Button } from "../components/ui/button"
 
 const SidebarStep = ({ step, currentStep, currentSubsection, completedSteps, onStepSelect, onSubsectionSelect, docName }) => {
@@ -101,6 +101,8 @@ export default function Sidebar({
   progress,
 }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const user = getUserData();
+
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -170,7 +172,7 @@ export default function Sidebar({
             </Button>
             <div className="pt-4 border-t">
               <div className="text-sm text-gray-600">Logged in as</div>
-              <div className="text-sm text-blue-600">user@example.com</div>
+              <div className="text-sm text-blue-600">{user?.email || ""}</div>
             </div>
           </div>
         </div>

@@ -27,16 +27,13 @@ export default function UserDropdown() {
   useEffect(() => {
     if (isLoggedIn) {
       const data = getUserData();
-      console.log(data , "data");
-      
+      console.log(data, "data");
+
       setUserData(data);
     } else {
       setUserData(null);
     }
   }, [isLoggedIn]);
-
-
-
 
   const handleLogout = () => {
     clearUserData();
@@ -63,21 +60,15 @@ export default function UserDropdown() {
             <p className="text-sm max-w-[160px] break-words">
               {userData.email}
             </p>{" "}
-            <Link href="/pricing" className="text-sm text-blue-600">
-              Upgrade Plan
-            </Link>
+            {userData?.isAdmin ? (
+              <Link href="/pricing" className="text-sm text-blue-600">
+                Upgrade Plan
+              </Link>
+            ) : null}
           </div>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <Link
-            href="app/user-panel/mydocs"
-            className="flex w-full items-center"
-          >
-            <Building2 className="mr-2 h-4 w-4" />
-            <span>Dashboard</span>
-          </Link>
-        </DropdownMenuItem>
+     
         {/* <DropdownMenuItem>
           <Link
             href="app/user-panel/settings/user"
@@ -87,15 +78,31 @@ export default function UserDropdown() {
             <span>User Settings</span>
           </Link>
         </DropdownMenuItem> */}
-        <DropdownMenuItem>
+        {!userData?.isAdmin ? (
+          <>
+          
+          <DropdownMenuItem>
           <Link
-            href="app/user-panel/billing"
+            href="app/user-panel/mydocs"
             className="flex w-full items-center"
           >
-            <Receipt className="mr-2 h-4 w-4" />
-            <span>Billing History</span>
+            <Building2 className="mr-2 h-4 w-4" />
+            <span>Dashboard</span>
           </Link>
         </DropdownMenuItem>
+        <DropdownMenuItem>
+            <Link
+              href="app/user-panel/billing"
+              className="flex w-full items-center"
+            >
+              <Receipt className="mr-2 h-4 w-4" />
+              <span>Billing History</span>
+            </Link>
+          </DropdownMenuItem>
+          </>
+         
+        ) : null}
+
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />

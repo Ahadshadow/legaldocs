@@ -16,10 +16,12 @@ import { usePathname } from "next/navigation"
 import UserDropdown from "../components/UserDropdown"
 import { useAuth } from "../hooks/useAuth"
 import { getCategories, getSubcategoriesByCategoryId } from "../service/navigationService"
+import { getUserData } from "../lib/utils"
 
 export default function Navigation() {
   const pathname = usePathname()
   const { isLoggedIn } = useAuth()
+  const userData = getUserData()
   const [categories, setCategories] = useState([])
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [subcategories, setSubcategories] = useState([])
@@ -85,7 +87,7 @@ export default function Navigation() {
     }
   }
 
-  
+
 
   return (
     <nav className="border-b">
@@ -95,49 +97,52 @@ export default function Navigation() {
             <Link href="/" className="text-xl font-semibold text-gray-900">
               legaltemplates.
             </Link>
-            <NavigationMenu className="hidden md:flex ml-10">
-              <NavigationMenuList>
-                {categories.map((category) => (
-                  <NavigationMenuItem key={category._id}>
-                    <NavigationMenuTrigger onMouseEnter={() => handleCategorySelect(category)}>
-                      {category.name}
-                    </NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <div className="p-4 w-64">
-                        {subLoading ? (
-                          <div className="text-sm text-gray-500">Loading...</div>
-                        ) : subcategories.length > 0 ? (
-                          <>
-                            {subcategories.slice(0, 5).map((subcategory) => (
-                              <div
-                                key={subcategory._id}
-                                className="p-2 cursor-pointer hover:text-[#6B7CFF]"
-                                onClick={() => handleSubcategorySelect(subcategory)}
-                              >
-                                {subcategory.name}
-                              </div>
-                            ))}
-                          {subcategories.length > 5 && (
-  <div
-    className="p-2 cursor-pointer text-[#6B7CFF] hover:underline"
-    onClick={() => {
-      const categorySlug = category.name.toLowerCase().replace(/\s+/g, "-").replace(/\//g, "")
-      router.push(`/${categorySlug}/${category._id}?viewAll=true`)
-    }}
-  >
-    View All
-  </div>
-)}
-                          </>
-                        ) : (
-                          <div className="text-sm text-gray-500">No subcategories available</div>
-                        )}
-                      </div>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-                ))}
-              </NavigationMenuList>
-            </NavigationMenu>
+            {
+              !userData?.isAdmin && <NavigationMenu className="hidden md:flex ml-10">
+                <NavigationMenuList>
+                  {categories.map((category) => (
+                    <NavigationMenuItem key={category._id}>
+                      <NavigationMenuTrigger onMouseEnter={() => handleCategorySelect(category)}>
+                        {category.name}
+                      </NavigationMenuTrigger>
+                      <NavigationMenuContent>
+                        <div className="p-4 w-64">
+                          {subLoading ? (
+                            <div className="text-sm text-gray-500">Loading...</div>
+                          ) : subcategories.length > 0 ? (
+                            <>
+                              {subcategories.slice(0, 5).map((subcategory) => (
+                                <div
+                                  key={subcategory._id}
+                                  className="p-2 cursor-pointer hover:text-[#6B7CFF]"
+                                  onClick={() => handleSubcategorySelect(subcategory)}
+                                >
+                                  {subcategory.name}
+                                </div>
+                              ))}
+                              {subcategories.length > 5 && (
+                                <div
+                                  className="p-2 cursor-pointer text-[#6B7CFF] hover:underline"
+                                  onClick={() => {
+                                    const categorySlug = category.name.toLowerCase().replace(/\s+/g, "-").replace(/\//g, "")
+                                    router.push(`/${categorySlug}/${category._id}?viewAll=true`)
+                                  }}
+                                >
+                                  View All
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <div className="text-sm text-gray-500">No subcategories available</div>
+                          )}
+                        </div>
+                      </NavigationMenuContent>
+                    </NavigationMenuItem>
+                  ))}
+                </NavigationMenuList>
+              </NavigationMenu>
+            }
+
           </div>
           <div className="flex items-center space-x-4">
             <Button variant="ghost" size="sm">
