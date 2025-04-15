@@ -163,7 +163,7 @@ export function QuestionsStepsPanel() {
           questions: subsection.questions.map((q) => ({
             label: q.label,
             faqQuestion: q.faqQuestion,
-                      faqAnswer: q.faqAnswer,
+            faqAnswer: q.faqAnswer,
             type: q.type,
             attribute: q.attribute,
             options: q.options,
