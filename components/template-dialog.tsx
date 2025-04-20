@@ -16,6 +16,7 @@ interface Category {
 interface Template {
   _id: string;
   name: string;
+  slug:string;
   description?: string;
   subcategory_ids?: string[];
   subcategory_names?: string[];
@@ -174,7 +175,7 @@ export function TemplateModal({ open, onClose }: TemplateModalProps) {
                   {/* Create Document Button (Bottom Left) */}
                   <CreateDocumentButton
                     className={"class"}
-                    onClick={() => handleCreateDocument(template._id)}
+                    onClick={() => handleCreateDocument(template.slug)}
                   />
                 </div>
               ))}

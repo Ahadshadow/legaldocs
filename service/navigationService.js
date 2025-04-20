@@ -22,7 +22,9 @@ export async function getSubcategoriesByCategoryId(categoryId) {
 
 export async function getTemplatesByCategory(categoryId) {
   try {
-    const response = await SC.getCall({ url: `allDocsOnCategoryBase/${categoryId}` });
+    const response = await SC.getCall({
+      url: `allDocsOnCategoryBase/${categoryId}`,
+    });
     return response.data;
   } catch (error) {
     console.error("Error fetching templates:", error);

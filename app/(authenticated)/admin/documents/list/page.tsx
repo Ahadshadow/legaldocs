@@ -1,23 +1,134 @@
 "use client"
 
-import DataTable, { type Column } from "../../../../../components/data-table"
-
-const documents = [
-  { name: "Personal Injury/ Insurance Payment Demand Letter", description: "", subCategories: "No Sub-Categories" },
-  { name: "Business Proposal", description: "", subCategories: "No Sub-Categories" },
-  { name: "Invoice", description: "", subCategories: "No Sub-Categories" },
-  { name: "Letter of Intent for General Property Purchase", description: "", subCategories: "No Sub-Categories" },
-  { name: "Vehicle Power of Attorney", description: "", subCategories: "No Sub-Categories" },
-  { name: "Cease and Desist – Harassment", description: "", subCategories: "No Sub-Categories" },
-  { name: "Cease and Desist – Defamation", description: "", subCategories: "No Sub-Categories" },
-  { name: "Photo Licensing (License) Agreement", description: "", subCategories: "No Sub-Categories" },
-  { name: "Photo Release Form", description: "", subCategories: "No Sub-Categories" },
-  { name: "Affidavit of Paternity", description: "", subCategories: "No Sub-Categories" },
-]
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+// import DataTable, { type Column } from "../../../../../components/data-table"
+import { Button } from "../../../../../components/ui/button"
+import { toast } from "../../../../../components/ui/use-toast"
+import { Plus } from "lucide-react"
+import DataTable , { type Column }from "../../../../../components/admin/data-table"
 
 export default function DocumentsList() {
+  const router = useRouter()
+  const [documents, setDocuments] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  async function fetchDocuments() {
+    // Mock data - replace with actual API call
+    return [
+      {
+        id: "1",
+        name: "Personal Injury/ Insurance Payment Demand Letter",
+        slug: "personal-injury-letter",
+        description: "",
+        subCategories: "No Sub-Categories",
+      },
+      {
+        id: "2",
+        name: "Business Proposal",
+        slug: "business-proposal",
+        description: "",
+        subCategories: "No Sub-Categories",
+      },
+      { id: "3", name: "Invoice", slug: "invoice", description: "", subCategories: "No Sub-Categories" },
+      {
+        id: "4",
+        name: "Letter of Intent for General Property Purchase",
+        slug: "letter-of-intent",
+        description: "",
+        subCategories: "No Sub-Categories",
+      },
+      {
+        id: "5",
+        name: "Vehicle Power of Attorney",
+        slug: "vehicle-power-of-attorney",
+        description: "",
+        subCategories: "No Sub-Categories",
+      },
+      {
+        id: "6",
+        name: "Cease and Desist – Harassment",
+        slug: "cease-and-desist-harassment",
+        description: "",
+        subCategories: "No Sub-Categories",
+      },
+      {
+        id: "7",
+        name: "Cease and Desist – Defamation",
+        slug: "cease-and-desist-defamation",
+        description: "",
+        subCategories: "No Sub-Categories",
+      },
+      {
+        id: "8",
+        name: "Photo Licensing (License) Agreement",
+        slug: "photo-licensing-agreement",
+        description: "",
+        subCategories: "No Sub-Categories",
+      },
+      {
+        id: "9",
+        name: "Photo Release Form",
+        slug: "photo-release-form",
+        description: "",
+        subCategories: "No Sub-Categories",
+      },
+      {
+        id: "10",
+        name: "Affidavit of Paternity",
+        slug: "affidavit-of-paternity",
+        description: "",
+        subCategories: "No Sub-Categories",
+      },
+    ]
+  }
+  
+
+  async function deleteDocument(id: string) {
+    console.log("Deleting document:", id)
+    // Replace with actual API call
+    return { success: true }
+  }
+  useEffect(() => {
+    const loadDocuments = async () => {
+      try {
+        const data = await fetchDocuments()
+        setDocuments(data)
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load documents",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadDocuments()
+  }, [])
+
+  const handleDelete = async (item: any) => {
+    if (window.confirm(`Are you sure you want to delete ${item.name}?`)) {
+      try {
+        await deleteDocument(item.id)
+        setDocuments(documents.filter((doc: any) => doc.id !== item.id))
+        toast({
+          title: "Success",
+          description: "Document deleted successfully",
+        })
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to delete document",
+          variant: "destructive",
+        })
+      }
+    }
+  }
+
   const columns: Column[] = [
     { key: "name", label: "NAME" },
+    { key: "slug", label: "SLUG" },
     { key: "description", label: "DESCRIPTION" },
     {
       key: "subCategories",
@@ -30,20 +141,36 @@ export default function DocumentsList() {
     {
       label: "Show",
       color: "cyan",
-      onClick: (item: any) => console.log("Show", item),
+      onClick: (item: any) => router.push(`/admin/documents/show/${item.id}`),
     },
     {
       label: "Edit",
       color: "orange",
-      onClick: (item: any) => console.log("Edit", item),
+      onClick: (item: any) => router.push(`/admin/documents/edit/${item.id}`),
     },
     {
       label: "Delete",
       color: "red",
-      onClick: (item: any) => console.log("Delete", item),
+      onClick: handleDelete,
     },
   ]
 
-  return <DataTable title="Documents List" columns={columns} data={documents} actions={actions} />
-}
+  if (isLoading) {
+    return <div className="p-6 text-center">Loading documents...</div>
+  }
 
+  return (
+    <div className="p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-xl font-medium">Documents List</h1>
+          <Button onClick={() => router.push("/admin/documents/add")} className="bg-black hover:bg-black/90">
+            <Plus className="mr-2 h-4 w-4" /> Add Document
+          </Button>
+        </div>
+
+        <DataTable title="Documents" columns={columns} data={documents} actions={actions} />
+      </div>
+    </div>
+  )
+}
