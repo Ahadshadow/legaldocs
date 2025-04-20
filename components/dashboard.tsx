@@ -26,7 +26,7 @@ export default function Dashboard({
 
   const pathname = usePathname();
 
-  const toggleSupportItems = (key:string) =>
+  const toggleSupportItems = (key: string) =>
     setSupportExpanded((oldState) => {
       return { ...oldState, [key]: !oldState[key] };
     });
@@ -387,7 +387,6 @@ export default function Dashboard({
               <div
                 className="flex items-center justify-between p-2 rounded-md hover:bg-muted cursor-pointer mt-1"
                 onClick={() => toggleSupportItems("subCategory")}
-
               >
                 <div className="flex items-center gap-2">
                   <LayoutGrid size={18} className="text-muted-foreground" />
@@ -442,13 +441,12 @@ export default function Dashboard({
                 </div>
               )}
             </div>
-            
+
             {/*SUPPORT Blog */}
             <div>
               <div
                 className="flex items-center justify-between p-2 rounded-md hover:bg-muted cursor-pointer mt-1"
                 onClick={() => toggleSupportItems("blog")}
-
               >
                 <div className="flex items-center gap-2">
                   <FileText size={18} className="text-muted-foreground" />

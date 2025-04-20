@@ -39,7 +39,7 @@ export default function RootLayout({ children }) {
           async
           defer
         ></script>
-        ;
+
         <AuthWrapper>
           {!hideNavigation && <Navigation />}
           <ContinueEditing />
@@ -54,7 +54,6 @@ export default function RootLayout({ children }) {
               </div>
             </header>
           )} */}
-
           {children}
         </AuthWrapper>
       </body>
