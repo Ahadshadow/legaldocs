@@ -52,7 +52,9 @@ export default function SearchSection() {
     setQuery(value);
     debouncedFetch(value);
   };
+
   const FieldIcon = loading ? Loader : Search;
+
   return (
     <section className="py-16">
       <div className="container mx-auto px-4">
@@ -68,8 +70,13 @@ export default function SearchSection() {
                 value={query}
                 onChange={handleInputChange}
               />
+
               <FieldIcon
-                className={`absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5`}
+                className={`absolute right-3 text-gray-400 h-5 w-5 ${
+                  loading
+                    ? "animate-spin w-4 h-4 top-1/4"
+                    : "-translate-y-1/2  top-1/2"
+                }`}
               />
             </div>
             <Button

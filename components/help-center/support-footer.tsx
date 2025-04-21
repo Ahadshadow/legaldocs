@@ -49,18 +49,10 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="#"
+                  href="/about"
                   className="hover:text-white text-white font-semibold text-sm"
                 >
                   About Us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="hover:text-white text-white font-semibold text-sm"
-                >
-                  Careers
                 </Link>
               </li>
             </ul>
@@ -74,26 +66,10 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="#"
+                  href="contact"
                   className="hover:text-white text-sm font-semibold"
                 >
                   Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="hover:text-white text-sm font-semibold"
-                >
-                  Chat
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="hover:text-white text-sm font-semibold"
-                >
-                  Email
                 </Link>
               </li>
             </ul>

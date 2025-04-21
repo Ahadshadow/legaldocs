@@ -17,6 +17,7 @@ import {
 } from "../../../components/ui/card";
 import { SC } from "../../../service/Api/serverCall";
 import { toast } from "sonner";
+import { GoogleLoginButton } from "@/components/google-login";
 
 export default function SignUp() {
   const [firstName, setFirstName] = useState("");
@@ -55,18 +56,15 @@ export default function SignUp() {
           first_name: firstName,
           last_name: lastName,
           display_name: displayName,
-          email:  email.toLowerCase(),
+          email: email.toLowerCase(),
           phone,
           password,
           password_confirmation: passwordConfirmation,
         },
       });
 
-
-      
       if (response.status === 201) {
-
-        toast.success(response.data?.message)
+        toast.success(response.data?.message);
         router.push("/signin");
       }
     } catch (error) {
@@ -178,7 +176,10 @@ export default function SignUp() {
                 terms of service
               </Link>{" "}
               and{" "}
-              <Link href="/privacy-policy" className="text-[#6B7CFF] hover:underline">
+              <Link
+                href="/privacy-policy"
+                className="text-[#6B7CFF] hover:underline"
+              >
                 privacy policy
               </Link>
             </label>
@@ -193,6 +194,8 @@ export default function SignUp() {
           >
             {isLoading ? "Creating account..." : "Create account"}
           </Button>
+
+          <GoogleLoginButton router={router} mode="singup" />
           <div className="text-center text-sm">
             Already have an account?{" "}
             <Link href="/signin" className="text-[#6B7CFF] hover:underline">

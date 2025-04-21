@@ -128,14 +128,6 @@ export default function SignIn(props) {
             {isLoading ? "Signing in..." : "Sign in"}
           </Button>
 
-          {/* <Button
-            type="button"
-            className="w-full bg-blue-500 text-white"
-            onClick={() => signIn("google")}
-            disabled={isLoading}
-          >
-            Sign in with Google
-          </Button> */}
           <GoogleLoginButton
             router={router}
             onSuccessfullLoginCB={props?.onSuccessfullLoginCB}

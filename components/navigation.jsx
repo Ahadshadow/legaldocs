@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "../components/ui/button";
-import { Search } from "lucide-react";
+import { HelpCircle, Search } from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -185,6 +185,14 @@ export default function Navigation() {
                 </Button>
               </>
             )}
+
+            <Link
+              title="Help center"
+              href="/help-center"
+              className="text-blue-600 hover:underline"
+            >
+              <HelpCircle className="inline-block" />
+            </Link>
           </div>
         </div>
       </div>

@@ -15,6 +15,13 @@ export default function DocumentSearch() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const toggleModal = (e) => {
+    setIsOpen(e);
+    if (!e) {
+      setKeyword("");
+      setResults([]);
+    }
+  };
   const fetchResults = async (text) => {
     setLoading(true);
     try {
@@ -44,7 +51,7 @@ export default function DocumentSearch() {
   }, [keyword]);
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog.Root open={isOpen} onOpenChange={toggleModal}>
       <Dialog.Trigger asChild>
         <Button variant="ghost" size="sm">
           <Search className="h-5 w-5" />

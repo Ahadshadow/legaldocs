@@ -536,7 +536,7 @@ export default function DynamicForm({ params }) {
   );
 
   return (
-    <div className="flex h-[calc(100vh-9rem)] bg-gray-50 overflow-hidden">
+    <div className="flex h-[calc(100vh-4.9rem)] bg-gray-50 overflow-hidden">
       <Sidebar
         steps={documentData.map((section, index) => ({
           id: index,

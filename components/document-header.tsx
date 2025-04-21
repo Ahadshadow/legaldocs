@@ -229,7 +229,7 @@ export function DocumentHeader({ submissionId, isEmailMatch }) {
 
       if (response) {
         toast.success("Document submitted successfully");
-        router.push("/app/user-panel/documents");
+        router.push("/app/user-panel/mydocs");
       } else {
         throw new Error("Failed to submit document");
       }
@@ -286,7 +286,11 @@ export function DocumentHeader({ submissionId, isEmailMatch }) {
           </Button>
         )}
         <Button disabled={submissionLoading} onClick={handleSubmit}>
-          {submissionLoading ? <Loader /> : "Submit"}
+          {submissionLoading ? (
+            <Loader className="animate-spin w-4 h-4" />
+          ) : (
+            "Submit"
+          )}
         </Button>
       </div>
     </div>
