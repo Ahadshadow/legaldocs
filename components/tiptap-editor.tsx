@@ -1,4 +1,3 @@
-// Version 462
 "use client"
 
 import { useEffect, useRef } from "react"
@@ -261,4 +260,4 @@ const globalStyles = `
   width: auto !important;
 }
 
-
+`
