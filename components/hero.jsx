@@ -1,4 +1,4 @@
-import DocumentGrid from "./document-grid"
+import DocumentGrid from "./document-grid";
 
 export default function Hero() {
   return (
@@ -15,6 +15,5 @@ export default function Hero() {
         </div>
       </div>
     </section>
-  )
+  );
 }
-

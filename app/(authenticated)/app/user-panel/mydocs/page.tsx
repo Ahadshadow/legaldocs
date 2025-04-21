@@ -138,16 +138,24 @@ export default function DocumentsPage() {
     }
   });
 
-  const handleSmartEditorClick = useCallback(
+  const handlePDFEditorClick = useCallback(
     (submissionId) => {
-      console.log("Smart Editor clicked for submission ID:", submissionId);
       router.push(
         `/app/document-editor/documents/${submissionId}`
       );
     },
     [router]
   );
-
+  
+  const handleSmartEditorClick = useCallback(
+    (submission) => {
+      router.push(
+        `/app/pdf-builder/documents/${submission.document.slug}?submission_id=${submission.submission_id}` 
+      );
+    },
+    [router]
+  );
+  
   return (
     <Layout>
       <GlobalStyles />
@@ -312,7 +320,15 @@ export default function DocumentsPage() {
                         <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuItem
                             onClick={() =>
-                              handleSmartEditorClick(submission.submission_id)
+                              handlePDFEditorClick(submission.submission_id)
+                            }
+                          >
+                            <Pencil className="mr-2 h-4 w-4" />
+                            <span>PDF Editor</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              handleSmartEditorClick(submission)
                             }
                           >
                             <Pencil className="mr-2 h-4 w-4" />

@@ -1,33 +1,40 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Input } from "../ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
-import { ChevronLeft, ChevronRight, Search } from "lucide-react"
-import { Button } from "../ui/button"
+import { useState } from "react";
+import { Input } from "../ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Button } from "../ui/button";
 
 export type Column = {
-  key: string
-  label: string
-  render?: (value: any, item: any) => React.ReactNode
-}
+  key: string;
+  label: string;
+  render?: (value: any, item: any) => React.ReactNode;
+};
 
 type Action = {
-  label: string
-  color: string
-  onClick: (item: any) => void
-}
+  label: string;
+  color: string;
+  onClick: (item: any) => void;
+};
 
 type DataTableProps = {
-  title: string
-  columns: Column[]
-  data: any[]
-  actions?: Action[]
-  showPagination?: boolean
-  itemsPerPage?: number
-}
+  title: string;
+  columns: Column[];
+  data: any[];
+  actions?: Action[];
+  showPagination?: boolean;
+  itemsPerPage?: number;
+};
 
 export default function DataTable({
   title,
@@ -37,37 +44,41 @@ export default function DataTable({
   showPagination = true,
   itemsPerPage = 10,
 }: DataTableProps) {
-  const [currentPage, setCurrentPage] = useState(1)
-  const [searchTerm, setSearchTerm] = useState("")
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Filter data based on search term
   const filteredData = data.filter((item) => {
-    return Object.values(item).some((value) => String(value).toLowerCase().includes(searchTerm.toLowerCase()))
-  })
+    return Object.values(item).some((value) =>
+      String(value).toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   // Calculate pagination
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedData = showPagination ? filteredData.slice(startIndex, startIndex + itemsPerPage) : filteredData
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedData = showPagination
+    ? filteredData.slice(startIndex, startIndex + itemsPerPage)
+    : filteredData;
 
   // Handle page change
   const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-  }
+    setCurrentPage(page);
+  };
 
   // Get color class based on action color
   const getColorClass = (color: string) => {
     switch (color) {
       case "red":
-        return "bg-red-500 hover:bg-red-600 text-white"
+        return "bg-red-500 hover:bg-red-600 text-white";
       case "orange":
-        return "bg-orange-500 hover:bg-orange-600 text-white"
+        return "bg-orange-500 hover:bg-orange-600 text-white";
       case "cyan":
-        return "bg-cyan-500 hover:bg-cyan-600 text-white"
+        return "bg-cyan-500 hover:bg-cyan-600 text-white";
       default:
-        return "bg-gray-500 hover:bg-gray-600 text-white"
+        return "bg-gray-500 hover:bg-gray-600 text-white";
     }
-  }
+  };
 
   return (
     <div className="p-6">
@@ -85,7 +96,7 @@ export default function DataTable({
           </div>
         </div>
 
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border rounded-lg overflow-hidden overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -94,13 +105,18 @@ export default function DataTable({
                     {column.label}
                   </TableHead>
                 ))}
-                {actions.length > 0 && <TableHead className="text-right">ACTIONS</TableHead>}
+                {actions.length > 0 && (
+                  <TableHead className="text-right">ACTIONS</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={columns.length + (actions.length > 0 ? 1 : 0)} className="text-center py-6">
+                  <TableCell
+                    colSpan={columns.length + (actions.length > 0 ? 1 : 0)}
+                    className="text-center py-6"
+                  >
                     No data found
                   </TableCell>
                 </TableRow>
@@ -109,7 +125,9 @@ export default function DataTable({
                   <TableRow key={index}>
                     {columns.map((column) => (
                       <TableCell key={column.key}>
-                        {column.render ? column.render(item[column.key], item) : item[column.key]}
+                        {column.render
+                          ? column.render(item[column.key], item)
+                          : item[column.key]}
                       </TableCell>
                     ))}
                     {actions.length > 0 && (
@@ -119,7 +137,9 @@ export default function DataTable({
                             <Button
                               key={actionIndex}
                               size="sm"
-                              className={`px-3 py-1 h-8 ${getColorClass(action.color)}`}
+                              className={`px-3 py-1 h-8 ${getColorClass(
+                                action.color
+                              )}`}
                               onClick={() => action.onClick(item)}
                             >
                               {action.label}
@@ -138,7 +158,8 @@ export default function DataTable({
         {showPagination && totalPages > 1 && (
           <div className="flex items-center justify-between mt-4">
             <div className="text-sm text-muted-foreground">
-              Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredData.length)} of{" "}
+              Showing {startIndex + 1} to{" "}
+              {Math.min(startIndex + itemsPerPage, filteredData.length)} of{" "}
               {filteredData.length} entries
             </div>
             <div className="flex items-center gap-1">
@@ -151,17 +172,19 @@ export default function DataTable({
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <Button
-                  key={page}
-                  variant={currentPage === page ? "default" : "outline"}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => handlePageChange(page)}
-                >
-                  {page}
-                </Button>
-              ))}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handlePageChange(page)}
+                  >
+                    {page}
+                  </Button>
+                )
+              )}
               <Button
                 variant="outline"
                 size="icon"
@@ -176,5 +199,5 @@ export default function DataTable({
         )}
       </div>
     </div>
-  )
+  );
 }

@@ -1,40 +1,50 @@
-"use client"
+"use client";
 
-import { Inter } from "next/font/google"
-import { usePathname, useRouter } from "next/navigation"
-import "./globals.css"
-import Navigation from "../components/navigation"
-import AuthWrapper from "../lib/AuthWrapper"
-import { useEffect } from "react"
+import { Inter } from "next/font/google";
+import { usePathname, useRouter } from "next/navigation";
+import "./globals.css";
+import Navigation from "../components/navigation";
+import ContinueEditing from "../components/continue-editing";
+import AuthWrapper from "../lib/AuthWrapper";
+import { useEffect } from "react";
 // import { useUser } from "../lib/useUser" // assuming this hook gives you the user info
-import { Button } from "../components/ui/button"
-import { getUserData } from "../lib/utils"
-
-const inter = Inter({ subsets: ["latin"] })
+import { Button } from "../components/ui/button";
+import { getUserData } from "../lib/utils";
+const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({ children }) {
-  const pathname = usePathname()
-  const router = useRouter()
-  const currentUser = getUserData() // You'll need to implement or already have this hook
+  const pathname = usePathname();
+  const router = useRouter();
+  const currentUser = getUserData(); // You'll need to implement or already have this hook
 
-  const hideNavigation = pathname === "/signin" || pathname.includes("user-panel") || pathname.split("/").includes("admin")
+  const hideNavigation =
+    pathname === "/signin" ||
+    pathname.includes("user-panel") ||
+    pathname.split("/").includes("admin");
 
   useEffect(() => {
-
     // if (currentUser?.isAdmin && pathname !== "/admin") {
     //   router.push("/admin")
     // } else
-     if (pathname.split("/").includes("admin")  && !currentUser?.isAdmin) {
-      router.push("/")
+    if (pathname.split("/").includes("admin") && !currentUser?.isAdmin) {
+      router.push("/");
     }
-  }, [currentUser, pathname, router])
+  }, [currentUser, pathname, router]);
 
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthWrapper>  
+        <script
+          src="https://accounts.google.com/gsi/client"
+          async
+          defer
+        ></script>
+
+        <AuthWrapper>
           {!hideNavigation && <Navigation />}
-           {/* {!hideNavigation && (
+          <ContinueEditing />
+
+          {/* {!hideNavigation && (
             <header className="bg-gray-900 text-white p-4 flex justify-center items-center">
               <div className="flex items-center gap-4">
                 <p>Would you like to continue working on your Employee Non-Disclosure Agreement?</p>
@@ -44,10 +54,9 @@ export default function RootLayout({ children }) {
               </div>
             </header>
           )} */}
-        
           {children}
         </AuthWrapper>
       </body>
     </html>
-  )
+  );
 }
