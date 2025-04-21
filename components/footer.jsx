@@ -1,10 +1,17 @@
-import { Button } from "../components/ui/button"
-import Link from "next/link"
-import Image from "next/image"
+"use client";
+import { Button } from "../components/ui/button";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 export default function Footer() {
+  const pathname = usePathname();
+  const hideNavigation = pathname.includes("help-center");
+
   return (
-    <footer className="bg-[#1E2B3A] text-white">
+    <footer
+      className={`bg-[#1E2B3A] text-white ${hideNavigation ? "hidden" : ""}`}
+    >
       <div className="container mx-auto px-4 py-12">
         <div className="grid md:grid-cols-2 gap-8 items-center mb-12">
           <div>
@@ -23,17 +30,43 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Company</h3>
             <ul className="space-y-2">
-              <li><Link href="/about" className="text-gray-400 hover:text-white">About</Link></li>
-              <li><Link href="/contact" className="text-gray-400 hover:text-white">Contact</Link></li>
-              <li><Link href="/blog" className="text-gray-400 hover:text-white">Blog</Link></li>
+              <li>
+                <Link href="/about" className="text-gray-400 hover:text-white">
+                  About
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/contact"
+                  className="text-gray-400 hover:text-white"
+                >
+                  Contact
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="text-gray-400 hover:text-white">
+                  Blog
+                </Link>
+              </li>
               {/* <li><Link href="#" className="text-gray-400 hover:text-white">Careers</Link></li> */}
             </ul>
           </div>
           <div>
             <h3 className="font-semibold mb-4">Legal</h3>
             <ul className="space-y-2">
-              <li><Link href="/privacy-policy" className="text-gray-400 hover:text-white">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="text-gray-400 hover:text-white">Terms of Service</Link></li>
+              <li>
+                <Link
+                  href="/privacy-policy"
+                  className="text-gray-400 hover:text-white"
+                >
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="text-gray-400 hover:text-white">
+                  Terms of Service
+                </Link>
+              </li>
               {/* <li><Link href="#" className="text-gray-400 hover:text-white">Cookie Policy</Link></li> */}
             </ul>
           </div>
@@ -65,12 +98,10 @@ export default function Footer() {
             </div>
             <div className="flex gap-4">
               <Link href="#" className="text-gray-400 hover:text-white">
-                <span className="sr-only">Facebook</span>
-                f
+                <span className="sr-only">Facebook</span>f
               </Link>
               <Link href="#" className="text-gray-400 hover:text-white">
-                <span className="sr-only">Twitter</span>
-                t
+                <span className="sr-only">Twitter</span>t
               </Link>
               <Link href="#" className="text-gray-400 hover:text-white">
                 <span className="sr-only">LinkedIn</span>
@@ -81,6 +112,5 @@ export default function Footer() {
         </div>
       </div>
     </footer>
-  )
+  );
 }
-

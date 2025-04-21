@@ -29,7 +29,7 @@ export const GoogleLoginButton = (props) => {
 
     if (res.data.token) {
       const userData = {
-        email: email.toLowerCase(),
+        email: res.data.user.email.toLowerCase(),
         token: res.data.token,
         ...res.data.user, // Assuming the API returns additional user data
       };

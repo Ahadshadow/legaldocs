@@ -20,6 +20,7 @@ export default function RootLayout({ children }) {
   const hideNavigation =
     pathname === "/signin" ||
     pathname.includes("user-panel") ||
+    pathname.includes("help-center") ||
     pathname.split("/").includes("admin");
 
   useEffect(() => {
