@@ -2,62 +2,75 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-// import DataTable from "../../../components/data-table"
 import { Button } from "../../../../../components/ui/button"
 import { toast } from "../../../../../components/ui/use-toast"
 import { Plus } from "lucide-react"
 import DataTable from "../../../../../components/admin/data-table"
+import { SC } from "../../../../../service/Api/serverCall"
+import { CustomPagination } from "../../../../../components/ui/custom-pagination"
 
 export default function SubcategoriesList() {
   const router = useRouter()
   const [subcategories, setSubcategories] = useState([])
   const [isLoading, setIsLoading] = useState(true)
-  async function fetchSubcategories() {
-    // Mock data - replace with actual API call
-    return [
-      { id: "1", name: "Corporate Filings", slug: "corporate-filings", category: "BUSINESS" },
-      { id: "2", name: "Employees / Contractors", slug: "employees-contractors", category: "BUSINESS" },
-      { id: "3", name: "Customers", slug: "customers", category: "BUSINESS" },
-      { id: "4", name: "Suppliers & Partners", slug: "suppliers-partners", category: "BUSINESS" },
-      { id: "5", name: "Internet", slug: "internet", category: "BUSINESS" },
-      { id: "6", name: "Mergers & Acquisitions", slug: "mergers-acquisitions", category: "BUSINESS" },
-      { id: "7", name: "Property Management", slug: "property-management", category: "BUSINESS" },
-      { id: "8", name: "Litigation", slug: "litigation", category: "BUSINESS" },
-      { id: "9", name: "Tax Forms", slug: "tax-forms", category: "BUSINESS" },
-      { id: "10", name: "Operations", slug: "operations", category: "BUSINESS" },
-    ]
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    perPage: 10,
+    total: 0,
+  })
+
+  useEffect(() => {
+    loadSubcategories(pagination.currentPage)
+  }, [])
+
+  const loadSubcategories = async (page = 1) => {
+    try {
+      setIsLoading(true)
+      const data = await SC.getCall({ url: `subcategories?page=${page}` })
+
+      // Extract pagination data from response
+      const { current_page, last_page, per_page, total, data: subcategoriesData } = data.data.data
+
+      // Update pagination state
+      setPagination({
+        currentPage: current_page,
+        totalPages: last_page,
+        perPage: per_page,
+        total: total,
+      })
+
+      // Map the data to include category name
+      const rawData = subcategoriesData.map((item: any) => ({
+        ...item,
+        category: item.category.name,
+      }))
+
+      setSubcategories(rawData)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load subcategories",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-
- async function deleteSubcategory(id: string) {
-  console.log("Deleting subcategory:", id)
-  // Replace with actual API call
-  return { success: true }
-}
-  useEffect(() => {
-    const loadSubcategories = async () => {
-      try {
-        const data = await fetchSubcategories()
-        setSubcategories(data)
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load subcategories",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadSubcategories()
-  }, [])
+  const handlePageChange = (page: number) => {
+    loadSubcategories(page)
+  }
 
   const handleDelete = async (item: any) => {
     if (window.confirm(`Are you sure you want to delete ${item.name}?`)) {
       try {
-        await deleteSubcategory(item.id)
-        setSubcategories(subcategories.filter((subcat: any) => subcat.id !== item.id))
+        await SC.deleteCall({
+          url: `subcategories/${item.slug}`,
+        })
+
+        // Reload the current page after deletion
+        loadSubcategories(pagination.currentPage)
+
         toast({
           title: "Success",
           description: "Subcategory deleted successfully",
@@ -82,7 +95,7 @@ export default function SubcategoriesList() {
     {
       label: "Edit",
       color: "orange",
-      onClick: (item: any) => router.push(`/admin/subcategories/edit/${item.id}`),
+      onClick: (item: any) => router.push(`/admin/subcategories/edit/${item.slug}`),
     },
     {
       label: "Delete",
@@ -91,7 +104,7 @@ export default function SubcategoriesList() {
     },
   ]
 
-  if (isLoading) {
+  if (isLoading && pagination.currentPage === 1) {
     return <div className="p-6 text-center">Loading subcategories...</div>
   }
 
@@ -105,7 +118,30 @@ export default function SubcategoriesList() {
           </Button>
         </div>
 
-        <DataTable title="Subcategories" columns={columns} data={subcategories} actions={actions} />
+        <DataTable
+          title="Subcategories"
+          columns={columns}
+          data={subcategories}
+          actions={actions}
+          // isLoading={isLoading}
+        />
+
+        {/* Pagination */}
+        <div className="mt-6">
+          <CustomPagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={handlePageChange}
+            showFirstLast={true}
+            maxPageButtons={5}
+          />
+        </div>
+
+        {/* Pagination summary */}
+        <div className="mt-2 text-sm text-gray-500 text-center">
+          Showing {(pagination.currentPage - 1) * pagination.perPage + 1} to{" "}
+          {Math.min(pagination.currentPage * pagination.perPage, pagination.total)} of {pagination.total} entries
+        </div>
       </div>
     </div>
   )

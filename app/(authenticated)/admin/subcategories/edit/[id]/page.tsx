@@ -9,75 +9,44 @@ import { Button } from "../../../../../../components/ui/button"
 import { Label } from "../../../../../../components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../../../components/ui/select"
 import { toast } from "../../../../../../components/ui/use-toast"
+import { SC } from "../../../../../../service/Api/serverCall"
 
 export default function EditSubcategory({ params }: { params: { id: string } }) {
   const router = useRouter()
   const { id } = params
 
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [categories, setCategories] = useState<any[]>([])
   const [formData, setFormData] = useState({
     name: "",
-    slug: "",
-    category: "",
+    category_id: "",
   })
-  async function fetchCategories() {
-    // Mock data - replace with actual API call
-    return [
-      { id: "1", name: "BUSINESS", slug: "business" },
-      { id: "2", name: "REAL ESTATE", slug: "real-estate" },
-      { id: "3", name: "PERSONAL", slug: "personal" },
-    ]
-  }
 
-  async function updateSubcategory(id: string, data: any) {
-    console.log("Updating subcategory:", id, data)
-    // Replace with actual API call
-    return { id, ...data }
-  }
-  async function fetchSubcategories() {
-    // Mock data - replace with actual API call
-    return [
-      { id: "1", name: "Corporate Filings", slug: "corporate-filings", category: "BUSINESS" },
-      { id: "2", name: "Employees / Contractors", slug: "employees-contractors", category: "BUSINESS" },
-      { id: "3", name: "Customers", slug: "customers", category: "BUSINESS" },
-      { id: "4", name: "Suppliers & Partners", slug: "suppliers-partners", category: "BUSINESS" },
-      { id: "5", name: "Internet", slug: "internet", category: "BUSINESS" },
-      { id: "6", name: "Mergers & Acquisitions", slug: "mergers-acquisitions", category: "BUSINESS" },
-      { id: "7", name: "Property Management", slug: "property-management", category: "BUSINESS" },
-      { id: "8", name: "Litigation", slug: "litigation", category: "BUSINESS" },
-      { id: "9", name: "Tax Forms", slug: "tax-forms", category: "BUSINESS" },
-      { id: "10", name: "Operations", slug: "operations", category: "BUSINESS" },
-    ]
-  }
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [categoriesData, subcategoriesData] = await Promise.all([fetchCategories(), fetchSubcategories()])
-
+        // Fetch categories first
+        const categoriesResponse = await SC.getCall({ url: "categories" })
+        const categoriesData = categoriesResponse.data.data.data || []
         setCategories(categoriesData)
 
-        const subcategory = subcategoriesData.find((subcat: any) => subcat.id === id)
-        if (subcategory) {
-          setFormData({
-            name: subcategory.name,
-            slug: subcategory.slug || "",
-            category: subcategory.category,
-          })
-        } else {
-          toast({
-            title: "Error",
-            description: "Subcategory not found",
-            variant: "destructive",
-          })
-          router.push("/admin/subcategories/list")
-        }
+        // Then fetch the subcategory details
+        const subcategoryResponse = await SC.getCall({ url: `subcategories/${id}` })
+        const subcategoryData = subcategoryResponse.data.data
+
+        setFormData({
+          name: subcategoryData.name,
+          category_id: subcategoryData.category_id,
+        })
       } catch (error) {
         toast({
           title: "Error",
           description: "Failed to load data",
           variant: "destructive",
         })
+        router.push("/admin/subcategories/list")
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -95,7 +64,7 @@ export default function EditSubcategory({ params }: { params: { id: string } }) 
   const handleCategoryChange = (value: string) => {
     setFormData({
       ...formData,
-      category: value,
+      category_id: value,
     })
   }
 
@@ -104,7 +73,11 @@ export default function EditSubcategory({ params }: { params: { id: string } }) 
     setIsLoading(true)
 
     try {
-      await updateSubcategory(id, formData)
+      await SC.putCall({
+        url: `subcategories/${id}`,
+        data: formData,
+      })
+
       toast({
         title: "Success",
         description: "Subcategory updated successfully",
@@ -113,12 +86,16 @@ export default function EditSubcategory({ params }: { params: { id: string } }) 
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update subcategory",
+        description: error.response?.data?.message || "Failed to update subcategory",
         variant: "destructive",
       })
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (isLoading) {
+    return <div className="p-6 text-center">Loading subcategory data...</div>
   }
 
   return (
@@ -128,14 +105,14 @@ export default function EditSubcategory({ params }: { params: { id: string } }) 
 
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <Label htmlFor="category">Category</Label>
-            <Select value={formData.category} onValueChange={handleCategoryChange} required>
+            <Label htmlFor="category_id">Category</Label>
+            <Select value={formData.category_id} onValueChange={handleCategoryChange} required>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.name}>
+                  <SelectItem key={category._id} value={category._id}>
                     {category.name}
                   </SelectItem>
                 ))}
@@ -153,19 +130,6 @@ export default function EditSubcategory({ params }: { params: { id: string } }) 
               onChange={handleChange}
               required
             />
-          </div>
-
-          <div>
-            <Label htmlFor="slug">Slug</Label>
-            <Input
-              id="slug"
-              placeholder="subcategory-slug"
-              className="mt-1"
-              value={formData.slug}
-              onChange={handleChange}
-              required
-            />
-            <p className="text-xs text-muted-foreground mt-1">URL-friendly version of the name</p>
           </div>
 
           <div className="flex gap-4">

@@ -9,6 +9,7 @@ import { Button } from "../../../../../components/ui/button"
 import { Label } from "../../../../../components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../../components/ui/select"
 import { toast } from "../../../../../components/ui/use-toast"
+import { SC } from "../../../../../service/Api/serverCall"
 
 export default function AddSubcategory() {
   const router = useRouter()
@@ -16,42 +17,37 @@ export default function AddSubcategory() {
   const [categories, setCategories] = useState<any[]>([])
   const [formData, setFormData] = useState({
     name: "",
-    slug: "",
-    category: "",
+    category_id: "",
   })
-  async function fetchCategories() {
-    // Mock data - replace with actual API call
-    return [
-      { id: "1", name: "BUSINESS", slug: "business" },
-      { id: "2", name: "REAL ESTATE", slug: "real-estate" },
-      { id: "3", name: "PERSONAL", slug: "personal" },
-    ]
-  }
+
 
   async function createSubcategory(data: any) {
     console.log("Creating subcategory:", data)
     // Replace with actual API call
-    return { id: Date.now().toString(), ...data, slug: data.name.toLowerCase().replace(/\s+/g, "-") }
+    return { id: Date.now().toString(), ...data,}
   }
   useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const data = await fetchCategories()
-        setCategories(data)
-        if (data.length > 0) {
-          setFormData((prev) => ({ ...prev, category: data[0].name }))
-        }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load categories",
-          variant: "destructive",
-        })
-      }
-    }
-
+  
     loadCategories()
   }, [])
+
+
+  const loadCategories = async () => {
+    try {
+
+      const data = await SC.getCall({url: "categories"})
+      setCategories(data.data.data.data)
+      // if (data.data.data.data.length > 0) {
+      //   setFormData((prev) => ({ ...prev, category: data[0].name }))
+      // }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load categories",
+        variant: "destructive",
+      })
+    }
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
@@ -64,7 +60,7 @@ export default function AddSubcategory() {
   const handleCategoryChange = (value: string) => {
     setFormData({
       ...formData,
-      category: value,
+      category_id: value,
     })
   }
 
@@ -73,16 +69,21 @@ export default function AddSubcategory() {
     setIsLoading(true)
 
     try {
-      await createSubcategory(formData)
+
+
+      const data = await SC.postCall({url: "subcategories", data: formData})
+      router.push("/admin/subcategories/list")
       toast({
         title: "Success",
-        description: "Subcategory created successfully",
+        description: data.data.message,
       })
       router.push("/admin/subcategories/list")
     } catch (error) {
+
+      
       toast({
         title: "Error",
-        description: "Failed to create subcategory",
+        description: error.response.data.message,
         variant: "destructive",
       })
     } finally {
@@ -98,13 +99,13 @@ export default function AddSubcategory() {
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
             <Label htmlFor="category">Category</Label>
-            <Select value={formData.category} onValueChange={handleCategoryChange} required>
+            <Select value={formData.category_id} onValueChange={handleCategoryChange} required>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.name}>
+                  <SelectItem key={category._id} value={category._id}>
                     {category.name}
                   </SelectItem>
                 ))}
@@ -124,20 +125,6 @@ export default function AddSubcategory() {
             />
           </div>
 
-          <div>
-            <Label htmlFor="slug">Slug</Label>
-            <Input
-              id="slug"
-              placeholder="subcategory-slug"
-              className="mt-1"
-              value={formData.slug}
-              onChange={handleChange}
-              required
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              URL-friendly version of the name (auto-generated if left empty)
-            </p>
-          </div>
 
           <Button type="submit" className="bg-black hover:bg-black/90" disabled={isLoading}>
             {isLoading ? "Submitting..." : "Submit"}

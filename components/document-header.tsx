@@ -99,6 +99,34 @@ export function DocumentHeader({ submissionId, isEmailMatch }) {
     pdf.save("document.pdf");
   }, []);
 
+    const handleSubmitAsAdmin = useCallback(async () => {
+      console.log("Submitting as admin")
+      const data = prepareForSubmission()
+      console.log("Complete data payload for API:", data)
+      try {
+        const response = await SC.postCall({
+          url: "admin-submission",
+          data: {
+            ...data,
+            content: data.content.replace(/\n/g, "\\n").replace(/\r/g, "\\r"),
+            email,
+            submission_id: submissionId,
+            is_admin: true,
+          },
+        })
+  
+        if (response) {
+          toast.success("Document submitted as admin successfully")
+          router.push("/app/admin/documents")
+        } else {
+          throw new Error("Failed to submit document as admin")
+        }
+      } catch (error) {
+        console.error("Error submitting document as admin:", error)
+        toast.error("Failed to submit document as admin")
+      }
+    }, [prepareForSubmission, email, submissionId, router])
+  
   const handleSave = useCallback(
     (format: "pdf" | "doc") => {
       console.log("handleSave called with format:", format);
@@ -275,8 +303,8 @@ export function DocumentHeader({ submissionId, isEmailMatch }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            {/* <DropdownMenuItem onClick={() => handleSave("pdf")}>Save as PDF</DropdownMenuItem> */}
-            {/* <DropdownMenuItem onClick={() => handleSave("doc")}>Save as DOC</DropdownMenuItem> */}
+            <DropdownMenuItem onClick={() => handleSave("pdf")}>Save as PDF</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleSave("doc")}>Save as DOC</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         {typeof window !== "undefined" && (
@@ -292,6 +320,15 @@ export function DocumentHeader({ submissionId, isEmailMatch }) {
             "Submit"
           )}
         </Button>
+        <div className="flex items-center gap-2">
+                  <Button
+                    onClick={handleSubmitAsAdmin}
+                    variant="outline"
+                    className="bg-red-50 hover:bg-red-100 text-red-600 border-red-200"
+                  >
+                    Submit as Admin
+                  </Button>
+                </div>
       </div>
     </div>
   );
