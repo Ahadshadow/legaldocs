@@ -1,63 +1,64 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Input } from "../../../../../components/ui/input"
-import { Button } from "../../../../../components/ui/button"
-import { Label } from "../../../../../components/ui/label"
-import { toast } from "../../../../../components/ui/use-toast"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Input } from "../../../../../components/ui/input";
+import { Button } from "../../../../../components/ui/button";
+import { Label } from "../../../../../components/ui/label";
+import { toast } from "../../../../../components/ui/use-toast";
+import { SC } from "../../../../../service/Api/serverCall";
+
 
 export default function AddCategory() {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    slug: "",
-  })
+    // slug: "",
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target
+    const { id, value } = e.target;
     setFormData({
       ...formData,
       [id]: value,
-    })
-  }
+    });
+  };
 
-  async function createCategory(data: any) {
-    console.log("Creating category:", data)
-    // Replace with actual API call
-    return { id: Date.now().toString(), ...data, slug: data.name.toLowerCase().replace(/\s+/g, "-") }
-  }
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+  const createCategory = async (e: any) => {
+    e.preventDefault();
+    setIsLoading(true);
 
     try {
-      await createCategory(formData)
+      const response = await SC.postCall({ url: "categories", data: formData });
+
+      console.log("response", response);
+
       toast({
         title: "Success",
         description: "Category created successfully",
-      })
-      router.push("/admin/categories/list")
+      });
+      router.push("/admin/categories/list");
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to create category",
+        description:
+          error.response?.data?.message || "Failed to create category",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="p-6">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-xl font-medium mb-6">Add Category</h1>
 
-        <form className="space-y-6" onSubmit={handleSubmit}>
+        <form className="space-y-6" onSubmit={createCategory}>
           <div>
             <Label htmlFor="name">Name</Label>
             <Input
@@ -70,26 +71,15 @@ export default function AddCategory() {
             />
           </div>
 
-          <div>
-            <Label htmlFor="slug">Slug</Label>
-            <Input
-              id="slug"
-              placeholder="category-slug"
-              className="mt-1"
-              value={formData.slug}
-              onChange={handleChange}
-              required
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              URL-friendly version of the name (auto-generated if left empty)
-            </p>
-          </div>
-
-          <Button type="submit" className="bg-black hover:bg-black/90" disabled={isLoading}>
+          <Button
+            type="submit"
+            className="bg-black hover:bg-black/90"
+            disabled={isLoading}
+          >
             {isLoading ? "Submitting..." : "Submit"}
           </Button>
         </form>
       </div>
     </div>
-  )
+  );
 }
