@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
 import { Plus, Trash2, Edit2, Check, Link } from "lucide-react"
@@ -678,6 +678,102 @@ STEP ${stepIndex + 1}: ${step.name}`)
     console.log("\n=== RAW DATA STRUCTURE ===")
     console.log(JSON.stringify(definition, null, 2))
   }
+
+
+  // / Add this function inside the QuestionsStepsPanel component
+  const debounce = (func: Function, wait: number) => {
+    let timeout: NodeJS.Timeout | null = null
+    return (...args: any[]) => {
+      if (timeout) clearTimeout(timeout)
+      timeout = setTimeout(() => func(...args), wait)
+    }
+  }
+
+  // Add this after the state declarations
+  const debouncedSave = useRef(
+    debounce((data: Step[]) => {
+      try {
+        localStorage.setItem("document-steps-definition", JSON.stringify(data))
+        console.log("Steps data saved to localStorage")
+      } catch (error) {
+        console.error("Error saving steps data to localStorage:", error)
+      }
+    }, 500),
+  ).current
+
+  const syncMarkupWithState = useCallback(() => {
+    if (!editor || definition.length === 0) return
+
+    // This is a basic implementation - you may need to enhance this
+    // to handle more complex scenarios like dependencies
+    definition.forEach((step) => {
+      step.subsections.forEach((subsection) => {
+        subsection.questions.forEach((question) => {
+          // Check if the question already exists in the document
+          const exists = editor.state.doc.descendants((node, pos) => {
+            if (node.type.name === "customQuestion" && node.attrs.attribute === question.attribute) {
+              return true
+            }
+            return false
+          })
+
+          // If it doesn't exist, add it to the document
+          if (!exists) {
+            if (question.dependence) {
+              const dependencyFormat = formatQuestionWithDependency(question)
+              editor.chain().insertContent(dependencyFormat).run()
+            } else {
+              editor.chain().setCustomQuestion(question.label, question.type).run()
+            }
+          }
+        })
+      })
+    })
+  }, [editor, definition])
+
+
+
+  // Add this useEffect after the other useEffect hooks
+  useEffect(() => {
+    try {
+      const savedData = localStorage.getItem("document-steps-definition")
+      if (savedData) {
+        const parsedData = JSON.parse(savedData)
+        setDefinition(parsedData)
+        console.log("Loaded steps data from localStorage")
+      }
+    } catch (error) {
+      console.error("Error loading steps data from localStorage:", error)
+    }
+  }, [])
+
+  // Add this useEffect after the other useEffect hooks
+  useEffect(() => {
+    if (definition.length > 0) {
+      debouncedSave(definition)
+    }
+  }, [definition, debouncedSave])
+
+  // Add this useEffect after the other useEffect hooks
+  useEffect(() => {
+    if (editor && definition.length > 0) {
+      syncMarkupWithState()
+    }
+  }, [editor, syncMarkupWithState])
+
+  // Add this useEffect after the other useEffect hooks
+  useEffect(() => {
+    return () => {
+      if (definition.length > 0) {
+        try {
+          localStorage.setItem("document-steps-definition", JSON.stringify(definition))
+          console.log("Steps data saved to localStorage on unmount")
+        } catch (error) {
+          console.error("Error saving steps data to localStorage on unmount:", error)
+        }
+      }
+    }
+  }, [definition])
 
   return (
     <div className="w-[450px] border-l bg-white flex flex-col h-full">
