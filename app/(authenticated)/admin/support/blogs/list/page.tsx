@@ -11,15 +11,22 @@ import {
   deleteBlog,
   getBlogs,
 } from "../../../../../../service/supportBlogService";
+import { CustomPagination } from "@/components/ui/custom-pagination";
 
 export default function BlogsList() {
   const router = useRouter();
   const [blogs, setBlogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    perPage: 10,
+    total: 0,
+  });
 
-  const loadBlogs = async () => {
+  const loadBlogs = async (page = 1) => {
     try {
-      const data = await getBlogs();
+      const data = await getBlogs(page);
       console.log(data.data);
       setBlogs(
         data.data?.map((item) => {
@@ -72,6 +79,11 @@ export default function BlogsList() {
     div.innerHTML = html;
     return div.textContent || div.innerText || "";
   };
+
+  const handlePageChange = (page: number) => {
+    loadBlogs(page);
+  };
+
   const columns = [
     { key: "question", label: "QUESTION" },
     {
@@ -144,6 +156,18 @@ export default function BlogsList() {
           data={blogs}
           actions={actions}
         />
+        {/* Pagination */}
+        <div className="mt-6">
+          <CustomPagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            perPage={pagination.perPage}
+            total={pagination.total}
+            onPageChange={handlePageChange}
+            showFirstLast={true}
+            maxPageButtons={5}
+          />
+        </div>
       </div>
     </div>
   );

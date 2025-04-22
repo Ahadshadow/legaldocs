@@ -11,15 +11,22 @@ import {
   deleteSubCategory,
   getSubCategories,
 } from "../../../../../../service/supportSubCategoryService";
+import { CustomPagination } from "@/components/ui/custom-pagination";
 
 export default function SubcategoriesList() {
   const router = useRouter();
   const [subcategories, setSubcategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    perPage: 10,
+    total: 0,
+  });
 
-  const loadSubcategories = async () => {
+  const loadSubcategories = async (page = 1) => {
     try {
-      const data = await getSubCategories();
+      const data = await getSubCategories(page);
       setSubcategories(
         data.data.map((item) => {
           return {
@@ -62,6 +69,9 @@ export default function SubcategoriesList() {
     }
   };
 
+  const handlePageChange = (page: number) => {
+    loadSubcategories(page);
+  };
   const columns = [
     { key: "name", label: "NAME" },
     { key: "category", label: "SUPPORT CATEGORY" },
@@ -105,6 +115,18 @@ export default function SubcategoriesList() {
           data={subcategories}
           actions={actions}
         />
+        {/* Pagination */}
+        <div className="mt-6">
+          <CustomPagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            perPage={pagination.perPage}
+            total={pagination.total}
+            onPageChange={handlePageChange}
+            showFirstLast={true}
+            maxPageButtons={5}
+          />
+        </div>
       </div>
     </div>
   );

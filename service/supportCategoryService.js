@@ -13,9 +13,12 @@ export async function createCategory(payload) {
   }
 }
 
-export async function getCategories() {
+export async function getCategories(page) {
   try {
-    const response = await SC.getCall({ url: "support-categories" });
+    const response = await SC.getCall({
+      url: "support-categories",
+      params: { page },
+    });
     return response.data;
   } catch (error) {
     console.error("Error fetching categories:", error);

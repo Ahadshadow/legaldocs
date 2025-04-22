@@ -10,15 +10,22 @@ import {
   deleteCategory,
   getCategories,
 } from "../../../../../../service/supportCategoryService";
+import { CustomPagination } from "@/components/ui/custom-pagination";
 
 export default function CategoriesList() {
   const router = useRouter();
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    perPage: 10,
+    total: 0,
+  });
 
-  const loadCategories = async () => {
+  const loadCategories = async (page = 1) => {
     try {
-      const response = await getCategories();
+      const response = await getCategories(page);
       setCategories(response.data || []);
     } catch (error) {
       toast({
@@ -53,7 +60,9 @@ export default function CategoriesList() {
       }
     }
   };
-
+  const handlePageChange = (page: number) => {
+    loadCategories(page);
+  };
   const columns = [
     { key: "name", label: "NAME" },
     { key: "slug", label: "SLUG" },
@@ -97,6 +106,19 @@ export default function CategoriesList() {
           actions={actions}
           showPagination={false}
         />
+
+        {/* Pagination */}
+        <div className="mt-6">
+          <CustomPagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            perPage={pagination.perPage}
+            total={pagination.total}
+            onPageChange={handlePageChange}
+            showFirstLast={true}
+            maxPageButtons={5}
+          />
+        </div>
       </div>
     </div>
   );

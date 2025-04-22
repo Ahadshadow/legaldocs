@@ -17,9 +17,14 @@ export async function createSubCategory(payload) {
 }
 
 // Read all
-export async function getSubCategories() {
+export async function getSubCategories(page) {
   try {
-    const response = await SC.getCall({ url: "support-sub-categories" });
+    const response = await SC.getCall({
+      url: "support-sub-categories",
+      params: {
+        page,
+      },
+    });
     return response.data;
   } catch (error) {
     console.error("Error fetching sub-categories:", error);

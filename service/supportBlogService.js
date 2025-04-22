@@ -18,9 +18,14 @@ export async function createBlog(payload) {
 }
 
 // Read all
-export async function getBlogs() {
+export async function getBlogs(page) {
   try {
-    const response = await SC.getCall({ url: "support-blogs" });
+    const response = await SC.getCall({
+      url: "support-blogs",
+      params: {
+        page,
+      },
+    });
     return response.data;
   } catch (error) {
     console.error("Error fetching blogs:", error);
