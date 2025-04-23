@@ -161,7 +161,7 @@ export default function Home() {
     }
 
 
-    console.log("templateData", templateData);
+    // console.log("templateData", templateData);
     
     try {
       // Use the same endpoint for both create and update
@@ -256,6 +256,9 @@ export default function Home() {
     )
   }
 
+  console.log("documentRaw", documentRaw);
+  
+
   return (
     <main className="flex h-screen overflow-hidden">
       {/* Sidebar with form builder */}
@@ -280,7 +283,7 @@ export default function Home() {
       {/* Main content area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex justify-between items-center p-4 border-b">
-          <h1 className="text-xl font-bold">Document Template Builder</h1>
+          <h1 className="text-xl font-bold">{documentRaw?.name || ""}</h1>
           <div className="flex gap-2">
             <Button onClick={handleSaveTemplate} variant="default" disabled={isSaving}>
               {isSaving ? (
