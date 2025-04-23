@@ -94,7 +94,7 @@ export default function Navigation() {
       router.push(`/${subcategory.category.slug}/${subcategory?.slug}`);
     }
   };
-
+  console.log("subcategories", subcategories);
   return (
     <nav className="border-b">
       <div className="container mx-auto px-4">
@@ -136,13 +136,7 @@ export default function Navigation() {
                                 <div
                                   className="p-2 cursor-pointer text-[#6B7CFF] hover:underline"
                                   onClick={() => {
-                                    const categorySlug = category.name
-                                      .toLowerCase()
-                                      .replace(/\s+/g, "-")
-                                      .replace(/\//g, "");
-                                    router.push(
-                                      `/${categorySlug}/${category._id}?viewAll=true`
-                                    );
+                                    router.push(`/${category.slug}/viewAll`);
                                   }}
                                 >
                                   View All
