@@ -207,8 +207,8 @@ export function FormBuilder({
     }
 
     // Remove all questions in this step from the document
-    formStructure.steps[stepIndex].subsections.forEach((subsection) => {
-      subsection.question.forEach((question) => {
+    formStructure.steps[stepIndex]?.subsections?.forEach((subsection) => {
+      subsection?.question?.forEach((question) => {
         removeFieldFromDocument(question.uniqueKeyName)
       })
     })
@@ -283,9 +283,9 @@ export function FormBuilder({
     ].question.filter((q) => q.id !== questionId)
 
     // Also remove any conditional logic that references this question
-    updatedSteps.forEach((step) => {
-      step.subsections.forEach((subsection) => {
-        subsection.question.forEach((question) => {
+    updatedSteps?.forEach((step) => {
+      step?.subsections?.forEach((subsection) => {
+        subsection?.question?.forEach((question) => {
           if (question.affectedQuestion) {
             question.affectedQuestion = question.affectedQuestion.filter((affected) => affected.id !== questionId)
           }
@@ -395,9 +395,9 @@ export function FormBuilder({
   const getAllQuestions = () => {
     const questions = []
 
-    formStructure.steps.forEach((step) => {
-      step.subsections.forEach((subsection) => {
-        subsection.question.forEach((question) => {
+    formStructure?.steps?.forEach((step) => {
+      step?.subsections?.forEach((subsection) => {
+        subsection?.question?.forEach((question) => {
           questions.push({
             id: question.id,
             uniqueKeyName: question.uniqueKeyName,
@@ -416,9 +416,9 @@ export function FormBuilder({
   const getAffectingQuestions = (questionId) => {
     const affectingQuestions = []
 
-    formStructure.steps.forEach((step) => {
-      step.subsections.forEach((subsection) => {
-        subsection.question.forEach((question) => {
+    formStructure?.steps?.forEach((step) => {
+      step?.subsections?.forEach((subsection) => {
+        subsection?.question?.forEach((question) => {
           if (question.affectedQuestion && question.affectedQuestion.some((q) => q.id === questionId)) {
             affectingQuestions.push({
               id: question.id,
@@ -813,11 +813,11 @@ export function FormBuilder({
 
                                   <div className="space-y-2">
                                     <div className="text-xs font-medium mb-1">Questions</div>
-                                    {subsection.question.length === 0 ? (
+                                    {subsection?.question?.length === 0 ? (
                                       <div className="text-xs text-muted-foreground py-2">No questions added</div>
                                     ) : (
                                       <div className="space-y-2">
-                                        {subsection.question.map((question) => {
+                                        {subsection?.question?.map((question) => {
                                           const affectingQuestions = getAffectingQuestions(question.id)
 
                                           return (
@@ -958,7 +958,7 @@ export function FormBuilder({
                       <div className="space-y-3">
                         {formStructure.steps.map((step) =>
                           step.subsections.map((subsection) =>
-                            subsection.question.map((question) => {
+                            subsection?.question?.map((question) => {
                               if (question.affectedQuestion && question.affectedQuestion.length > 0) {
                                 return question.affectedQuestion.map((affected, index) => {
                                   const affectedQuestion = getAllQuestions().find((q) => q.id === affected.id)

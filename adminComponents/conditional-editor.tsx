@@ -72,8 +72,8 @@ export function ConditionalEditor({ questions, addConditionalToDocument, generat
               <SelectValue placeholder="Choose a question" />
             </SelectTrigger>
             <SelectContent>
-              {questions.map((question) => (
-                <SelectItem key={question.uniqueKeyName} value={question.uniqueKeyName}>
+              {questions.map((question, index) => (
+                <SelectItem key={index} value={question.uniqueKeyName}>
                   {question.questionToAsk}
                 </SelectItem>
               ))}

@@ -482,9 +482,9 @@ export function DocumentEditor({
   const getAllQuestions = () => {
     const questions = []
 
-    formStructure.steps.forEach((step) => {
-      step.subsections.forEach((subsection) => {
-        subsection.question.forEach((question) => {
+    formStructure.steps?.forEach((step) => {
+      step?.subsections?.forEach((subsection) => {
+        subsection?.question?.forEach((question) => {
           questions.push({
             id: question.id,
             uniqueKeyName: question.uniqueKeyName,

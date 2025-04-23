@@ -6,566 +6,23 @@ import axios from "axios"
 import { FormBuilder } from "../../../../../../adminComponents/form-builder"
 import { DocumentEditor } from "../../../../../../adminComponents/document-editor"
 import { Button } from "../../../../../../adminComponents/ui/button"
-import { Download, Save, Loader2 } from "lucide-react"
+import { Save, Loader2 } from "lucide-react"
 import { useToast } from "../../../../../../adminComponents/ui/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../../../../adminComponents/ui/tabs"
 import { DocumentPreview } from "../../../../../../adminComponents/document-preview"
-import { Alert, AlertDescription, AlertTitle } from "../../../../../../adminComponents/ui/alert"
+import { SC } from "@/service/Api/serverCall"
 
 export default function Home() {
   const { toast } = useToast()
   const router = useRouter()
   const params = useParams()
   const templateId = params?.id as string
+  const [documentRaw, setDocumentRaw] = useState(null)
 
   // State for form structure and document content
-  const [formStructure, setFormStructure] = useState({
-    steps: [
-      {
-        name: "Contract Basics",
-        FAQQuestion: "What information is needed for the contract basics?",
-        FAQAnswer: "You'll need to provide the contract type, effective date, and parties involved.",
-        subsections: [
-          {
-            name: "Contract Type",
-            FAQQuestion: "What types of contracts can I create?",
-            FAQAnswer: "You can create service agreements, employment contracts, or sales contracts.",
-            question: [
-              {
-                id: "question_1",
-                uniqueKeyName: "contract_type",
-                questionToAsk: "What type of contract is this?",
-                type: "radioButton",
-                isRequired: true,
-                placeholder: "Select contract type",
-                selectionValue: "text",
-                list: [
-                  { name: "Service Agreement" },
-                  { name: "Employment Contract" },
-                  { name: "Sales Contract" }
-                ],
-                affectedQuestion: [
-                  {
-                    id: "question_4",
-                    value: ["Service Agreement"]
-                  },
-                  {
-                    id: "question_5",
-                    value: ["Employment Contract"]
-                  },
-                  {
-                    id: "question_6",
-                    value: ["Sales Contract"]
-                  }
-                ]
-              },
-              {
-                id: "question_2",
-                uniqueKeyName: "effective_date",
-                questionToAsk: "What is the effective date of this contract?",
-                type: "textField",
-                isRequired: true,
-                placeholder: "MM/DD/YYYY",
-                selectionValue: "date"
-              },
-              {
-                id: "question_3",
-                uniqueKeyName: "contract_duration",
-                questionToAsk: "What is the duration of this contract?",
-                type: "dropdownList",
-                isRequired: true,
-                placeholder: "Select duration",
-                list: [
-                  { name: "6 months" },
-                  { name: "1 year" },
-                  { name: "2 years" },
-                  { name: "3 years" },
-                  { name: "5 years" },
-                  { name: "Indefinite" }
-                ],
-                affectedQuestion: [
-                  {
-                    id: "question_7",
-                    value: ["Indefinite"]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            name: "Service Details",
-            FAQQuestion: "What service details are required?",
-            FAQAnswer: "You'll need to specify the service scope, deliverables, and timeline.",
-            question: [
-              {
-                id: "question_4",
-                uniqueKeyName: "service_scope",
-                questionToAsk: "What is the scope of services?",
-                type: "textField",
-                isRequired: true,
-                placeholder: "Describe the services to be provided",
-                selectionValue: "text"
-              }
-            ]
-          },
-          {
-            name: "Employment Details",
-            FAQQuestion: "What employment details are required?",
-            FAQAnswer: "You'll need to specify the position, salary, and benefits.",
-            question: [
-              {
-                id: "question_5",
-                uniqueKeyName: "position_title",
-                questionToAsk: "What is the position title?",
-                type: "textField",
-                isRequired: true,
-                placeholder: "Enter position title",
-                selectionValue: "text"
-              }
-            ]
-          },
-          {
-            name: "Sales Details",
-            FAQQuestion: "What sales details are required?",
-            FAQAnswer: "You'll need to specify the product, quantity, and price.",
-            question: [
-              {
-                id: "question_6",
-                uniqueKeyName: "product_description",
-                questionToAsk: "What is the product or service being sold?",
-                type: "textField",
-                isRequired: true,
-                placeholder: "Describe the product or service",
-                selectionValue: "text"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        name: "Parties Information",
-        FAQQuestion: "What information is needed about the parties?",
-        FAQAnswer: "You'll need to provide details about both parties involved in the contract.",
-        subsections: [
-          {
-            name: "First Party",
-            FAQQuestion: "What information is needed for the first party?",
-            FAQAnswer: "You'll need to provide the name, address, and contact information.",
-            question: [
-              {
-                id: "question_8",
-                uniqueKeyName: "party1_name",
-                questionToAsk: "What is the name of the first party?",
-                type: "textField",
-                isRequired: true,
-                placeholder: "Enter name",
-                selectionValue: "text"
-              },
-              {
-                id: "question_9",
-                uniqueKeyName: "party1_type",
-                questionToAsk: "What type of entity is the first party?",
-                type: "radioButton",
-                isRequired: true,
-                placeholder: "Select entity type",
-                list: [
-                  { name: "Individual" },
-                  { name: "Corporation" },
-                  { name: "LLC" },
-                  { name: "Partnership" }
-                ],
-                affectedQuestion: [
-                  {
-                    id: "question_10",
-                    value: ["Corporation", "LLC", "Partnership"]
-                  }
-                ]
-              },
-              {
-                id: "question_10",
-                uniqueKeyName: "party1_representative",
-                questionToAsk: "Who is the authorized representative?",
-                type: "textField",
-                isRequired: true,
-                placeholder: "Enter representative name",
-                selectionValue: "text"
-              }
-            ]
-          },
-          {
-            name: "Second Party",
-            FAQQuestion: "What information is needed for the second party?",
-            FAQAnswer: "You'll need to provide the name, address, and contact information.",
-            question: [
-              {
-                id: "question_11",
-                uniqueKeyName: "party2_name",
-                questionToAsk: "What is the name of the second party?",
-                type: "textField",
-                isRequired: true,
-                placeholder: "Enter name",
-                selectionValue: "text"
-              },
-              {
-                id: "question_12",
-                uniqueKeyName: "party2_type",
-                questionToAsk: "What type of entity is the second party?",
-                type: "radioButton",
-                isRequired: true,
-                placeholder: "Select entity type",
-                list: [
-                  { name: "Individual" },
-                  { name: "Corporation" },
-                  { name: "LLC" },
-                  { name: "Partnership" }
-                ],
-                affectedQuestion: [
-                  {
-                    id: "question_13",
-                    value: ["Corporation", "LLC", "Partnership"]
-                  }
-                ]
-              },
-              {
-                id: "question_13",
-                uniqueKeyName: "party2_representative",
-                questionToAsk: "Who is the authorized representative?",
-                type: "textField",
-                isRequired: true,
-                placeholder: "Enter representative name",
-                selectionValue: "text"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        name: "Payment Terms",
-        FAQQuestion: "What payment terms can be specified?",
-        FAQAnswer: "You can specify payment amount, schedule, and method.",
-        subsections: [
-          {
-            name: "Payment Details",
-            FAQQuestion: "What payment details are required?",
-            FAQAnswer: "You'll need to specify the payment amount, schedule, and method.",
-            question: [
-              {
-                id: "question_14",
-                uniqueKeyName: "payment_amount",
-                questionToAsk: "What is the payment amount?",
-                type: "textField",
-                isRequired: true,
-                placeholder: "Enter amount",
-                selectionValue: "number"
-              },
-              {
-                id: "question_15",
-                uniqueKeyName: "payment_currency",
-                questionToAsk: "What currency will be used?",
-                type: "dropdownList",
-                isRequired: true,
-                placeholder: "Select currency",
-                list: [
-                  { name: "USD" },
-                  { name: "EUR" },
-                  { name: "GBP" },
-                  { name: "CAD" },
-                  { name: "AUD" }
-                ]
-              },
-              {
-                id: "question_16",
-                uniqueKeyName: "payment_schedule",
-                questionToAsk: "What is the payment schedule?",
-                type: "radioButton",
-                isRequired: true,
-                placeholder: "Select payment schedule",
-                list: [
-                  { name: "One-time payment" },
-                  { name: "Monthly" },
-                  { name: "Quarterly" },
-                  { name: "Annually" },
-                  { name: "Custom schedule" }
-                ],
-                affectedQuestion: [
-                  {
-                    id: "question_17",
-                    value: ["Custom schedule"]
-                  }
-                ]
-              },
-              {
-                id: "question_17",
-                uniqueKeyName: "custom_payment_details",
-                questionToAsk: "Describe the custom payment schedule",
-                type: "textField",
-                isRequired: true,
-                placeholder: "Enter custom payment details",
-                selectionValue: "text"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        name: "Termination",
-        FAQQuestion: "What termination terms can be specified?",
-        FAQAnswer: "You can specify termination conditions, notice period, and consequences.",
-        subsections: [
-          {
-            name: "Termination Conditions",
-            FAQQuestion: "What termination conditions can be specified?",
-            FAQAnswer: "You can specify early termination options and notice periods.",
-            question: [
-              {
-                id: "question_7",
-                uniqueKeyName: "termination_clause",
-                questionToAsk: "Should the contract include an early termination clause?",
-                type: "radioButton",
-                isRequired: true,
-                placeholder: "Select option",
-                list: [
-                  { name: "Yes" },
-                  { name: "No" }
-                ],
-                affectedQuestion: [
-                  {
-                    id: "question_18",
-                    value: ["Yes"]
-                  }
-                ]
-              },
-              {
-                id: "question_18",
-                uniqueKeyName: "notice_period",
-                questionToAsk: "What is the notice period for early termination?",
-                type: "dropdownList",
-                isRequired: true,
-                placeholder: "Select notice period",
-                list: [
-                  { name: "7 days" },
-                  { name: "14 days" },
-                  { name: "30 days" },
-                  { name: "60 days" },
-                  { name: "90 days" }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        name: "Dispute Resolution",
-        FAQQuestion: "What dispute resolution methods can be specified?",
-        FAQAnswer: "You can specify mediation, arbitration, or litigation.",
-        subsections: [
-          {
-            name: "Resolution Method",
-            FAQQuestion: "What dispute resolution methods can be specified?",
-            FAQAnswer: "You can specify mediation, arbitration, or litigation.",
-            question: [
-              {
-                id: "question_19",
-                uniqueKeyName: "dispute_resolution",
-                questionToAsk: "How should disputes be resolved?",
-                type: "radioButton",
-                isRequired: true,
-                placeholder: "Select resolution method",
-                list: [
-                  { name: "Mediation" },
-                  { name: "Arbitration" },
-                  { name: "Litigation" }
-                ],
-                affectedQuestion: [
-                  {
-                    id: "question_20",
-                    value: ["Arbitration"]
-                  }
-                ]
-              },
-              {
-                id: "question_20",
-                uniqueKeyName: "arbitration_org",
-                questionToAsk: "Which arbitration organization should be used?",
-                type: "dropdownList",
-                isRequired: true,
-                placeholder: "Select arbitration organization",
-                list: [
-                  { name: "American Arbitration Association" },
-                  { name: "JAMS" },
-                  { name: "International Chamber of Commerce" },
-                  { name: "Other" }
-                ],
-                affectedQuestion: [
-                  {
-                    id: "question_21",
-                    value: ["Other"]
-                  }
-                ]
-              },
-              {
-                id: "question_21",
-                uniqueKeyName: "other_arbitration_org",
-                questionToAsk: "Specify the other arbitration organization",
-                type: "textField",
-                isRequired: true,
-                placeholder: "Enter organization name",
-                selectionValue: "text"
-              }
-            ]
-          }
-        ]
-      }
-    ],
-  })
+  const [formStructure, setFormStructure] = useState({ steps: [] })
 
-  const [documentContent, setDocumentContent] = useState(`<h1>LEGAL CONTRACT</h1>
-
-<p>This {{% contract_type | input | underscore %}} (the "Agreement") is made and entered into as of {{% effective_date | input | underscore %}} (the "Effective Date"), by and between:</p>
-
-<p><strong>{{% party1_name | input | underscore %}}</strong>, a 
-{% if party1_type == "Individual" %}
-an individual
-{% endif %}
-{% if party1_type == "Corporation" %}
-corporation organized under the laws of [State/Country], represented by {{% party1_representative | input | underscore %}}
-{% endif %}
-{% if party1_type == "LLC" %}
-limited liability company organized under the laws of [State/Country], represented by {{% party1_representative | input | underscore %}}
-{% endif %}
-{% if party1_type == "Partnership" %}
-partnership organized under the laws of [State/Country], represented by {{% party1_representative | input | underscore %}}
-{% endif %}
- (hereinafter referred to as the "First Party"),</p>
-
-<p>and</p>
-
-<p><strong>{{% party2_name | input | underscore %}}</strong>, a 
-{% if party2_type == "Individual" %}
-an individual
-{% endif %}
-{% if party2_type == "Corporation" %}
-corporation organized under the laws of [State/Country], represented by {{% party2_representative | input | underscore %}}
-{% endif %}
-{% if party2_type == "LLC" %}
-limited liability company organized under the laws of [State/Country], represented by {{% party2_representative | input | underscore %}}
-{% endif %}
-{% if party2_type == "Partnership" %}
-partnership organized under the laws of [State/Country], represented by {{% party2_representative | input | underscore %}}
-{% endif %}
- (hereinafter referred to as the "Second Party").</p>
-
-<p>The First Party and Second Party may be individually referred to as a "Party" and collectively as the "Parties."</p>
-
-<h2>1. TERM</h2>
-
-<p>This Agreement shall commence on the Effective Date and shall continue for a period of {{% contract_duration | input | underscore %}}, unless earlier terminated as provided herein.</p>
-
-{% if termination_clause == "Yes" %}
-<h2>2. TERMINATION</h2>
-
-<p>Either Party may terminate this Agreement prior to its expiration by providing written notice to the other Party at least {{% notice_period | input | underscore %}} in advance of the intended termination date.</p>
-{% endif %}
-
-{% if contract_type == "Service Agreement" %}
-<h2>3. SERVICES</h2>
-
-<p>The First Party agrees to provide the following services to the Second Party:</p>
-
-<p>{{% service_scope | input | underscore %}}</p>
-{% endif %}
-
-{% if contract_type == "Employment Contract" %}
-<h2>3. EMPLOYMENT</h2>
-
-<p>The First Party agrees to employ the Second Party in the position of {{% position_title | input | underscore %}}.</p>
-{% endif %}
-
-{% if contract_type == "Sales Contract" %}
-<h2>3. SALE OF GOODS</h2>
-
-<p>The First Party agrees to sell to the Second Party the following products:</p>
-
-<p>{{% product_description | input | underscore %}}</p>
-{% endif %}
-
-<h2>4. PAYMENT</h2>
-
-<p>The Second Party shall pay the First Party the amount of {{% payment_amount | input | underscore %}} {{% payment_currency | input | underscore %}} according to the following schedule:</p>
-
-{% if payment_schedule == "One-time payment" %}
-<p>Full payment shall be made within 30 days of the Effective Date.</p>
-{% endif %}
-
-{% if payment_schedule == "Monthly" %}
-<p>Payment shall be made in equal monthly installments, due on the first day of each month.</p>
-{% endif %}
-
-{% if payment_schedule == "Quarterly" %}
-<p>Payment shall be made in equal quarterly installments, due on the first day of each quarter.</p>
-{% endif %}
-
-{% if payment_schedule == "Annually" %}
-<p>Payment shall be made in equal annual installments, due on the anniversary of the Effective Date.</p>
-{% endif %}
-
-{% if payment_schedule == "Custom schedule" %}
-<p>{{% custom_payment_details | input | underscore %}}</p>
-{% endif %}
-
-<h2>5. DISPUTE RESOLUTION</h2>
-
-{% if dispute_resolution == "Mediation" %}
-<p>Any dispute arising out of or relating to this Agreement shall be resolved through mediation. The Parties agree to attempt in good faith to resolve any dispute through negotiation between the Parties. If the dispute cannot be resolved through negotiation, the Parties agree to engage a mutually agreed upon mediator.</p>
-{% endif %}
-
-{% if dispute_resolution == "Arbitration" %}
-<p>Any dispute arising out of or relating to this Agreement shall be resolved through binding arbitration administered by 
-{% if arbitration_org == "Other" %}
-{{% other_arbitration_org | input | underscore %}}
-{% else %}
-the {{% arbitration_org | input | underscore %}}
-{% endif %}
- in accordance with its applicable rules. The arbitration shall take place in [City, State/Country], and the language of the arbitration shall be English. The decision of the arbitrator shall be final and binding on the Parties.</p>
-{% endif %}
-
-{% if dispute_resolution == "Litigation" %}
-<p>Any dispute arising out of or relating to this Agreement shall be resolved through litigation in the courts of [Jurisdiction]. The Parties consent to the exclusive jurisdiction of such courts for the resolution of any such dispute.</p>
-{% endif %}
-
-<h2>6. GOVERNING LAW</h2>
-
-<p>This Agreement shall be governed by and construed in accordance with the laws of [Jurisdiction], without giving effect to any choice of law or conflict of law provisions.</p>
-
-<h2>7. ENTIRE AGREEMENT</h2>
-
-<p>This Agreement constitutes the entire understanding between the Parties concerning the subject matter hereof and supersedes all prior agreements, understandings, or negotiations.</p>
-
-<h2>8. SIGNATURES</h2>
-
-<p>IN WITNESS WHEREOF, the Parties hereto have executed this Agreement as of the Effective Date.</p>
-
-<p>
-<strong>First Party:</strong><br>
-{{% party1_name | input | underscore %}}<br>
-{% if party1_type != "Individual" %}
-By: {{% party1_representative | input | underscore %}}<br>
-Title: ___________________<br>
-{% endif %}
-Date: ___________________<br>
-Signature: ___________________
-</p>
-
-<p>
-<strong>Second Party:</strong><br>
-{{% party2_name | input | underscore %}}<br>
-{% if party2_type != "Individual" %}
-By: {{% party2_representative | input | underscore %}}<br>
-Title: ___________________<br>
-{% endif %}
-Date: ___________________<br>
-Signature: ___________________
-</p>`)
+  const [documentContent, setDocumentContent] = useState()
   const [formData, setFormData] = useState({})
   const [editorInstance, setEditorInstance] = useState(null)
 
@@ -661,11 +118,16 @@ Signature: ___________________
       setError(null)
 
       try {
-        const response = await axios.get(`/api/templates/${templateId}`)
+        const response = await SC.getCall({ url: `document/${templateId}` })
 
-        if (response.data) {
-          setFormStructure(response.data.formStructure || formStructure)
-          setDocumentContent(response.data.documentContent || "")
+        console.log("response", response)
+
+        // const [documentRaw, setDocumentRaw] = useState(null)
+
+        if (response.status == 200 && response.data.data) {
+          setDocumentRaw(response.data.data)
+          setFormStructure({ steps: response.data.data?.steps || [] })
+          setDocumentContent(response.data.data?.markup || "")
           setIsNewTemplate(false)
         } else {
           // If no data found, we're creating a new template
@@ -684,7 +146,7 @@ Signature: ___________________
       }
     }
 
-    // fetchTemplateData()
+    fetchTemplateData()
   }, [templateId, toast])
 
   // Save or update template
@@ -698,9 +160,22 @@ Signature: ___________________
       documentContent,
     }
 
+
+    console.log("templateData", templateData);
+    
     try {
       // Use the same endpoint for both create and update
-      const response = await axios.post(`/api/templates/${templateId}`, templateData)
+      // const response = await axios.post(`/api/templates/${templateId}`, templateData)
+
+        const response = await SC.postCall({
+          url: `document/${templateId}/update`,
+          data: {
+            ...templateData,
+            markup: templateData.documentContent,
+            steps: templateData.formStructure?.steps,
+          },
+        })
+  
 
       toast({
         title: isNewTemplate ? "Template created" : "Template updated",
@@ -834,7 +309,7 @@ Signature: ___________________
           </Alert>
         )} */}
 
-        <Tabs defaultValue="editor"  className="flex-1 flex flex-col overflow-hidden">
+        <Tabs defaultValue="editor" className="flex-1 flex flex-col overflow-hidden">
           <div className="px-4 border-b">
             <TabsList>
               <TabsTrigger value="editor">Editor</TabsTrigger>

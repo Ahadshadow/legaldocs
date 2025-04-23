@@ -20,7 +20,7 @@ export function DocumentPreview({ content, formStructure, formData, setFormData 
 
     formStructure.steps.forEach((step) => {
       step.subsections.forEach((subsection) => {
-        subsection.question.forEach((question) => {
+        subsection?.question?.forEach((question) => {
           questions.push(question)
         })
       })
