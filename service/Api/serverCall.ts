@@ -17,10 +17,14 @@ axios.interceptors.response.use(
   (error: AxiosError) => {
     try {
       if (error.response?.status === 401) {
-        // localStorage.clear()
+
+        // console.log("error.response", error.response);
+        
+        localStorage.clear()
         // toast.error('Session expired. Please login again.')
         // Cookies.remove('accessToken')
         // window.location.href = process.env.NEXT_PUBLIC_COMPLIANCE_FRONTEND_URL ?? ''
+        window.location.href = "/"
       }
     } catch (error) {
       console.error(error);

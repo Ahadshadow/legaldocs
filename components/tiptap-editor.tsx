@@ -19,6 +19,8 @@ import { CustomHorizontalRule } from "../extensions/horizontal-rule-extension"
 import { CustomPagination } from "../extensions/custom-pagination"
 import { Node, mergeAttributes } from "@tiptap/core"
 import { generateAttribute } from "../lib/utils"
+import "./tap-tap.css"
+import { removeCustomQuestionStyling} from "./Editor/editor-helper"
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -28,11 +30,13 @@ declare module "@tiptap/core" {
   }
 }
 
+// Create a custom extension for handling question nodes
 const CustomQuestion = Node.create({
   name: "customQuestion",
   group: "inline",
   inline: true,
-  atom: true,
+  selectable: true,
+  atom: true, // Make it an atomic node
 
   addAttributes() {
     return {
@@ -57,10 +61,16 @@ const CustomQuestion = Node.create({
   },
 
   renderHTML({ node, HTMLAttributes }) {
+    // Use minimal attributes to avoid adding styling
     const attrs = mergeAttributes(HTMLAttributes, {
       "data-type": "custom-question",
-      "data-dependency": node.attrs.dependence ? "true" : "false",
+      "data-question-attribute": node.attrs.attribute,
+      "data-question-type": node.attrs.type,
+      class: "custom-question-node",
+      contenteditable: "false", // Make the node itself not editable
     })
+
+    // Return the node with its content
     return ["span", attrs, `{{% ${node.attrs.attribute} | ${node.attrs.type} | underscore %}}`]
   },
 
@@ -68,12 +78,16 @@ const CustomQuestion = Node.create({
     return {
       setCustomQuestion:
         (question, type) =>
-        ({ commands }) => {
+        ({ chain }) => {
           const attribute = generateAttribute(question)
-          return commands.insertContent({
-            type: this.name,
-            attrs: { question, type, attribute },
-          })
+
+          // Insert the content and ensure the cursor is placed after the node
+          return chain()
+            .insertContent({
+              type: this.name,
+              attrs: { question, type, attribute },
+            })
+            .run()
         },
     }
   },
@@ -158,8 +172,51 @@ export function TiptapEditor({ content, onChange, className, readOnly, extension
     editable: !readOnly,
     editorProps: {
       attributes: {
-        class: "prose mx-auto focus:outline-none",
+        class: "prose mx-auto focus:outline-none custom-tiptap-content",
         style: "max-width: 100%; padding: 0; margin: 0; font-size: 12px; line-height: 1.5;",
+      },
+      handleClick(view, pos, event) {
+        // Handle clicks on custom question nodes
+        const target = event.target as HTMLElement
+        if (target.getAttribute("data-type") === "custom-question") {
+          const nodePos = view.posAtDOM(target, 0)
+          const node = view.state.doc.nodeAt(nodePos)
+
+          if (node) {
+            // Determine if click is on left or right side of the node
+            const rect = target.getBoundingClientRect()
+            const clickX = event.clientX
+            const isRightSide = clickX > rect.left + rect.width / 2
+
+            // Set cursor position before or after the node
+            const newPos = isRightSide ? nodePos + node.nodeSize : nodePos
+
+            // Update selection
+            const tr = view.state.tr.setSelection(view.state.selection.constructor.near(view.state.doc.resolve(newPos)))
+            view.dispatch(tr)
+
+            return true // Prevent default handling
+          }
+        }
+        return false // Let other click handlers run
+      },
+      handleKeyDown(view, event) {
+        // Handle arrow key navigation around custom nodes
+        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+          const { selection } = view.state
+          const { $from, $to } = selection
+
+          // Check if we're at a custom question node
+          const node = $from.nodeAfter || $to.nodeBefore
+          if (node && node.type.name === "customQuestion") {
+            // Move cursor before or after the node based on arrow direction
+            const pos = event.key === "ArrowLeft" ? $from.pos : $to.pos
+            const tr = view.state.tr.setSelection(view.state.selection.constructor.near(view.state.doc.resolve(pos)))
+            view.dispatch(tr)
+            return true
+          }
+        }
+        return false
       },
     },
   })
@@ -176,88 +233,143 @@ export function TiptapEditor({ content, onChange, className, readOnly, extension
     }
   }, [editor, readOnly])
 
+  // Add a custom CSS class to the editor when it's mounted
+  useEffect(() => {
+    if (editorRef.current) {
+      const editorElement = editorRef.current.querySelector(".ProseMirror")
+      if (editorElement) {
+        editorElement.classList.add("custom-tiptap-editor")
+      }
+    }
+  }, [editor])
+
+  // Add a click handler to improve cursor positioning around custom nodes
+  useEffect(() => {
+    if (editor) {
+      const editorElement = document.querySelector(".ProseMirror")
+      if (editorElement) {
+        const handleClick = (e: MouseEvent) => {
+          const target = e.target as HTMLElement
+          if (target.getAttribute("data-type") === "custom-question") {
+            // Find the nearest valid cursor position
+            const rect = target.getBoundingClientRect()
+            const isClickOnRightHalf = e.clientX > rect.left + rect.width / 2
+
+            if (isClickOnRightHalf) {
+              // Place cursor after the node
+              const pos = editor.view.posAtDOM(target, 0) + target.textContent!.length
+              editor.commands.setTextSelection(pos)
+            } else {
+              // Place cursor before the node
+              const pos = editor.view.posAtDOM(target, 0)
+              editor.commands.setTextSelection(pos)
+            }
+
+            e.preventDefault()
+            e.stopPropagation()
+          }
+        }
+
+        editorElement.addEventListener("click", handleClick)
+        return () => {
+          editorElement.removeEventListener("click", handleClick)
+        }
+      }
+    }
+  }, [editor])
+
+  // Process text nodes with custom question format to remove styling
+  useEffect(() => {
+    if (editor) {
+      const processTextNodes = () => {
+        const editorElement = document.querySelector(".ProseMirror")
+        if (!editorElement) return
+
+        // Find all text nodes that contain custom question format
+        const walker = document.createTreeWalker(editorElement, NodeFilter.SHOW_TEXT, {
+          acceptNode: (node) => {
+            const text = node.textContent || ""
+            return text.includes("{{% ") && text.includes(" %}}") ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP
+          },
+        })
+
+        const nodesToProcess = []
+        let currentNode
+        while ((currentNode = walker.nextNode())) {
+          nodesToProcess.push(currentNode)
+        }
+
+        // Process the nodes to remove styling
+        nodesToProcess.forEach((node) => {
+          const parent = node.parentNode
+          if (parent && parent.nodeType === Node.ELEMENT_NODE) {
+            // Remove any styling classes or attributes
+            if ((parent as Element).classList.contains("custom-question-text")) {
+              ;(parent as Element).classList.remove("custom-question-text")
+            }
+            if ((parent as Element).hasAttribute("data-custom-question")) {
+              ;(parent as Element).removeAttribute("data-custom-question")
+            }
+            // Remove any inline styles
+            if ((parent as Element).style.backgroundColor) {
+              ;(parent as Element).style.backgroundColor = ""
+            }
+            if ((parent as Element).style.color) {
+              ;(parent as Element).style.color = ""
+            }
+            if ((parent as Element).style.border) {
+              ;(parent as Element).style.border = ""
+            }
+            if ((parent as Element).style.padding) {
+              ;(parent as Element).style.padding = ""
+            }
+            if ((parent as Element).style.margin) {
+              ;(parent as Element).style.margin = ""
+            }
+            if ((parent as Element).style.fontFamily) {
+              ;(parent as Element).style.fontFamily = ""
+            }
+          }
+        })
+      }
+
+      // Process on initial load
+      processTextNodes()
+
+      // Set up a listener for editor updates
+      const handleUpdate = () => {
+        processTextNodes()
+      }
+
+      editor.on("update", handleUpdate)
+
+      return () => {
+        editor.off("update", handleUpdate)
+      }
+    }
+  }, [editor])
+
+  useEffect(() => {
+    if (editor) {
+      // Remove styling on initial load
+      removeCustomQuestionStyling()
+
+      // Set up a listener for editor updates
+      const handleUpdate = () => {
+        removeCustomQuestionStyling()
+      }
+
+      editor.on("update", handleUpdate)
+
+      return () => {
+        editor.off("update", handleUpdate)
+      }
+    }
+  }, [editor])
+
   return (
     <div ref={editorRef} className={`w-full overflow-hidden ${className || ""}`}>
       <EditorContent editor={editor} className={`w-full whitespace-pre-wrap ${className || ""}`} />
-      <style jsx global>
-        {globalStyles}
-      </style>
     </div>
   )
 }
-
-const globalStyles = `
-/* Base styling for all question formats - more comprehensive selectors */
-.ProseMirror span[data-type="custom-question"],
-.ProseMirror code,
-.ProseMirror *:has(code),
-.ProseMirror *:contains("{{% "),
-.ProseMirror *:contains("%}}"),
-.ProseMirror *:contains("if"),
-.ProseMirror *:contains("endif"),
-.ProseMirror p:has(span:contains("{%")),
-.ProseMirror p:has(span:contains("%}")),
-.ProseMirror p:has(span:contains("underscore")),
-.ProseMirror span:contains("underscore") {
-  background-color: #f0f9ff !important;
-  border-radius: 4px !important;
-  padding: 2px 4px !important;
-  font-weight: medium !important;
-  color: #0066cc !important;
-  display: inline !important;
-  margin: 0 2px !important;
-  border: 1px solid #e6f3ff !important;
-  font-family: monospace !important;
-  width: auto !important;
-  max-width: fit-content !important;
-}
-
-/* Direct targeting for the specific format with commas */
-.ProseMirror *:contains("if"),
-.ProseMirror *:contains("=="),
-.ProseMirror *:contains("endif") {
-  background-color: #f0f9ff !important;
-  border: 1px solid #e6f3ff !important;
-  display: inline !important;
-}
-
-/* Ensure no nested backgrounds */
-.ProseMirror span[data-type="custom-question"] span,
-.ProseMirror *:contains("{{% ") span,
-.ProseMirror *:contains("%}}") span,
-.ProseMirror *:contains("if") span,
-.ProseMirror *:contains("endif") span {
-  background-color: transparent !important;
-  border: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-/* Consistent text color */
-.ProseMirror span[data-type="custom-question"] *,
-.ProseMirror *:contains("{{% ") *,
-.ProseMirror *:contains("%}}") *,
-.ProseMirror *:contains("if") *,
-.ProseMirror *:contains("endif") * {
-  color: #0066cc !important;
-}
-
-/* Ensure inline code blocks maintain styling */
-.ProseMirror code {
-  background-color: #f0f9ff !important;
-  color: #0066cc !important;
-  display: inline !important;
-}
-
-/* Direct targeting for the specific problematic format */
-.ProseMirror p:contains("{{% if"),
-.ProseMirror span:contains("{{% if") {
-  background-color: #f0f9ff !important;
-  border-radius: 4px !important;
-  padding: 2px 4px !important;
-  border: 1px solid #e6f3ff !important;
-  display: inline !important;
-  width: auto !important;
-}
-
-`

@@ -10,139 +10,47 @@ import { Label } from "../../../../../../components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../../../components/ui/select"
 import { Textarea } from "../../../../../../components/ui/textarea"
 import { toast } from "../../../../../../components/ui/use-toast"
+import { SC } from "../../../../../../service/Api/serverCall"
 
 export default function EditDocument({ params }: { params: { id: string } }) {
   const router = useRouter()
   const { id } = params
 
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [subcategories, setSubcategories] = useState<any[]>([])
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    subCategories: "",
-    slug: "",
+    subcategory_id: "",
     image: null as File | null,
   })
   const [currentImage, setCurrentImage] = useState<string | null>(null)
-  async function fetchSubcategories() {
-    // Mock data - replace with actual API call
-    return [
-      { id: "1", name: "Corporate Filings", slug: "corporate-filings", category: "BUSINESS" },
-      { id: "2", name: "Employees / Contractors", slug: "employees-contractors", category: "BUSINESS" },
-      { id: "3", name: "Customers", slug: "customers", category: "BUSINESS" },
-      { id: "4", name: "Suppliers & Partners", slug: "suppliers-partners", category: "BUSINESS" },
-      { id: "5", name: "Internet", slug: "internet", category: "BUSINESS" },
-      { id: "6", name: "Mergers & Acquisitions", slug: "mergers-acquisitions", category: "BUSINESS" },
-      { id: "7", name: "Property Management", slug: "property-management", category: "BUSINESS" },
-      { id: "8", name: "Litigation", slug: "litigation", category: "BUSINESS" },
-      { id: "9", name: "Tax Forms", slug: "tax-forms", category: "BUSINESS" },
-      { id: "10", name: "Operations", slug: "operations", category: "BUSINESS" },
-    ]
-  }
 
-  async function updateDocument(id: string, data: any) {
-    console.log("Updating document:", id, data)
-    // Replace with actual API call
-    return { id, ...data }
-  }
-
-  async function fetchDocuments() {
-    // Mock data - replace with actual API call
-    return [
-      {
-        id: "1",
-        name: "Personal Injury/ Insurance Payment Demand Letter",
-        slug: "personal-injury-letter",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-      {
-        id: "2",
-        name: "Business Proposal",
-        slug: "business-proposal",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-      { id: "3", name: "Invoice", slug: "invoice", description: "", subCategories: "No Sub-Categories" },
-      {
-        id: "4",
-        name: "Letter of Intent for General Property Purchase",
-        slug: "letter-of-intent",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-      {
-        id: "5",
-        name: "Vehicle Power of Attorney",
-        slug: "vehicle-power-of-attorney",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-      {
-        id: "6",
-        name: "Cease and Desist – Harassment",
-        slug: "cease-and-desist-harassment",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-      {
-        id: "7",
-        name: "Cease and Desist – Defamation",
-        slug: "cease-and-desist-defamation",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-      {
-        id: "8",
-        name: "Photo Licensing (License) Agreement",
-        slug: "photo-licensing-agreement",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-      {
-        id: "9",
-        name: "Photo Release Form",
-        slug: "photo-release-form",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-      {
-        id: "10",
-        name: "Affidavit of Paternity",
-        slug: "affidavit-of-paternity",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-    ]
-  }
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [subcategoriesData, documentsData] = await Promise.all([fetchSubcategories(), fetchDocuments()])
+        // Fetch subcategories
+        const subcategoriesResponse = await SC.getCall({ url: "subcategories" })
+        // setSubcategories(subcategoriesResponse.data.data.data || [])
 
-        setSubcategories(subcategoriesData)
+        console.log("subcategoriesResponse", subcategoriesResponse);
+        
+        // Fetch document details
+        const documentResponse = await SC.getCall({ url: `document/${id}` })
+        const documentData = documentResponse.data.data
 
-        const document = documentsData.find((doc: any) => doc.id === id)
-        if (document) {
-          setFormData({
-            name: document.name,
-            description: document.description || "",
-            subCategories: document.subCategories || "No Sub-Categories",
-            slug: document.slug || "",
-            image: null,
-          })
-          // If there's an image URL in the document data
-          if (document.imageUrl) {
-            setCurrentImage(document.imageUrl)
-          }
-        } else {
-          toast({
-            title: "Error",
-            description: "Document not found",
-            variant: "destructive",
-          })
-          router.push("/admin/documents/list")
+        console.log("documentData", documentData);
+        
+        // setFormData({
+        //   name: documentData.name,
+        //   description: documentData.description || "",
+        //   subcategory_id: documentData.subcategory_id || "",
+        //   image: null,
+        // })
+
+        // If there's an image URL in the document data
+        if (documentData.image_url) {
+          // setCurrentImage(documentData.image_url)
         }
       } catch (error) {
         toast({
@@ -150,6 +58,9 @@ export default function EditDocument({ params }: { params: { id: string } }) {
           description: "Failed to load data",
           variant: "destructive",
         })
+        router.push("/admin/documents/list")
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -167,7 +78,7 @@ export default function EditDocument({ params }: { params: { id: string } }) {
   const handleSubcategoryChange = (value: string) => {
     setFormData({
       ...formData,
-      subCategories: value,
+      subcategory_id: value === "none" ? "" : value,
     })
   }
 
@@ -185,8 +96,28 @@ export default function EditDocument({ params }: { params: { id: string } }) {
     setIsLoading(true)
 
     try {
-      // In a real app, you'd handle file upload here
-      await updateDocument(id, formData)
+      // Create FormData for file upload
+      const formDataToSend = new FormData()
+      formDataToSend.append("name", formData.name)
+      formDataToSend.append("description", formData.description)
+
+      if (formData.subcategory_id) {
+        formDataToSend.append("subcategory_id", formData.subcategory_id)
+      }
+
+      if (formData.image) {
+        formDataToSend.append("image", formData.image)
+      }
+
+      // Use PUT or PATCH depending on your API
+      await SC.putCall({
+        url: `documents/${id}`,
+        data: formDataToSend,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+
       toast({
         title: "Success",
         description: "Document updated successfully",
@@ -195,12 +126,16 @@ export default function EditDocument({ params }: { params: { id: string } }) {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update document",
+        description: error.response?.data?.message || "Failed to update document",
         variant: "destructive",
       })
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (isLoading) {
+    return <div className="p-6 text-center">Loading document data...</div>
   }
 
   return (
@@ -210,15 +145,15 @@ export default function EditDocument({ params }: { params: { id: string } }) {
 
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <Label htmlFor="subcategories">Subcategories</Label>
-            <Select value={formData.subCategories} onValueChange={handleSubcategoryChange}>
+            <Label htmlFor="subcategory_id">Subcategory</Label>
+            <Select value={formData.subcategory_id || "none"} onValueChange={handleSubcategoryChange}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Select Subcategory" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="No Sub-Categories">No Sub-Categories</SelectItem>
+                <SelectItem value="none">No Subcategory</SelectItem>
                 {subcategories.map((subcat) => (
-                  <SelectItem key={subcat.id} value={subcat.name}>
+                  <SelectItem key={subcat._id} value={subcat._id}>
                     {subcat.name}
                   </SelectItem>
                 ))}
@@ -231,19 +166,6 @@ export default function EditDocument({ params }: { params: { id: string } }) {
               Document Name <span className="text-red-500">*</span>
             </Label>
             <Input id="name" className="mt-1" value={formData.name} onChange={handleChange} required />
-          </div>
-
-          <div>
-            <Label htmlFor="slug">Slug</Label>
-            <Input
-              id="slug"
-              placeholder="document-slug"
-              className="mt-1"
-              value={formData.slug}
-              onChange={handleChange}
-              required
-            />
-            <p className="text-xs text-muted-foreground mt-1">URL-friendly version of the name</p>
           </div>
 
           <div>

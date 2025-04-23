@@ -247,8 +247,83 @@ export function DocumentViewer({ isEmailMatch }: { isEmailMatch: boolean }) {
         </ScrollArea>
       </div>
       {renderActivePanel()}
+      <style jsx>{`
+.ProseMirror span[data-type="custom-question"],
+.ProseMirror span[data-dependency="true"],
+.ProseMirror *:contains("{{% if"),
+.ProseMirror *:contains("=="),
+.ProseMirror *:contains("{{% endif"),
+.ProseMirror *:contains("underscore") {
+  background-color: #f0f9ff !important;
+  border-radius: 4px !important;
+  padding: 2px 4px !important;
+  font-weight: medium !important;
+  color: #0066cc !important;
+  display: inline !important;
+  margin: 0 2px !important;
+  border: 1px solid #e6f3ff !important;
+  font-family: monospace !important;
+  width: auto !important;
+  max-width: fit-content !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* Fix for cursor positioning */
+.ProseMirror p {
+  position: relative !important;
+}
+
+/* Ensure inline behavior */
+.ProseMirror span[data-type="custom-question"],
+.ProseMirror span:contains("{{% "),
+.ProseMirror span:contains("%}}"),
+.ProseMirror span:contains("if"),
+.ProseMirror span:contains("endif"),
+.ProseMirror span:contains("underscore") {
+  display: inline !important;
+  vertical-align: baseline !important;
+}
+
+/* Ensure no nested backgrounds */
+span[data-type="custom-question"] span,
+span:contains("{{% ") span,
+span:contains("%}}") span,
+span:contains("if") span,
+span:contains("endif") span {
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Direct targeting for the specific problematic format */
+*:contains("{{% if") {
+  background-color: #f0f9ff !important;
+  border-radius: 4px !important;
+  border: 1px solid #e6f3ff !important;
+  display: inline !important;
+  width: auto !important;
+}
+
+/* Make sure the parent elements don't force full width */
+.ProseMirror p {
+  display: block !important;
+  width: 100% !important;
+}
+
+/* Ensure custom questions inside paragraphs flow naturally */
+.ProseMirror p span[data-type="custom-question"],
+.ProseMirror p *:contains("{{% if") {
+  display: inline !important;
+  width: auto !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+}
+`}</style>
+
     </div>
   )
 }
-
-

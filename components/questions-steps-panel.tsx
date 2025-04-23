@@ -1,15 +1,18 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Button } from "../components/ui/button"
+
 import { Input } from "../components/ui/input"
-import { Plus, Trash2, Edit2, Check, Link } from "lucide-react"
+import { Plus, Trash2, Edit2, Check, Link, RefreshCw } from "lucide-react"
 import { useDocument } from "./context/document-context"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { generateAttribute } from "../lib/utils"
 import { toast } from "sonner"
+import { mergeStepsData, parseDocumentContent } from "./Editor/editor-helper"
 
 interface Question {
+  id?: string
   label: string
   type: "input" | "dropdown" | "checkbox" | "radio" | "date"
   attribute: string
@@ -34,11 +37,38 @@ interface Step {
   subsections: Subsection[]
 }
 
+// This interface matches the format expected by the form renderer
+interface FormRendererQuestion {
+  id: string
+  uniqueKeyName: string
+  type: "textField" | "dropdownList" | "radioButton" | "checkboxes" | "multipleEntryList"
+  questionToAsk: string
+  selectionValue?: string
+  isRequired: boolean
+  placeholder: string
+  list: Array<{ name: string }>
+  affectedQuestion: Array<{ id: string; value: string[] }>
+  answer?: string
+  faqQuestion?: string
+  faqAnswer?: string
+}
+
+interface FormRendererSubsection {
+  name: string
+  question: FormRendererQuestion[]
+  faqQuestion?: string
+  faqAnswer?: string
+}
+
+interface FormRendererStep {
+  name: string
+  subsections: FormRendererSubsection[]
+}
+
 export function QuestionsStepsPanel() {
-  const { setActivePanel, editor } = useDocument()
+  const { setActivePanel, editor, pages, initialData } = useDocument()
   const [definition, setDefinition] = useState<Step[]>([])
   const [newStepName, setNewStepName] = useState("")
-  // First, add state for the new FAQ fields when creating a subsection
   const [newSubsectionName, setNewSubsectionName] = useState("")
   const [newSubsectionFaqQuestion, setNewSubsectionFaqQuestion] = useState("")
   const [newSubsectionFaqAnswer, setNewSubsectionFaqAnswer] = useState("")
@@ -62,12 +92,245 @@ export function QuestionsStepsPanel() {
   const [newQuestionFaqAnswer, setNewQuestionFaqAnswer] = useState("")
   const [editingQuestionFaqQuestion, setEditingQuestionFaqQuestion] = useState("")
   const [editingQuestionFaqAnswer, setEditingQuestionFaqAnswer] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
   const [showDependencyFields, setShowDependencyFields] = useState(false)
   const [dependencyValue, setDependencyValue] = useState("")
   const [dependencyQuestion, setDependencyQuestion] = useState("")
   const [optionsInput, setOptionsInput] = useState("")
   const [dependencyOptions, setDependencyOptions] = useState<string[]>([])
+
+  // Add this function inside the QuestionsStepsPanel component
+  const debounce = (func: Function, wait: number) => {
+    let timeout: NodeJS.Timeout | null = null
+    return (...args: any) => {
+      if (timeout) clearTimeout(timeout)
+      timeout = setTimeout(() => func(...args), wait)
+    }
+  }
+
+  // Add this after the state declarations
+  const debouncedSave = useRef(
+    debounce((data: Step[]) => {
+      try {
+        // Convert to form renderer format before saving
+        const formRendererData = convertToFormRendererFormat(data)
+        localStorage.setItem("document-steps-definition", JSON.stringify(formRendererData))
+        console.log("Steps data saved to localStorage in form renderer format")
+      } catch (error) {
+        console.error("Error saving steps data to localStorage:", error)
+      }
+    }, 500),
+  ).current
+
+  // Convert from our internal format to the form renderer format
+  const convertToFormRendererFormat = (steps: Step[]): FormRendererStep[] => {
+    return steps.map((step) => ({
+      name: step.name,
+      subsections: step.subsections.map((subsection) => ({
+        name: subsection.name,
+        faqQuestion: subsection.faqQuestion || "",
+        faqAnswer: subsection.faqAnswer || "",
+        question: subsection.questions.map((question) => {
+          // Convert question type
+          let type: "textField" | "dropdownList" | "radioButton" | "checkboxes" | "multipleEntryList"
+          switch (question.type) {
+            case "dropdown":
+              type = "dropdownList"
+              break
+            case "checkbox":
+              type = "checkboxes"
+              break
+            case "radio":
+              type = "radioButton"
+              break
+            default:
+              type = "textField"
+          }
+
+          // Convert options to list format
+          const list = []
+          if (question.options && Array.isArray(question.options)) {
+            question.options.forEach((option) => {
+              list.push({ name: option })
+            })
+          }
+
+          // Create affected questions array
+          const affectedQuestion: Array<{ id: string; value: string[] }> = []
+
+          return {
+            id: question.id || Math.random().toString(36).substring(2, 9),
+            uniqueKeyName: question.attribute,
+            type: type,
+            questionToAsk: question.label,
+            selectionValue: question.type === "date" ? "date" : "",
+            isRequired: true,
+            placeholder: `Enter ${question.label}`,
+            list: list,
+            affectedQuestion: affectedQuestion,
+            answer: "",
+            faqQuestion: question.faqQuestion || "",
+            faqAnswer: question.faqAnswer || "",
+          }
+        }),
+      })),
+    }))
+  }
+
+  // Convert from form renderer format to our internal format
+  const convertFromFormRendererFormat = (steps: any[]): Step[] => {
+    if (!steps || !Array.isArray(steps)) return []
+
+    return steps.map((step) => ({
+      name: step.name,
+      subsections: step.subsections.map((subsection) => ({
+        name: subsection.name,
+        faqQuestion: subsection.faqQuestion || "",
+        faqAnswer: subsection.faqAnswer || "",
+        questions: (subsection.question || []).map((question) => {
+          // Convert question type
+          let type: "input" | "dropdown" | "checkbox" | "radio" | "date"
+          switch (question.type) {
+            case "dropdownList":
+              type = "dropdown"
+              break
+            case "checkboxes":
+              type = "checkbox"
+              break
+            case "radioButton":
+              type = "radio"
+              break
+            default:
+              type = question.selectionValue === "date" ? "date" : "input"
+          }
+
+          // Convert list to options array
+          const options = (question.list || []).map((item) => item.name)
+
+          return {
+            id: question.id,
+            label: question.questionToAsk,
+            type: type,
+            attribute: question.uniqueKeyName,
+            options: options,
+            dependence: null, // We'll handle dependencies separately
+            faqQuestion: question.faqQuestion || "",
+            faqAnswer: question.faqAnswer || "",
+          }
+        }),
+      })),
+    }))
+  }
+
+  // Process dependencies after conversion
+  const processDependencies = (steps: Step[], formRendererSteps: any[]): Step[] => {
+    const updatedSteps = [...steps]
+
+    // Create a map of all questions by uniqueKeyName
+    const questionMap = new Map()
+    updatedSteps.forEach((step, stepIndex) => {
+      step.subsections.forEach((subsection, subsectionIndex) => {
+        subsection.questions.forEach((question, questionIndex) => {
+          questionMap.set(question.attribute, {
+            stepIndex,
+            subsectionIndex,
+            questionIndex,
+            question,
+          })
+        })
+      })
+    })
+
+    // Process affected questions
+    formRendererSteps.forEach((step) => {
+      step.subsections.forEach((subsection) => {
+        subsection.question.forEach((question) => {
+          if (question.affectedQuestion && question.affectedQuestion.length > 0) {
+            question.affectedQuestion.forEach((affected) => {
+              const targetQuestion = questionMap.get(affected.id)
+              if (targetQuestion) {
+                const { stepIndex, subsectionIndex, questionIndex } = targetQuestion
+
+                // Set dependence on the target question
+                updatedSteps[stepIndex].subsections[subsectionIndex].questions[questionIndex].dependence = {
+                  question: question.uniqueKeyName,
+                  value: affected.value[0], // Take the first value for simplicity
+                }
+              }
+            })
+          }
+        })
+      })
+    })
+
+    return updatedSteps
+  }
+
+  // Parse document content and extract steps data
+  const parseDocumentSteps = useCallback(() => {
+    setIsLoading(true)
+
+    
+    try {
+      if (pages && pages.length > 0) {
+        const content = pages[0].content
+        const parsedSteps = parseDocumentContent(content)
+        console.log("parsedSteps", parsedSteps);
+
+        // If we have steps data from the API, merge it with the parsed steps
+        let mergedSteps = parsedSteps
+        if (initialData && initialData.steps && initialData.steps.length > 0) {
+          mergedSteps = mergeStepsData(initialData.steps, parsedSteps)
+        }
+
+        // Convert to our internal format
+        const internalFormat = convertFromFormRendererFormat(mergedSteps)
+
+        // Process dependencies
+        const withDependencies = processDependencies(internalFormat, mergedSteps)
+
+        setDefinition(withDependencies)
+        toast.success("Document steps parsed successfully")
+      }
+    } catch (error) {
+      console.log("Error parsing document steps:", error)
+      toast.error("Failed to parse document steps")
+    } finally {
+      setIsLoading(false)
+    }
+  }, [pages, initialData])
+
+  // Load steps data on component mount
+  useEffect(() => {
+    // First try to load from localStorage
+    try {
+      const savedData = localStorage.getItem("document-steps-definition")
+      if (savedData) {
+        const parsedData = JSON.parse(savedData)
+        // Convert from form renderer format to our internal format
+        const internalFormat = convertFromFormRendererFormat(parsedData)
+        // Process dependencies
+        const withDependencies = processDependencies(internalFormat, parsedData)
+        setDefinition(withDependencies)
+        console.log("Loaded steps data from localStorage")
+      } else if (initialData && initialData.steps && initialData.steps.length > 0) {
+        // If no localStorage data, try to load from API data
+        const internalFormat = convertFromFormRendererFormat(initialData.steps)
+        // Process dependencies
+        const withDependencies = processDependencies(internalFormat, initialData.steps)
+        setDefinition(withDependencies)
+        console.log("Loaded steps data from API")
+      } else {
+        // If no data from localStorage or API, parse from document content
+        parseDocumentSteps()
+      }
+    } catch (error) {
+      console.error("Error loading steps data:", error)
+      // If error, try to parse from document content
+      parseDocumentSteps()
+    }
+  }, [initialData, parseDocumentSteps])
 
   useEffect(() => {
     if (selectedStepIndex !== null && dependencyQuestion) {
@@ -177,6 +440,28 @@ export function QuestionsStepsPanel() {
         })),
       })),
     )
+  }, [definition])
+
+  // Add this useEffect to save the steps definition to localStorage when it changes
+  useEffect(() => {
+    if (definition.length > 0) {
+      debouncedSave(definition)
+    }
+  }, [definition, debouncedSave])
+
+  // Add this useEffect to save the steps definition to localStorage when the component unmounts
+  useEffect(() => {
+    return () => {
+      if (definition.length > 0) {
+        try {
+          const formRendererData = convertToFormRendererFormat(definition)
+          localStorage.setItem("document-steps-definition", JSON.stringify(formRendererData))
+          console.log("Steps data saved to localStorage on unmount in form renderer format")
+        } catch (error) {
+          console.error("Error saving steps data to localStorage on unmount:", error)
+        }
+      }
+    }
   }, [definition])
 
   const addStep = () => {
@@ -317,6 +602,7 @@ export function QuestionsStepsPanel() {
     ) {
       const attribute = generateAttribute(newQuestionLabel.trim())
       const newQuestion: Question = {
+        id: Math.random().toString(36).substring(2, 9),
         label: newQuestionLabel.trim(),
         type: newQuestionType,
         attribute,
@@ -437,6 +723,7 @@ export function QuestionsStepsPanel() {
 
     // Create the updated question object
     const updatedQuestion: Question = {
+      id: oldQuestion.id,
       label: editingQuestionLabel,
       type: editingQuestionType,
       attribute: newAttribute,
@@ -641,202 +928,51 @@ export function QuestionsStepsPanel() {
     return [...previousStepsQuestions, ...previousSubsectionsQuestions, ...currentSubsectionQuestions]
   }
 
-  // Add this function before the return statement in the QuestionsStepsPanel component
-
-  const logAllData = () => {
-    console.log("=== COMPLETE STEPS DATA ===")
-
-    definition.forEach((step, stepIndex) => {
-      console.log(`
-STEP ${stepIndex + 1}: ${step.name}`)
-
-      step.subsections.forEach((subsection, subsectionIndex) => {
-        console.log(`  SUBSECTION ${subsectionIndex + 1}: ${subsection.name}`)
-        console.log(`    FAQ Question: ${subsection.faqQuestion || "None"}`)
-        console.log(`    FAQ Answer: ${subsection.faqAnswer || "None"}`)
-
-        if (subsection.questions.length === 0) {
-          console.log("    No questions in this subsection")
-        } else {
-          console.log("    QUESTIONS:")
-          subsection.questions.forEach((question, questionIndex) => {
-            console.log(`      Q${questionIndex + 1}: ${question.label} (${question.type})`)
-            console.log(`        Attribute: ${question.attribute}`)
-            if (question.options) {
-              console.log(`        Options: ${question.options.join(", ")}`)
-            }
-            if (question.dependence) {
-              console.log(`        Depends on: ${question.dependence.question} = ${question.dependence.value}`)
-            }
-            console.log(`        FAQ Question: ${question.faqQuestion || "None"}`)
-            console.log(`        FAQ Answer: ${question.faqAnswer || "None"}`)
-          })
-        }
-      })
-    })
-
-    console.log("\n=== RAW DATA STRUCTURE ===")
-    console.log(JSON.stringify(definition, null, 2))
+  // Add a button to re-parse the document content
+  const handleReparseDocument = () => {
+    parseDocumentSteps()
   }
 
-
-  // / Add this function inside the QuestionsStepsPanel component
-  const debounce = (func: Function, wait: number) => {
-    let timeout: NodeJS.Timeout | null = null
-    return (...args: any[]) => {
-      if (timeout) clearTimeout(timeout)
-      timeout = setTimeout(() => func(...args), wait)
-    }
-  }
-
-  // Add this after the state declarations
-  const debouncedSave = useRef(
-    debounce((data: Step[]) => {
-      try {
-        localStorage.setItem("document-steps-definition", JSON.stringify(data))
-        console.log("Steps data saved to localStorage")
-      } catch (error) {
-        console.error("Error saving steps data to localStorage:", error)
-      }
-    }, 500),
-  ).current
-
-  const syncMarkupWithState = useCallback(() => {
-    if (!editor || definition.length === 0) return
-
-    // This is a basic implementation - you may need to enhance this
-    // to handle more complex scenarios like dependencies
-    definition.forEach((step) => {
-      step.subsections.forEach((subsection) => {
-        subsection.questions.forEach((question) => {
-          // Check if the question already exists in the document
-          const exists = editor.state.doc.descendants((node, pos) => {
-            if (node.type.name === "customQuestion" && node.attrs.attribute === question.attribute) {
-              return true
-            }
-            return false
-          })
-
-          // If it doesn't exist, add it to the document
-          if (!exists) {
-            if (question.dependence) {
-              const dependencyFormat = formatQuestionWithDependency(question)
-              editor.chain().insertContent(dependencyFormat).run()
-            } else {
-              editor.chain().setCustomQuestion(question.label, question.type).run()
-            }
-          }
-        })
-      })
-    })
-  }, [editor, definition])
-
-
-
-  // Add this useEffect after the other useEffect hooks
-  useEffect(() => {
+  // Export steps data in form renderer format
+  const exportStepsData = () => {
     try {
-      const savedData = localStorage.getItem("document-steps-definition")
-      if (savedData) {
-        const parsedData = JSON.parse(savedData)
-        setDefinition(parsedData)
-        console.log("Loaded steps data from localStorage")
-      }
+      const formRendererData = convertToFormRendererFormat(definition)
+      console.log("Steps data in form renderer format:", formRendererData)
+
+      // Create a downloadable JSON file
+      const dataStr = JSON.stringify(formRendererData, null, 2)
+      const dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr)
+
+      const exportFileDefaultName = "steps-data.json"
+
+      const linkElement = document.createElement("a")
+      linkElement.setAttribute("href", dataUri)
+      linkElement.setAttribute("download", exportFileDefaultName)
+      linkElement.click()
+
+      toast.success("Steps data exported successfully")
     } catch (error) {
-      console.error("Error loading steps data from localStorage:", error)
+      console.error("Error exporting steps data:", error)
+      toast.error("Failed to export steps data")
     }
-  }, [])
-
-  // Add this useEffect after the other useEffect hooks
-  useEffect(() => {
-    if (definition.length > 0) {
-      debouncedSave(definition)
-    }
-  }, [definition, debouncedSave])
-
-  // Add this useEffect after the other useEffect hooks
-  useEffect(() => {
-    if (editor && definition.length > 0) {
-      syncMarkupWithState()
-    }
-  }, [editor, syncMarkupWithState])
-
-  // Add this useEffect after the other useEffect hooks
-  useEffect(() => {
-    return () => {
-      if (definition.length > 0) {
-        try {
-          localStorage.setItem("document-steps-definition", JSON.stringify(definition))
-          console.log("Steps data saved to localStorage on unmount")
-        } catch (error) {
-          console.error("Error saving steps data to localStorage on unmount:", error)
-        }
-      }
-    }
-  }, [definition])
+  }
 
   return (
     <div className="w-[450px] border-l bg-white flex flex-col h-full">
       <div className="p-4 space-y-4 overflow-y-auto">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium">Questions & Steps</h3>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              // Log the complete definition array directly to ensure it's visible
-              console.log("STEPS DATA:", definition)
-
-              // Log each step individually for better visibility
-              definition.forEach((step, stepIndex) => {
-                console.log(`STEP ${stepIndex + 1}: ${step.name}`, step)
-
-                step.subsections.forEach((subsection, subsectionIndex) => {
-                  console.log(`  SUBSECTION ${subsectionIndex + 1}: ${subsection.name}`, subsection)
-                  console.log(`    FAQ Question: ${subsection.faqQuestion || "None"}`)
-                  console.log(`    FAQ Answer: ${subsection.faqAnswer || "None"}`)
-
-                  subsection.questions.forEach((question, questionIndex) => {
-                    console.log(`    QUESTION ${questionIndex + 1}: ${question.label}`, question)
-                  })
-                })
-              })
-
-              // Also keep the existing formatted data object for backward compatibility
-              const formattedData = {
-                defination: definition.map((step) => ({
-                  name: step.name,
-                  subsections: step.subsections.map((subsection) => ({
-                    name: subsection.name,
-                    faqQuestion: subsection.faqQuestion,
-                    faqAnswer: subsection.faqAnswer,
-                    questions: subsection.questions.map((q) => ({
-                      label: q.label,
-                      type: q.type,
-                      attribute: q.attribute,
-                      options: q.options,
-                      dependence: q.dependence,
-                      faqQuestion: q.faqQuestion,
-                      faqAnswer: q.faqAnswer,
-                    })),
-                  })),
-                })),
-              }
-
-              // Log the formatted data
-              console.log("Formatted Steps Data:", formattedData)
-
-              // Log the document markup
-              if (editor) {
-                console.log("Document Markup:", editor.getHTML())
-              }
-
-              toast.success("Steps data logged to console")
-            }}
-          >
-            Log Steps
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleReparseDocument} disabled={isLoading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+              {isLoading ? "Parsing..." : "Parse Document"}
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportStepsData}>
+              Export Steps
+            </Button>
+          </div>
         </div>
+
         <div className="space-y-2">
           <Input
             placeholder="Add a new step..."
@@ -1298,6 +1434,24 @@ STEP ${stepIndex + 1}: ${step.name}`)
   width: auto !important;
   max-width: fit-content !important;
   white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* Fix for cursor positioning */
+.ProseMirror p {
+  position: relative !important;
+}
+
+/* Ensure inline behavior */
+.ProseMirror span[data-type="custom-question"],
+.ProseMirror span:contains("{{% "),
+.ProseMirror span:contains("%}}"),
+.ProseMirror span:contains("if"),
+.ProseMirror span:contains("endif"),
+.ProseMirror span:contains("underscore") {
+  display: inline !important;
+  vertical-align: baseline !important;
 }
 
 /* Ensure no nested backgrounds */
@@ -1332,9 +1486,11 @@ span:contains("endif") span {
 .ProseMirror p *:contains("{{% if") {
   display: inline !important;
   width: auto !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
 }
 `}</style>
     </div>
   )
 }
-

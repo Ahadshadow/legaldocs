@@ -3,31 +3,58 @@
   margin: 0 auto;
   background-color: white;
   width: 816px;
-  min-height: fit-content;
-  max-height: 1056px;
+  min-height: 1056px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  overflow-y: auto;
 }
 
 .ProseMirror {
-  min-height: fit-content;
-  max-height: 1056px;
   white-space: pre-wrap;
   word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .ProseMirror p {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  margin-bottom: 0.5rem;
+  margin: 0 0 0.75rem 0;
+  line-height: 1.5;
+  min-height: 1.5em;
+  display: block !important;
+  width: 100% !important;
 }
 
-.ProseMirror:focus {
-  outline: none;
+.ProseMirror h1,
+.ProseMirror h2 {
+  margin: 1.5rem 0 1rem;
 }
 
-[data-page-break] {
-  display: none;
+/* Remove custom question styling */
+.ProseMirror span[data-type="custom-question"],
+\
+.ProseMirror *:contains("{{% "),
+.ProseMirror *:contains("%}}"),
+.ProseMirror *:contains("if"),
+.ProseMirror *:contains("endif"),
+.ProseMirror p:has(span:contains("{%")),
+.ProseMirror p:has(span:contains("%}")),
+.ProseMirror p:has(span:contains("underscore")),
+.ProseMirror span:contains("underscore") {
+  /* Remove all styling to inherit from parent */
+  background-color: transparent !important;
+  border: none !important;
+  color: inherit !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-family: inherit !important;
+  display: inline !important;
+}
+
+.page-break {
+  height: 0;
+  margin: 0;
+  padding: 0;
+  page-break-before: always;
+  break-before: page;
+  visibility: hidden;
+  user-select: none;
 }
 
 @media print {
@@ -35,25 +62,31 @@
     padding: 0;
     margin: 0;
     box-shadow: none;
-    height: auto;
-    min-height: 0;
-    max-height: none;
-    overflow: visible;
   }
 
-  .ProseMirror {
-    height: auto;
-    min-height: 0;
-    max-height: none;
+  .page-break {
+    display: none;
+  }
+
+  @page {
+    margin: 0.5in;
+    size: A4;
   }
 
   .ProseMirror p {
-    page-break-inside: avoid;
-    break-inside: avoid;
+    orphans: 3;
+    widows: 3;
   }
 
-  [data-page-break] {
-    display: none;
+  .ProseMirror h1,
+  .ProseMirror h2 {
+    break-after: avoid-page;
+    page-break-after: avoid;
+  }
+
+  .ProseMirror h1 + p,
+  .ProseMirror h2 + p {
+    break-before: avoid-page;
+    page-break-before: avoid;
   }
 }
-

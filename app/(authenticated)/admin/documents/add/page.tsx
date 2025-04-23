@@ -2,51 +2,51 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import type { ChangeEvent, FormEvent } from "react"
+
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Input } from "../../../../../components/ui/input"
 import { Button } from "../../../../../components/ui/button"
 import { Label } from "../../../../../components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../../components/ui/select"
 import { Textarea } from "../../../../../components/ui/textarea"
 import { toast } from "../../../../../components/ui/use-toast"
+import { SC } from "../../../../../service/Api/serverCall"
+import { Check, ChevronDown, X } from "lucide-react"
 
 export default function CreateDocument() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [subcategories, setSubcategories] = useState<any[]>([])
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([])
+  const [dropdownOpen, setDropdownOpen] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    subCategories: "",
-    slug: "",
     image: null as File | null,
   })
-  async function createDocument(data: any) {
-    console.log("Creating document:", data)
-    // Replace with actual API call
-    return { id: Date.now().toString(), ...data, slug: data.name.toLowerCase().replace(/\s+/g, "-") }
-  }
-  async function fetchSubcategories() {
-    // Mock data - replace with actual API call
-    return [
-      { id: "1", name: "Corporate Filings", slug: "corporate-filings", category: "BUSINESS" },
-      { id: "2", name: "Employees / Contractors", slug: "employees-contractors", category: "BUSINESS" },
-      { id: "3", name: "Customers", slug: "customers", category: "BUSINESS" },
-      { id: "4", name: "Suppliers & Partners", slug: "suppliers-partners", category: "BUSINESS" },
-      { id: "5", name: "Internet", slug: "internet", category: "BUSINESS" },
-      { id: "6", name: "Mergers & Acquisitions", slug: "mergers-acquisitions", category: "BUSINESS" },
-      { id: "7", name: "Property Management", slug: "property-management", category: "BUSINESS" },
-      { id: "8", name: "Litigation", slug: "litigation", category: "BUSINESS" },
-      { id: "9", name: "Tax Forms", slug: "tax-forms", category: "BUSINESS" },
-      { id: "10", name: "Operations", slug: "operations", category: "BUSINESS" },
-    ]
-  }
+
+  // Ref for dropdown
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
   useEffect(() => {
     const loadSubcategories = async () => {
       try {
-        const data = await fetchSubcategories()
-        setSubcategories(data)
+        const response = await SC.getCall({ url: "subcategories" })
+        setSubcategories(response.data.data.data || [])
       } catch (error) {
         toast({
           title: "Error",
@@ -59,7 +59,7 @@ export default function CreateDocument() {
     loadSubcategories()
   }, [])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target
     setFormData({
       ...formData,
@@ -67,14 +67,22 @@ export default function CreateDocument() {
     })
   }
 
-  const handleSubcategoryChange = (value: string) => {
-    setFormData({
-      ...formData,
-      subCategories: value,
+  const toggleSubcategory = (id: string) => {
+    setSelectedSubcategories((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((item) => item !== id)
+      } else {
+        return [...prev, id]
+      }
     })
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const removeSubcategory = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent dropdown from opening
+    setSelectedSubcategories((prev) => prev.filter((item) => item !== id))
+  }
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFormData({
         ...formData,
@@ -83,27 +91,51 @@ export default function CreateDocument() {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      // In a real app, you'd handle file upload here
-      await createDocument(formData)
+      // Create FormData for file upload
+      const formDataToSend = new FormData()
+      formDataToSend.append("name", formData.name)
+      formDataToSend.append("description", formData.description)
+
+      // Append each selected subcategory ID
+      selectedSubcategories.forEach((subcategoryId) => {
+        formDataToSend.append("sub_Categories[]", subcategoryId)
+      })
+
+      if (formData.image) {
+        formDataToSend.append("image", formData.image)
+      }
+
+      await SC.postCall({
+        url: "document/store",
+        data: formDataToSend,
+        formData: true,
+      })
+
       toast({
         title: "Success",
         description: "Document created successfully",
       })
       router.push("/admin/documents/list")
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to create document",
+        description: error.response?.data?.message || "Failed to create document",
         variant: "destructive",
       })
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Get subcategory name by ID
+  const getSubcategoryName = (id: string) => {
+    const subcategory = subcategories.find((subcat) => subcat._id === id)
+    return subcategory ? subcategory.name : ""
   }
 
   return (
@@ -114,19 +146,58 @@ export default function CreateDocument() {
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
             <Label htmlFor="subcategories">Subcategories</Label>
-            <Select value={formData.subCategories} onValueChange={handleSubcategoryChange}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Select Subcategory" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No Sub-Categories</SelectItem>
-                {subcategories.map((subcat) => (
-                  <SelectItem key={subcat.id} value={subcat.name}>
-                    {subcat.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="relative mt-1" ref={dropdownRef}>
+              <div
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+              >
+                <span className="truncate">
+                  {selectedSubcategories.length > 0
+                    ? `${selectedSubcategories.length} subcategories selected`
+                    : "Select subcategories"}
+                </span>
+                <ChevronDown className="h-4 w-4 opacity-50" />
+              </div>
+
+              {/* Dropdown menu */}
+              {dropdownOpen && (
+                <div className="absolute z-10 mt-1 w-full rounded-md border border-input bg-background shadow-lg">
+                  <div className="max-h-60 overflow-auto p-1">
+                    {subcategories.length === 0 ? (
+                      <div className="px-2 py-1 text-sm text-muted-foreground">No subcategories available</div>
+                    ) : (
+                      subcategories.map((subcat) => (
+                        <div
+                          key={subcat._id}
+                          className="flex items-center px-2 py-1.5 text-sm hover:bg-muted rounded cursor-pointer"
+                          onClick={() => toggleSubcategory(subcat._id)}
+                        >
+                          <div className="flex h-4 w-4 items-center justify-center rounded-sm border mr-2">
+                            {selectedSubcategories.includes(subcat._id) && <Check className="h-3 w-3" />}
+                          </div>
+                          <span>{subcat.name}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Selected items */}
+              {selectedSubcategories.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {selectedSubcategories.map((id) => (
+                    <div key={id} className="flex items-center gap-1 bg-muted text-xs px-2 py-1 rounded-full">
+                      {getSubcategoryName(id)}
+                      <X
+                        className="h-3 w-3 cursor-pointer hover:text-destructive"
+                        onClick={(e) => removeSubcategory(id, e)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
@@ -134,21 +205,6 @@ export default function CreateDocument() {
               Document Name <span className="text-red-500">*</span>
             </Label>
             <Input id="name" className="mt-1" value={formData.name} onChange={handleChange} required />
-          </div>
-
-          <div>
-            <Label htmlFor="slug">Slug</Label>
-            <Input
-              id="slug"
-              placeholder="document-slug"
-              className="mt-1"
-              value={formData.slug}
-              onChange={handleChange}
-              required
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              URL-friendly version of the name (auto-generated if left empty)
-            </p>
           </div>
 
           <div>

@@ -23,6 +23,7 @@ interface Drawing {
 }
 
 interface DocumentContextType {
+  initialData?: any
   pages: Page[]
   currentPage: number
   setCurrentPage: (page: number) => void
@@ -554,6 +555,7 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData
         prepareForSubmission,
         email,
         setEmail: updateEmail,
+        initialData
       }}
     >
       {children}

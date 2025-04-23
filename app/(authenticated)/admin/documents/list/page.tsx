@@ -2,116 +2,74 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-// import DataTable, { type Column } from "../../../../../components/data-table"
 import { Button } from "../../../../../components/ui/button"
 import { toast } from "../../../../../components/ui/use-toast"
 import { Plus } from "lucide-react"
-import DataTable , { type Column }from "../../../../../components/admin/data-table"
+import DataTable, { type Column } from "../../../../../components/admin/data-table"
+import { SC } from "../../../../../service/Api/serverCall"
+import { CustomPagination } from "../../../../../components/ui/custom-pagination"
 
 export default function DocumentsList() {
   const router = useRouter()
   const [documents, setDocuments] = useState([])
   const [isLoading, setIsLoading] = useState(true)
-  async function fetchDocuments() {
-    // Mock data - replace with actual API call
-    return [
-      {
-        id: "1",
-        name: "Personal Injury/ Insurance Payment Demand Letter",
-        slug: "personal-injury-letter",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-      {
-        id: "2",
-        name: "Business Proposal",
-        slug: "business-proposal",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-      { id: "3", name: "Invoice", slug: "invoice", description: "", subCategories: "No Sub-Categories" },
-      {
-        id: "4",
-        name: "Letter of Intent for General Property Purchase",
-        slug: "letter-of-intent",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-      {
-        id: "5",
-        name: "Vehicle Power of Attorney",
-        slug: "vehicle-power-of-attorney",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-      {
-        id: "6",
-        name: "Cease and Desist – Harassment",
-        slug: "cease-and-desist-harassment",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-      {
-        id: "7",
-        name: "Cease and Desist – Defamation",
-        slug: "cease-and-desist-defamation",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-      {
-        id: "8",
-        name: "Photo Licensing (License) Agreement",
-        slug: "photo-licensing-agreement",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-      {
-        id: "9",
-        name: "Photo Release Form",
-        slug: "photo-release-form",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-      {
-        id: "10",
-        name: "Affidavit of Paternity",
-        slug: "affidavit-of-paternity",
-        description: "",
-        subCategories: "No Sub-Categories",
-      },
-    ]
-  }
-  
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    perPage: 10,
+    total: 0,
+  })
 
-  async function deleteDocument(id: string) {
-    console.log("Deleting document:", id)
-    // Replace with actual API call
-    return { success: true }
-  }
   useEffect(() => {
-    const loadDocuments = async () => {
-      try {
-        const data = await fetchDocuments()
-        setDocuments(data)
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load documents",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadDocuments()
+    loadDocuments(pagination.currentPage)
   }, [])
+
+  const loadDocuments = async (page = 1) => {
+    try {
+      setIsLoading(true)
+      const response = await SC.getCall({ url: `getAllAdminDocument?page=${page}` })
+
+      // Extract pagination data from response
+      const { current_page, last_page, per_page, total, data: documentsData } = response.data.data
+
+      // Update pagination state
+      setPagination({
+        currentPage: current_page,
+        totalPages: last_page,
+        perPage: per_page,
+        total: total,
+      })
+
+      // Format the data for display
+      const formattedData = documentsData.map((doc: any) => ({
+        ...doc,
+        subCategories: doc.subcategory ? doc.subcategory.name : "No Subcategory",
+      }))
+
+      setDocuments(formattedData)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load documents",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handlePageChange = (page: number) => {
+    loadDocuments(page)
+  }
 
   const handleDelete = async (item: any) => {
     if (window.confirm(`Are you sure you want to delete ${item.name}?`)) {
       try {
-        await deleteDocument(item.id)
-        setDocuments(documents.filter((doc: any) => doc.id !== item.id))
+        await SC.deleteCall({ url: `documents/${item._id}` })
+
+        // Reload the current page after deletion
+        loadDocuments(pagination.currentPage)
+
         toast({
           title: "Success",
           description: "Document deleted successfully",
@@ -128,25 +86,25 @@ export default function DocumentsList() {
 
   const columns: Column[] = [
     { key: "name", label: "NAME" },
-    { key: "slug", label: "SLUG" },
     { key: "description", label: "DESCRIPTION" },
     {
       key: "subCategories",
-      label: "SUB-CATEGORIES",
+      label: "SUBCATEGORY",
       render: (value) => <span className="italic text-muted-foreground">{value}</span>,
     },
   ]
 
   const actions = [
     {
-      label: "Show",
+      label: "Edit Template",
       color: "cyan",
-      onClick: (item: any) => router.push(`/admin/documents/show/${item.id}`),
+      onClick: (item: any) => router.push(`/admin/documents/template-editor/${item.slug}`),
+
     },
     {
-      label: "Edit",
+      label: "Edit Details",
       color: "orange",
-      onClick: (item: any) => router.push(`/admin/documents/edit/${item.id}`),
+      onClick: (item: any) => router.push(`/admin/documents/edit/${item._id}`),
     },
     {
       label: "Delete",
@@ -155,7 +113,7 @@ export default function DocumentsList() {
     },
   ]
 
-  if (isLoading) {
+  if (isLoading && pagination.currentPage === 1) {
     return <div className="p-6 text-center">Loading documents...</div>
   }
 
@@ -169,7 +127,31 @@ export default function DocumentsList() {
           </Button>
         </div>
 
-        <DataTable title="Documents" columns={columns} data={documents} actions={actions} />
+        <DataTable
+          title="Documents"
+          columns={columns}
+          data={documents}
+          actions={actions}
+          isLoading={isLoading}
+          showPagination={false}
+        />
+
+        {/* Pagination */}
+        <div className="mt-6">
+          <CustomPagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={handlePageChange}
+            showFirstLast={true}
+            maxPageButtons={5}
+          />
+        </div>
+
+        {/* Pagination summary */}
+        <div className="mt-2 text-sm text-gray-500 text-center">
+          Showing {(pagination.currentPage - 1) * pagination.perPage + 1} to{" "}
+          {Math.min(pagination.currentPage * pagination.perPage, pagination.total)} of {pagination.total} entries
+        </div>
       </div>
     </div>
   )
