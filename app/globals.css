@@ -259,6 +259,9 @@ hr {
 
 
 
+
+
+
 /* Update page break styles */
 .page-break-container {
   position: relative;
@@ -392,3 +395,319 @@ hr {
   justify-content: normal !important;
 }
 
+
+
+
+/* Add these styles to improve the handling of whitespace in the editor */
+
+
+
+/* A4 Page Styling */
+.a4-page-container {
+  width: 210mm;
+  min-height: 297mm;
+  position: relative;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-bottom: 2rem;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.a4-page {
+  width: 100%;
+  min-height: 297mm;
+  padding: 20mm;
+  box-sizing: border-box;
+  overflow: visible;
+  position: relative;
+}
+
+/* Remove highlight box */
+.a4-page .ProseMirror {
+  outline: none !important;
+}
+
+.a4-page .ProseMirror:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.a4-page .ProseMirror *::selection {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Make sure the editor uses the full width */
+.prose {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+/* Page break styling */
+.page-break-indicator {
+  position: relative;
+  height: 20px;
+  margin: 10px 0;
+  width: 100%;
+}
+
+.page-break-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  border-top: 1px dashed #cbd5e0;
+}
+
+.page-break-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #f7fafc;
+  padding: 0 10px;
+  font-size: 12px;
+  color: #718096;
+}
+
+/* Pagination controls */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.pagination-controls button {
+  background-color: #f7fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.5rem 1rem;
+  margin: 0 0.25rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.pagination-controls button:hover {
+  background-color: #edf2f7;
+}
+
+.pagination-controls button.active {
+  background-color: #4a5568;
+  color: white;
+}
+
+/* Field placeholder styling */
+.field-placeholder {
+  background-color: #f0f9ff;
+  border: 1px dashed #93c5fd;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin: 0 2px;
+  font-family: monospace;
+  color: #3b82f6;
+  cursor: default;
+  user-select: none;
+  display: inline-block;
+  white-space: nowrap;
+  position: relative;
+  vertical-align: middle;
+}
+
+/* Make sure the field placeholder is treated as a single unit */
+.field-placeholder::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+/* Conditional block styling */
+.conditional-block {
+  background-color: #f0fff4;
+  border: 1px dashed #84e1bc;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin: 4px 0;
+  position: relative;
+  white-space: pre-wrap;
+  display: block;
+}
+
+.conditional-block::before {
+  content: attr(data-condition);
+  position: absolute;
+  top: -10px;
+  left: 8px;
+  background-color: #f0fff4;
+  padding: 0 4px;
+  font-size: 10px;
+  color: #047857;
+}
+
+/* Field placeholder inside conditional styling */
+.conditional-block .field-placeholder {
+  background-color: #ecfdf5;
+  border-color: #6ee7b7;
+  color: #047857;
+}
+
+/* Print styles */
+@media print {
+  .a4-page-container {
+    box-shadow: none;
+    margin: 0;
+    page-break-after: always;
+  }
+
+  .pagination-controls,
+  .toolbar {
+    display: none;
+  }
+}
+
+/* Document Canvas Styling */
+.document-canvas {
+  width: 210mm;
+  min-height: 297mm;
+  position: relative;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-bottom: 0;
+}
+
+.document-content {
+  width: 100%;
+  min-height: 297mm;
+  padding: 20mm;
+  box-sizing: border-box;
+  overflow: visible;
+  position: relative;
+}
+
+.document-content .ProseMirror {
+  min-height: 257mm; /* 297mm - 40mm (top and bottom padding) */
+  height: 100%;
+  width: 100%;
+  outline: none !important; /* Remove the outline when focused */
+}
+
+/* Remove any highlight or selection styling */
+.document-content .ProseMirror *::selection {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.document-content .ProseMirror:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Zoom container styling */
+.zoom-container {
+  min-height: 100%;
+  padding: 20px 0;
+}
+
+.document-container {
+  transition: transform 0.2s ease;
+}
+
+/* Text alignment styles */
+.ProseMirror .text-left {
+  text-align: left;
+}
+
+.ProseMirror .text-center {
+  text-align: center;
+}
+
+.ProseMirror .text-right {
+  text-align: right;
+}
+
+.ProseMirror .text-justify {
+  text-align: justify;
+}
+
+/* Custom HR */
+.custom-hr {
+  border: none;
+  height: 2px;
+  background-color: #e2e8f0;
+  margin: 1.5em 0;
+  width: 100%;
+}
+
+.ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.ProseMirror td,
+.ProseMirror th {
+  min-width: 1em;
+  border: 2px solid #ced4da;
+  padding: 3px 5px;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.ProseMirror th {
+  font-weight: bold;
+  background-color: #f1f3f5;
+}
+
+/* Remove selection highlight styling */
+.ProseMirror .selectedCell:after {
+  display: none;
+}
+
+.ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: #adf;
+  pointer-events: none;
+  cursor: col-resize;
+  z-index: 3;
+}
+
+
+
+/* Preserve whitespace in the editor */
+.ProseMirror {
+  white-space: pre-wrap !important;
+}
+
+/* Prevent field placeholders from being broken across lines */
+.field-placeholder {
+  white-space: nowrap !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
+
+/* Ensure conditional blocks maintain proper spacing */
+.conditional-block {
+  white-space: normal !important;
+  display: block !important;
+  margin: 0.5em 0 !important;
+}
+
+/* Fix spacing around field placeholders */
+.ProseMirror p .field-placeholder {
+  margin: 0 0.25em !important;
+}
+
+/* Prevent extra spaces from being visible */
+.ProseMirror br + br {
+  display: none;
+}
