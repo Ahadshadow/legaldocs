@@ -70,8 +70,11 @@ export function FormBuilder({
       steps: updatedSteps,
     })
 
-    setSelectedStep(formStructure.steps.length)
-    setSelectedSubsection(0)
+    // Set the selected step to the new step's index AFTER the state update
+    setTimeout(() => {
+      setSelectedStep(updatedSteps.length - 1)
+      setSelectedSubsection(0)
+    }, 0)
   }
 
   // Add a new subsection with FAQ fields
@@ -605,10 +608,11 @@ export function FormBuilder({
                           <div
                             role="button"
                             tabIndex={0}
-                            className={`h-8 w-8 flex items-center justify-center rounded-md ${formStructure.steps.length <= 1
+                            className={`h-8 w-8 flex items-center justify-center rounded-md ${
+                              formStructure.steps.length <= 1
                                 ? "opacity-50 cursor-not-allowed"
                                 : "hover:bg-accent cursor-pointer"
-                              }`}
+                            }`}
                             onClick={() => {
                               if (formStructure.steps.length > 1) {
                                 deleteStep(stepIndex)
@@ -661,184 +665,182 @@ export function FormBuilder({
                     <div className="pl-4 border-l-2 border-gray-200 mt-3">
                       <div className="text-sm font-medium mb-2">Subsections</div>
                       <div className="space-y-2">
-                        {formStructure.steps.map((step, stepIndex) =>
-                          step.subsections.map((subsection, subsectionIndex) => (
-                            <Accordion
-                              key={subsectionIndex}
-                              type="single"
-                              collapsible
-                              className={`border rounded-md ${selectedStep === stepIndex && selectedSubsection === subsectionIndex
-                                  ? "border-primary bg-primary/5"
-                                  : "border-gray-200"
-                                }`}
-                            >
-                              <AccordionItem value="subsection" className="border-none">
-                                <div
-                                  className="flex items-center justify-between w-full px-3 py-2 cursor-pointer"
-                                  onClick={() => {
-                                    const accordionTrigger = document.getElementById(
-                                      `subsection-${stepIndex}-${subsectionIndex}`,
-                                    )
-                                    if (accordionTrigger) {
-                                      accordionTrigger.click()
-                                    }
-                                  }}
-                                >
-                                  {editingSubsectionIndex &&
-                                    editingSubsectionIndex.stepIndex === stepIndex &&
-                                    editingSubsectionIndex.subsectionIndex === subsectionIndex ? (
-                                    <div className="flex items-center space-x-1 flex-1">
-                                      <Input
-                                        ref={inputRef}
-                                        value={editingName}
-                                        onChange={(e) => setEditingName(e.target.value)}
-                                        onKeyDown={(e) => {
-                                          if (e.key === "Enter") saveEditedName()
-                                          if (e.key === "Escape") cancelEditing()
-                                        }}
-                                        className="h-7 text-sm"
-                                      />
-                                      <div
-                                        role="button"
-                                        tabIndex={0}
-                                        className="h-6 w-6 flex items-center justify-center rounded-md hover:bg-accent"
-                                        onClick={saveEditedName}
-                                        onKeyDown={(e) => {
-                                          if (e.key === "Enter" || e.key === "Space") saveEditedName()
-                                        }}
-                                      >
-                                        <Check className="h-3 w-3" />
-                                      </div>
-                                      <div
-                                        role="button"
-                                        tabIndex={0}
-                                        className="h-6 w-6 flex items-center justify-center rounded-md hover:bg-accent"
-                                        onClick={cancelEditing}
-                                        onKeyDown={(e) => {
-                                          if (e.key === "Enter" || e.key === "Space") cancelEditing()
-                                        }}
-                                      >
-                                        <X className="h-3 w-3" />
-                                      </div>
+                        {/* Only render subsections for the current step */}
+                        {step.subsections.map((subsection, subsectionIndex) => (
+                          <Accordion
+                            key={subsectionIndex}
+                            type="single"
+                            collapsible
+                            className={`border rounded-md ${
+                              selectedStep === stepIndex && selectedSubsection === subsectionIndex
+                                ? "border-primary bg-primary/5"
+                                : "border-gray-200"
+                            }`}
+                          >
+                            <AccordionItem value="subsection" className="border-none">
+                              <div
+                                className="flex items-center justify-between w-full px-3 py-2 cursor-pointer"
+                                onClick={() => {
+                                  const accordionTrigger = document.getElementById(
+                                    `subsection-${stepIndex}-${subsectionIndex}`,
+                                  )
+                                  if (accordionTrigger) {
+                                    accordionTrigger.click()
+                                  }
+                                }}
+                              >
+                                {editingSubsectionIndex &&
+                                editingSubsectionIndex.stepIndex === stepIndex &&
+                                editingSubsectionIndex.subsectionIndex === subsectionIndex ? (
+                                  <div className="flex items-center space-x-1 flex-1">
+                                    <Input
+                                      ref={inputRef}
+                                      value={editingName}
+                                      onChange={(e) => setEditingName(e.target.value)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") saveEditedName()
+                                        if (e.key === "Escape") cancelEditing()
+                                      }}
+                                      className="h-7 text-sm"
+                                    />
+                                    <div
+                                      role="button"
+                                      tabIndex={0}
+                                      className="h-6 w-6 flex items-center justify-center rounded-md hover:bg-accent"
+                                      onClick={saveEditedName}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === "Space") saveEditedName()
+                                      }}
+                                    >
+                                      <Check className="h-3 w-3" />
                                     </div>
-                                  ) : (
-                                    <div className="flex items-center justify-between w-full">
-                                      <span className="text-sm flex items-center">
-                                        {subsection.name}
-                                        <div
-                                          role="button"
-                                          tabIndex={0}
-                                          className="h-5 w-5 ml-1 flex items-center justify-center rounded-md hover:bg-accent"
-                                          onClick={(e) => {
-                                            e.stopPropagation()
-                                            startEditingSubsection(stepIndex, subsectionIndex, subsection.name)
-                                          }}
-                                          onKeyDown={(e) => {
-                                            if (e.key === "Enter" || e.key === "Space") {
-                                              e.stopPropagation()
-                                              startEditingSubsection(stepIndex, subsectionIndex, subsection.name)
-                                            }
-                                          }}
-                                        >
-                                          <Edit className="h-3 w-3" />
-                                        </div>
-                                      </span>
+                                    <div
+                                      role="button"
+                                      tabIndex={0}
+                                      className="h-6 w-6 flex items-center justify-center rounded-md hover:bg-accent"
+                                      onClick={cancelEditing}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === "Space") cancelEditing()
+                                      }}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center justify-between w-full">
+                                    <span className="text-sm flex items-center">
+                                      {subsection.name}
                                       <div
                                         role="button"
                                         tabIndex={0}
-                                        className={`h-6 w-6 flex items-center justify-center rounded-md ${step.subsections.length <= 1
-                                            ? "opacity-50 cursor-not-allowed"
-                                            : "hover:bg-accent cursor-pointer"
-                                          }`}
+                                        className="h-5 w-5 ml-1 flex items-center justify-center rounded-md hover:bg-accent"
                                         onClick={(e) => {
                                           e.stopPropagation()
-                                          if (step.subsections.length > 1) {
-                                            deleteSubsection(stepIndex, subsectionIndex)
-                                          }
+                                          startEditingSubsection(stepIndex, subsectionIndex, subsection.name)
                                         }}
                                         onKeyDown={(e) => {
                                           if (e.key === "Enter" || e.key === "Space") {
                                             e.stopPropagation()
-                                            if (step.subsections.length > 1) {
-                                              deleteSubsection(stepIndex, subsectionIndex)
-                                            }
+                                            startEditingSubsection(stepIndex, subsectionIndex, subsection.name)
                                           }
                                         }}
-                                        aria-disabled={step.subsections.length <= 1}
                                       >
-                                        <Trash2 className="h-3 w-3" />
+                                        <Edit className="h-3 w-3" />
                                       </div>
+                                    </span>
+                                    <div
+                                      role="button"
+                                      tabIndex={0}
+                                      className={`h-6 w-6 flex items-center justify-center rounded-md ${
+                                        step.subsections.length <= 1
+                                          ? "opacity-50 cursor-not-allowed"
+                                          : "hover:bg-accent cursor-pointer"
+                                      }`}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        if (step.subsections.length > 1) {
+                                          deleteSubsection(stepIndex, subsectionIndex)
+                                        }
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === "Space") {
+                                          e.stopPropagation()
+                                          if (step.subsections.length > 1) {
+                                            deleteSubsection(stepIndex, subsectionIndex)
+                                          }
+                                        }
+                                      }}
+                                      aria-disabled={step.subsections.length <= 1}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
                                     </div>
-                                  )}
-                                </div>
-                                <AccordionTrigger
-                                  id={`subsection-${stepIndex}-${subsectionIndex}`}
-                                  className="sr-only"
-                                />
-                                <AccordionContent className="px-3 pb-2">
-                                  {/* Add FAQ fields for subsections */}
-                                  <div className="mb-3 space-y-2">
-                                    <div className="text-xs font-medium">Subsection FAQ</div>
-                                    <Input
-                                      placeholder="FAQ Question"
-                                      value={subsection.FAQQuestion || ""}
-                                      onChange={(e) => {
-                                        const updatedSteps = [...formStructure.steps]
-                                        updatedSteps[stepIndex].subsections[subsectionIndex].FAQQuestion =
-                                          e.target.value
-                                        setFormStructure({
-                                          ...formStructure,
-                                          steps: updatedSteps,
-                                        })
-                                      }}
-                                      className="text-xs h-7"
-                                    />
-                                    <Input
-                                      placeholder="FAQ Answer"
-                                      value={subsection.FAQAnswer || ""}
-                                      onChange={(e) => {
-                                        const updatedSteps = [...formStructure.steps]
-                                        updatedSteps[stepIndex].subsections[subsectionIndex].FAQAnswer = e.target.value
-                                        setFormStructure({
-                                          ...formStructure,
-                                          steps: updatedSteps,
-                                        })
-                                      }}
-                                      className="text-xs h-7"
-                                    />
                                   </div>
+                                )}
+                              </div>
+                              <AccordionTrigger id={`subsection-${stepIndex}-${subsectionIndex}`} className="sr-only" />
+                              <AccordionContent className="px-3 pb-2">
+                                {/* Add FAQ fields for subsections */}
+                                <div className="mb-3 space-y-2">
+                                  <div className="text-xs font-medium">Subsection FAQ</div>
+                                  <Input
+                                    placeholder="FAQ Question"
+                                    value={subsection.FAQQuestion || ""}
+                                    onChange={(e) => {
+                                      const updatedSteps = [...formStructure.steps]
+                                      updatedSteps[stepIndex].subsections[subsectionIndex].FAQQuestion = e.target.value
+                                      setFormStructure({
+                                        ...formStructure,
+                                        steps: updatedSteps,
+                                      })
+                                    }}
+                                    className="text-xs h-7"
+                                  />
+                                  <Input
+                                    placeholder="FAQ Answer"
+                                    value={subsection.FAQAnswer || ""}
+                                    onChange={(e) => {
+                                      const updatedSteps = [...formStructure.steps]
+                                      updatedSteps[stepIndex].subsections[subsectionIndex].FAQAnswer = e.target.value
+                                      setFormStructure({
+                                        ...formStructure,
+                                        steps: updatedSteps,
+                                      })
+                                    }}
+                                    className="text-xs h-7"
+                                  />
+                                </div>
 
-                                  <div className="space-y-2">
-                                    <div className="text-xs font-medium mb-1">Questions</div>
-                                    {subsection?.question?.length === 0 ? (
-                                      <div className="text-xs text-muted-foreground py-2">No questions added</div>
-                                    ) : (
-                                      <div className="space-y-2">
-                                        {subsection?.question?.map((question) => {
-                                          const affectingQuestions = getAffectingQuestions(question.id)
+                                <div className="space-y-2">
+                                  <div className="text-xs font-medium mb-1">Questions</div>
+                                  {subsection?.question?.length === 0 ? (
+                                    <div className="text-xs text-muted-foreground py-2">No questions added</div>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      {subsection?.question?.map((question) => {
+                                        const affectingQuestions = getAffectingQuestions(question.id)
 
-                                          return (
-                                            <div
-                                              key={question.id}
-                                              className="flex items-center justify-between p-2 border rounded-md text-xs"
-                                            >
+                                        return (
+                                          <div
+                                            key={question.id}
+                                            className="flex items-center justify-between p-2 border rounded-md text-xs"
+                                          >
                                             <div className="flex flex-col w-full max-w-full">
-  <span className="font-medium">{question.questionToAsk}</span>
-  <span className="text-muted-foreground text-xs truncate overflow-hidden whitespace-nowrap">
-    {question.uniqueKeyName}
-  </span>
-                                                {question.affectedQuestion && question.affectedQuestion.length > 0 && (
-                                                  <span className="text-xs text-blue-500 mt-1">
-                                                    Controls {question.affectedQuestion.length} question(s)
-                                                  </span>
-                                                )}
-                                                {affectingQuestions.length > 0 && (
-                                                  <span className="text-xs text-green-500 mt-1">
-                                                    Depends on:{" "}
-                                                    {affectingQuestions.map((q) => q.questionToAsk).join(", ")}
-                                                  </span>
-                                                )}
-                                                <div className="flex space-x-1 mt-1">
+                                              <span className="font-medium">{question.questionToAsk}</span>
+                                              <span className="text-muted-foreground text-xs truncate overflow-hidden whitespace-nowrap">
+                                                {question.uniqueKeyName}
+                                              </span>
+                                              {question.affectedQuestion && question.affectedQuestion.length > 0 && (
+                                                <span className="text-xs text-blue-500 mt-1">
+                                                  Controls {question.affectedQuestion.length} question(s)
+                                                </span>
+                                              )}
+                                              {affectingQuestions.length > 0 && (
+                                                <span className="text-xs text-green-500 mt-1">
+                                                  Depends on:{" "}
+                                                  {affectingQuestions.map((q) => q.questionToAsk).join(", ")}
+                                                </span>
+                                              )}
+                                              <div className="flex space-x-1 mt-1">
                                                 <Button
                                                   variant="ghost"
                                                   size="icon"
@@ -887,32 +889,30 @@ export function FormBuilder({
                                                   <Trash2 className="h-3 w-3" />
                                                 </Button>
                                               </div>
-                                              </div>
-                                              
                                             </div>
-                                          )
-                                        })}
-                                      </div>
-                                    )}
+                                          </div>
+                                        )
+                                      })}
+                                    </div>
+                                  )}
 
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="w-full text-xs"
-                                      onClick={() => {
-                                        setSelectedStep(stepIndex)
-                                        setSelectedSubsection(subsectionIndex)
-                                        addQuestion(stepIndex, subsectionIndex)
-                                      }}
-                                    >
-                                      <Plus className="h-3 w-3 mr-1" /> Add Question
-                                    </Button>
-                                  </div>
-                                </AccordionContent>
-                              </AccordionItem>
-                            </Accordion>
-                          )),
-                        )}
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full text-xs"
+                                    onClick={() => {
+                                      setSelectedStep(stepIndex)
+                                      setSelectedSubsection(subsectionIndex)
+                                      addQuestion(stepIndex, subsectionIndex)
+                                    }}
+                                  >
+                                    <Plus className="h-3 w-3 mr-1" /> Add Question
+                                  </Button>
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
+                        ))}
                       </div>
 
                       <Button
