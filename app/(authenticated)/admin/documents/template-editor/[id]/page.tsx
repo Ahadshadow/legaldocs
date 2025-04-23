@@ -36,9 +36,9 @@ export default function Home() {
   const generateFieldKey = (text) => {
     return text
       .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, "")
-      .replace(/\s+/g, "_")
-  }
+      .replace(/[^a-z\s]/g, "")     // removes everything except lowercase letters and spaces
+      .replace(/\s+/g, "_");         // replaces spaces with underscores
+  };
 
   // Function to add a field to the document content
   const addFieldToDocument = (fieldKey, fieldType = "input", cursorPosition = null) => {
