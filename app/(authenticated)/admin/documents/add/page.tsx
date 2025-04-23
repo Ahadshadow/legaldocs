@@ -45,8 +45,10 @@ export default function CreateDocument() {
   useEffect(() => {
     const loadSubcategories = async () => {
       try {
-        const response = await SC.getCall({ url: "subcategories" })
-        setSubcategories(response.data.data.data || [])
+        const response = await SC.getCall({ url: "subCategoriesWithoutPagination" })
+
+        
+        setSubcategories(response.data.data || [])
       } catch (error) {
         toast({
           title: "Error",

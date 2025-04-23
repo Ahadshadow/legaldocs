@@ -50,8 +50,8 @@ export default function EditDocument({ params }: { params: { id: string } }) {
     const loadData = async () => {
       try {
         // Fetch subcategories
-        const subcategoriesResponse = await SC.getCall({ url: "subcategories" })
-        setSubcategories(subcategoriesResponse.data.data.data || [])
+        const subcategoriesResponse = await SC.getCall({ url: "subCategoriesWithoutPagination" })
+        setSubcategories(subcategoriesResponse.data.data || [])
 
         // Fetch document details
         const documentResponse = await SC.getCall({ url: `document/${id}` })
@@ -140,8 +140,8 @@ export default function EditDocument({ params }: { params: { id: string } }) {
       }
 
       // Update document
-      await SC.putCall({
-        url: `document/${id}`,
+      await SC.postCall({
+        url: `document/${id}/update`,
         data: formDataToSend,
         formData: true,
       })

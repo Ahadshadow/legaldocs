@@ -36,6 +36,8 @@ function DocumentItem({ title, id }) {
 }
 
 export default function SubcategoryPage({ params }) {
+
+  
   const { category, subcategory } =use(params);
 
   const [options, setOptions] = useState(null);

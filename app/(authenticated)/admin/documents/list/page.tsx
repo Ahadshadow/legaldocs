@@ -43,7 +43,7 @@ export default function DocumentsList() {
       // Format the data for display
       const formattedData = documentsData.map((doc: any) => ({
         ...doc,
-        subCategories: doc.subcategory ? doc.subcategory.name : "No Subcategory",
+        subCategories: doc?.sub_categories?.map?.((sub: any) => sub.name).join(", ") || "",
       }))
 
       setDocuments(formattedData)

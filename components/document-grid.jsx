@@ -45,12 +45,8 @@ export default function DocumentGrid() {
   }, []);
 
   const handleClick = (event, href) => {
-    if (!isAuthenticated) {
-      event.preventDefault();
-      router.push("/signin");
-    } else {
+  
       router.push(href);
-    }
   };
   return (
     <div className="flex justify-center">
