@@ -501,7 +501,7 @@ export function DocumentEditor({
   // Function to add a field to the document content
   const insertField = (fieldKey, fieldType = "input") => {
     // Check if the field already exists in the document
-    const fieldRegex = new RegExp(`\\{\\{%\\s*${fieldKey}\\s*\\|[^}]*%\\}\\}`, "g")
+    const fieldRegex = new RegExp(`\\{\\{\\s*${fieldKey}\\s*\\|[^}]*\\}\\}`, "g")
     const fieldExists = fieldRegex.test(documentContent)
 
     // If the field exists and no cursor position is provided, don't add a duplicate
@@ -509,7 +509,7 @@ export function DocumentEditor({
       return
     }
 
-    const fieldFormat = `{{% ${fieldKey} | ${fieldType} | underscore %}}`
+    const fieldFormat = `{{ ${fieldKey} | ${fieldType} | underscore }}`
 
     if (editorInstance && cursorPosition !== null) {
       // Insert at cursor position without line breaks
@@ -544,9 +544,9 @@ export function DocumentEditor({
       const content = editor.getHTML()
 
       // Replace field placeholders
-      const fieldRegex = new RegExp(`\\{\\{%\\s*${oldFieldKey}\\s*(\\|[^}]*%\\}\\})`, "g")
+      const fieldRegex = new RegExp(`\\{\\{\\s*${oldFieldKey}\\s*(\\|[^}]*\\}\\})`, "g")
       let updatedContent = content.replace(fieldRegex, (match, formatPart) => {
-        return `{{% ${newFieldKey}${formatPart}`
+        return `{{ ${newFieldKey}${formatPart}`
       })
 
       // Replace conditional logic references

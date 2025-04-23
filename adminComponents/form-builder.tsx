@@ -352,9 +352,9 @@ export function FormBuilder({
         let updatedContent = documentContent
 
         // Replace field placeholders
-        const fieldRegex = new RegExp(`\\{\\{%\\s*${oldFieldKey}\\s*(\\|[^}]*%\\}\\})`, "g")
+        const fieldRegex = new RegExp(`\\{\\{\\s*${oldFieldKey}\\s*(\\|[^}]*\\}\\})`, "g")
         updatedContent = updatedContent.replace(fieldRegex, (match, formatPart) => {
-          return `{{% ${newFieldKey}${formatPart}`
+          return `{{ ${newFieldKey}${formatPart}`
         })
 
         // Replace conditional logic references
@@ -528,11 +528,11 @@ export function FormBuilder({
   const insertConditionalField = (controllingField, value, dependentField) => {
     if (editorInstance) {
       const { from } = editorInstance.state.selection
-      const conditionalContent = `{{% ${dependentField} | input | underscore %}}`
+      const conditionalContent = `{{ ${dependentField} | input | underscore }}`
       addConditionalToDocument(controllingField, "==", value, conditionalContent, from)
       editorInstance.commands.focus()
     } else {
-      const conditionalContent = `{{% ${dependentField} | input | underscore %}}`
+      const conditionalContent = `{{ ${dependentField} | input | underscore }}`
       addConditionalToDocument(controllingField, "==", value, conditionalContent)
     }
   }

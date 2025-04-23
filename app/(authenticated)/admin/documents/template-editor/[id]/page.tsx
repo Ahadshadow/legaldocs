@@ -53,7 +53,7 @@ export default function Home() {
 
     if (editorInstance && cursorPosition !== null) {
       // Format: {{% field_name | input | underscore %}}
-      const fieldFormat = `{{% ${fieldKey} | ${fieldType} | underscore %}}`
+      const fieldFormat = `{{ ${fieldKey} | ${fieldType} | underscore }}`
 
       // Insert at cursor position without line breaks
       const { state } = editorInstance
@@ -63,7 +63,7 @@ export default function Home() {
     } else {
       // Fallback if no cursor position or editor instance
       setDocumentContent((prevContent) => {
-        return prevContent + `{{% ${fieldKey} | ${fieldType} | underscore %}}`
+        return prevContent + `{{ ${fieldKey} | ${fieldType} | underscore }}`
       })
     }
   }
@@ -72,7 +72,7 @@ export default function Home() {
   const removeFieldFromDocument = (fieldKey) => {
     setDocumentContent((prevContent) => {
       // Remove field references with the exact format
-      const fieldRegex = new RegExp(`\\{\\{%\\s*${fieldKey}\\s*\\|[^}]*%\\}\\}`, "g")
+      const fieldRegex = new RegExp(`\\{\\{\\s*${fieldKey}\\s*\\|[^}]*\\}\\}`, "g")
       let newContent = prevContent.replace(fieldRegex, "")
 
       // Remove conditional blocks that reference this field

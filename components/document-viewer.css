@@ -29,8 +29,8 @@
 /* Remove custom question styling */
 .ProseMirror span[data-type="custom-question"],
 \
-.ProseMirror *:contains("{{% "),
-.ProseMirror *:contains("%}}"),
+.ProseMirror *:contains("{{ "),
+.ProseMirror *:contains("}}"),
 .ProseMirror *:contains("if"),
 .ProseMirror *:contains("endif"),
 .ProseMirror p:has(span:contains("{%")),

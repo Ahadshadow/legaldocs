@@ -143,7 +143,7 @@ export function DocumentPreview({ content, formStructure, formData, setFormData 
 
     // Now process any remaining field replacements outside of conditionals
     // Format: {{% field_name | input | underscore %}}
-    const fieldRegex = /\{\{%\s*([a-zA-Z0-9_]+)\s*\|[^}]*%\}\}/g
+    const fieldRegex = /\{\{\s*([a-zA-Z0-9_]+)\s*\|[^}]*\}\}/g
 
     result = result.replace(fieldRegex, (match, key) => {
       const value = formData[key]
