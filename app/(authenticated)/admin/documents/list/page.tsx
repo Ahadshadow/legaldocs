@@ -104,7 +104,7 @@ export default function DocumentsList() {
     {
       label: "Edit Details",
       color: "orange",
-      onClick: (item: any) => router.push(`/admin/documents/edit/${item._id}`),
+      onClick: (item: any) => router.push(`/admin/documents/edit/${item.slug}`),
     },
     {
       label: "Delete",
