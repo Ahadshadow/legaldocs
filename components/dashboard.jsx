@@ -63,9 +63,9 @@ export default function NavHeader() {
         </div>
 
         <div className="flex flex-1 items-center justify-end space-x-4">
-          <Button variant="outline" className="hidden lg:inline-flex">
+          {/* <Button variant="outline" className="hidden lg:inline-flex">
             Upgrade Plan
-          </Button>
+          </Button> */}
 
           <Avatar>
             <AvatarImage src="/placeholder.svg" alt="User avatar" />

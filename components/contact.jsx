@@ -1,4 +1,5 @@
 import { Button } from "../components/ui/button"
+import Link from "next/link";
 
 export default function Contact() {
   return (
@@ -10,7 +11,11 @@ export default function Contact() {
           If you're having any difficulties or need assistance please reach out to us and we'll be happy to help.
         </p>
         <Button className="bg-[#6B7CFF] hover:bg-[#5A6AE6]">
-          Contact Us
+          <Link
+            href="/contact"
+          >
+            Contact US
+          </Link>
         </Button>
       </div>
     </section>

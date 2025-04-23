@@ -56,14 +56,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             legaltemplates.
           </Link>
           <div className="flex items-center gap-4">
-            <Link href="/pricing" className="hidden md:block">
+            {/* <Link href="/pricing" className="hidden md:block">
               <Button
                 variant="ghost"
                 className="bg-white hover:bg-gray-50 text-blue-600 border border-blue-600 font-normal rounded-md"
               >
                 Upgrade Plan
               </Button>
-            </Link>
+            </Link> */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
