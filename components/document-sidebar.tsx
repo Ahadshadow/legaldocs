@@ -375,12 +375,12 @@ export function DocumentSidebar({ isEmailMatch }: { isEmailMatch: boolean }) {
               active={activeTool === "signature"}
               onClick={() => setActiveTool(activeTool === "signature" ? null : "signature")}
             />
-            <SidebarButton
+            {/* <SidebarButton
               icon={<FormInput />}
               label="Questions & Steps"
               active={activeTool === "formBuilder"}
               onClick={() => setActiveTool(activeTool === "formBuilder" ? null : "formBuilder")}
-            />
+            /> */}
           </div>
         </div>
       </div>

@@ -241,7 +241,7 @@ export function DocumentHeader({
         toast.success("Document submitted successfully")
         // Clear localStorage after successful submission
         localStorage.removeItem("document-steps-definition")
-        router.push("/app/user-panel/documents")
+        router.push("/app/user-panel/mydocs")
       } else {
         throw new Error("Failed to submit document")
       }
@@ -316,24 +316,18 @@ export function DocumentHeader({
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem onClick={() => handleSave("pdf")}>Save as PDF</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSave("doc")}>Save as DOC</DropdownMenuItem>
+            {/* <DropdownMenuItem onClick={() => handleSave("doc")}>Save as DOC</DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
-        {typeof window !== "undefined" && (
+        {/* {typeof window !== "undefined" && (
           <Button onClick={() => handleSave("pdf")}>
             <FileDown className="h-4 w-4 mr-2" />
             Download PDF
           </Button>
-        )}
+        )} */}
         <div className="flex items-center gap-2">
-          <Button onClick={handleSubmit}>Template Submit</Button>
-          <Button
-            onClick={handleSubmitAsAdmin}
-            variant="outline"
-            className="bg-red-50 hover:bg-red-100 text-red-600 border-red-200"
-          >
-            Submit as Admin
-          </Button>
+          <Button onClick={handleSubmit}>Submit</Button>
+         
         </div>
       </div>
     </div>

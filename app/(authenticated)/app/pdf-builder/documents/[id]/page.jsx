@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { HelpCircle, Loader } from "lucide-react";
 import Sidebar from "../../../../../../components/sidebarPdf";
@@ -30,6 +30,7 @@ import { SC } from "../../../../../../service/Api/serverCall";
 import { MultipleEntryListField } from "../../../../../../components/MultipleEntryListField";
 import { useAuth } from "../../../../../../hooks/useAuth";
 import LoginModal from "../../../../../../components/login-modal";
+import InfoCard from "@/components/FaqSteperRender";
 
 export default function DynamicForm({ params }) {
   const { toast } = useToast();
@@ -38,7 +39,9 @@ export default function DynamicForm({ params }) {
   const searchParams = useSearchParams();
   const submissionId = searchParams.get("submission_id");
 
-  const selectedId = params.id;
+  const rawParams = use(params);
+  const selectedId =
+    rawParams.id;
   const [documentData, setDocumentData] = useState(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [currentSubsectionIndex, setCurrentSubsectionIndex] = useState(0);
@@ -368,9 +371,8 @@ export default function DynamicForm({ params }) {
       if (response.status) {
         toast({
           title: "Success",
-          description: `Document ${
-            submissionId ? "updated" : "saved"
-          } successfully`,
+          description: `Document ${submissionId ? "updated" : "saved"
+            } successfully`,
         });
         localStorage.removeItem("documentDraft"); // REMOVE LOCAL STORAGE DOCUMENT DRAFT
         router.push("/app/user-panel/mydocs");
@@ -532,8 +534,9 @@ export default function DynamicForm({ params }) {
         (acc, section) => acc + section.subsections.length,
         0
       )) *
-      100
+    100
   );
+
 
   return (
     <div className="flex h-[calc(100vh-4.9rem)] bg-gray-50 overflow-hidden">
@@ -592,8 +595,8 @@ export default function DynamicForm({ params }) {
                   <div className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
                     {documentData.flatMap((section) =>
                       section.subsections.flatMap((subsection) =>
-                        subsection.question.map((field) => (
-                          <div key={field.uniqueKeyName} className="mb-4">
+                        subsection.question.map((field, id) => (
+                          <div key={`${id}-${field.uniqueKeyName}`} className="mb-4">
                             <h3 className="font-semibold">
                               {field.questionToAsk}
                             </h3>
@@ -601,7 +604,7 @@ export default function DynamicForm({ params }) {
                               {Array.isArray(formData[field.uniqueKeyName])
                                 ? formData[field.uniqueKeyName].join(", ")
                                 : formData[field.uniqueKeyName] ||
-                                  "Not provided"}
+                                "Not provided"}
                             </p>
                           </div>
                         ))
@@ -610,95 +613,111 @@ export default function DynamicForm({ params }) {
                   </div>
                 </div>
               ) : (
-                <div className="w-full max-h-[calc(100vh-120px)]">
-                  <div className="mb-8">
-                    <h2 className="text-2xl font-semibold mb-6">
-                      {currentSection.name} - {currentSubsection.name}
-                    </h2>
+                <div className="flex">
+                  <div className="w-full max-h-[calc(100vh-120px)]">
+                    <div className="mb-8">
+                      <h2 className="text-2xl font-semibold mb-6">
+                        {currentSection.name} - {currentSubsection.name}
+                      </h2>
 
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleNext();
-                      }}
-                    >
-                      <div className="space-y-4">
-                        {currentSubsection.question.map(
-                          (field) =>
-                            !shouldHideQuestion(field) && (
-                              <div
-                                key={field.uniqueKeyName}
-                                className="bg-white shadow-sm border border-gray-200 rounded-lg"
-                              >
-                                <div className="p-4">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <Label
-                                      htmlFor={field.uniqueKeyName}
-                                      className="text-sm font-medium"
-                                    >
-                                      {field.questionToAsk}
-                                    </Label>
-                                    {/* {field.description && ( */}
-                                    {true && (
-                                      <TooltipProvider>
-                                        <Tooltip>
-                                          <TooltipTrigger>
-                                            <button
-                                              type="button"
-                                              onClick={(e) => {
-                                                e.preventDefault(); // Prevents default form submission
-                                                e.stopPropagation(); // Stops the event from bubbling up
-                                              }}
-                                            >
-                                              <HelpCircle className="w-4 h-4 text-gray-400" />
-                                            </button>
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            {/* <p className="w-64 text-sm">{field.description}</p> */}
-                                            <p className="w-64 text-sm">
-                                              ahad sad sda
-                                            </p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    )}
-                                  </div>
-                                  <div className="border-t border-gray-200 mt-2 pt-2">
-                                    {renderField(field)}
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleNext();
+                        }}
+                      >
+                        <div className="space-y-4 ">
+                          {currentSubsection.question.map(
+                            (field, id) =>
+                              !shouldHideQuestion(field) && (
+                                <div
+                                  key={field.uniqueKeyName+id}
+                                  className="bg-white shadow-sm border border-gray-200 rounded-lg"
+                                >
+                                  <div className="p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <Label
+                                        htmlFor={field.uniqueKeyName}
+                                        className="text-sm font-medium"
+                                      >
+                                        {field.questionToAsk}
+                                      </Label>
+                                      {/* {field.description && ( */}
+                                      {field?.FAQQuestion && (
+                                        <TooltipProvider>
+                                          <Tooltip>
+                                            <TooltipTrigger>
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.preventDefault(); // Prevents default form submission
+                                                  e.stopPropagation(); // Stops the event from bubbling up
+                                                }}
+                                              >
+                                                <HelpCircle className="w-4 h-4 text-gray-400" />
+                                              </button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <p className="w-64 text-sm">
+                                                {field?.FAQQuestion || null}
+                                                <br />
+                                                {field?.FAQAnswer || null}
+                                              </p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </TooltipProvider>
+                                      )}
+                                    </div>
+                                    <div className="border-t border-gray-200 mt-2 pt-2">
+                                      {renderField(field)}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            )
-                        )}
-                      </div>
+                              )
+                          )}
+                        </div>
 
-                      <div className="flex items-center justify-between mt-8">
-                        <Button
-                          type="button"
-                          onClick={handleBack}
-                          variant="ghost"
-                          className="text-gray-600 hover:text-gray-800"
-                          disabled={
-                            currentStepIndex === 0 &&
-                            currentSubsectionIndex === 0
-                          }
-                        >
-                          ← Back
-                        </Button>
+                        <div className="flex items-center justify-between mt-8">
+                          <Button
+                            type="button"
+                            onClick={handleBack}
+                            variant="ghost"
+                            className="text-gray-600 hover:text-gray-800"
+                            disabled={
+                              currentStepIndex === 0 &&
+                              currentSubsectionIndex === 0
+                            }
+                          >
+                            ← Back
+                          </Button>
 
-                        <Button
-                          type="submit"
-                          className="bg-red-500 text-white hover:bg-red-600"
-                        >
-                          {currentStepIndex === documentData.length - 1 &&
-                          currentSubsectionIndex ===
-                            currentSection.subsections.length - 1
-                            ? "Preview"
-                            : "Next"}
-                        </Button>
-                      </div>
-                    </form>
+                          <Button
+                            type="submit"
+                            className="bg-red-500 text-white hover:bg-red-600"
+                          >
+                            {currentStepIndex === documentData.length - 1 &&
+                              currentSubsectionIndex ===
+                              currentSection.subsections.length - 1
+                              ? "Preview"
+                              : "Next"}
+                          </Button>
+                        </div>
+                      </form>
+                    </div>
                   </div>
+
+
+
+                  {currentSection.FAQQuestion &&
+                    <div>
+                      <InfoCard
+                        content={currentSection.FAQAnswer}
+                        question={currentSection.FAQQuestion}
+
+                      />
+                    </div>
+                  }
+
                 </div>
               )}
             </div>
