@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { ChevronRight, ChevronDown, Search, LightbulbIcon } from "lucide-react";
 import PropTypes from "prop-types";
 import Link from "next/link";
@@ -36,7 +36,8 @@ function DocumentItem({ title, id }) {
 }
 
 export default function SubcategoryPage({ params }) {
-  const { category, subcategory } = params;
+  const { category, subcategory } =use(params);
+
   const [options, setOptions] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const searchParams = useSearchParams();

@@ -221,7 +221,7 @@ export function ConditionalLogicEditor({ question, allQuestions, onUpdate }) {
                     <SelectTrigger>
                       <SelectValue placeholder="Select a question to show/hide" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="">
                       {allQuestions
                         .filter((q) => q.id !== question.id) // Don't allow a question to affect itself
                         .map((q) => (

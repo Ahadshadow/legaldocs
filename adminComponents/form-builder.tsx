@@ -548,7 +548,7 @@ export function FormBuilder({
                 {formStructure.steps.map((step, stepIndex) => (
                   <div
                     key={stepIndex}
-                    className={`p-3 border rounded-md ${selectedStep === stepIndex ? "border-primary bg-primary/5" : "border-gray-200"}`}
+                    className={`p-3 border rounded-md w-[300px] ${selectedStep === stepIndex ? "border-primary bg-primary/5" : "border-gray-200"}`}
                   >
                     <div className="flex items-center justify-between mb-2">
                       {editingStepIndex === stepIndex ? (
@@ -605,11 +605,10 @@ export function FormBuilder({
                           <div
                             role="button"
                             tabIndex={0}
-                            className={`h-8 w-8 flex items-center justify-center rounded-md ${
-                              formStructure.steps.length <= 1
+                            className={`h-8 w-8 flex items-center justify-center rounded-md ${formStructure.steps.length <= 1
                                 ? "opacity-50 cursor-not-allowed"
                                 : "hover:bg-accent cursor-pointer"
-                            }`}
+                              }`}
                             onClick={() => {
                               if (formStructure.steps.length > 1) {
                                 deleteStep(stepIndex)
@@ -668,11 +667,10 @@ export function FormBuilder({
                               key={subsectionIndex}
                               type="single"
                               collapsible
-                              className={`border rounded-md ${
-                                selectedStep === stepIndex && selectedSubsection === subsectionIndex
+                              className={`border rounded-md ${selectedStep === stepIndex && selectedSubsection === subsectionIndex
                                   ? "border-primary bg-primary/5"
                                   : "border-gray-200"
-                              }`}
+                                }`}
                             >
                               <AccordionItem value="subsection" className="border-none">
                                 <div
@@ -687,8 +685,8 @@ export function FormBuilder({
                                   }}
                                 >
                                   {editingSubsectionIndex &&
-                                  editingSubsectionIndex.stepIndex === stepIndex &&
-                                  editingSubsectionIndex.subsectionIndex === subsectionIndex ? (
+                                    editingSubsectionIndex.stepIndex === stepIndex &&
+                                    editingSubsectionIndex.subsectionIndex === subsectionIndex ? (
                                     <div className="flex items-center space-x-1 flex-1">
                                       <Input
                                         ref={inputRef}
@@ -748,11 +746,10 @@ export function FormBuilder({
                                       <div
                                         role="button"
                                         tabIndex={0}
-                                        className={`h-6 w-6 flex items-center justify-center rounded-md ${
-                                          step.subsections.length <= 1
+                                        className={`h-6 w-6 flex items-center justify-center rounded-md ${step.subsections.length <= 1
                                             ? "opacity-50 cursor-not-allowed"
                                             : "hover:bg-accent cursor-pointer"
-                                        }`}
+                                          }`}
                                         onClick={(e) => {
                                           e.stopPropagation()
                                           if (step.subsections.length > 1) {
@@ -825,11 +822,11 @@ export function FormBuilder({
                                               key={question.id}
                                               className="flex items-center justify-between p-2 border rounded-md text-xs"
                                             >
-                                              <div className="flex flex-col">
-                                                <span className="font-medium">{question.questionToAsk}</span>
-                                                <span className="text-muted-foreground text-xs">
-                                                  {question.uniqueKeyName}
-                                                </span>
+                                            <div className="flex flex-col w-full max-w-full">
+  <span className="font-medium">{question.questionToAsk}</span>
+  <span className="text-muted-foreground text-xs truncate overflow-hidden whitespace-nowrap">
+    {question.uniqueKeyName}
+  </span>
                                                 {question.affectedQuestion && question.affectedQuestion.length > 0 && (
                                                   <span className="text-xs text-blue-500 mt-1">
                                                     Controls {question.affectedQuestion.length} question(s)
@@ -841,8 +838,7 @@ export function FormBuilder({
                                                     {affectingQuestions.map((q) => q.questionToAsk).join(", ")}
                                                   </span>
                                                 )}
-                                              </div>
-                                              <div className="flex space-x-1">
+                                                <div className="flex space-x-1 mt-1">
                                                 <Button
                                                   variant="ghost"
                                                   size="icon"
@@ -891,6 +887,8 @@ export function FormBuilder({
                                                   <Trash2 className="h-3 w-3" />
                                                 </Button>
                                               </div>
+                                              </div>
+                                              
                                             </div>
                                           )
                                         })}
@@ -1046,7 +1044,7 @@ export function FormBuilder({
 
       {/* Conditional Logic Editor Dialog */}
       <Dialog open={openConditionalDialog} onOpenChange={setOpenConditionalDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Conditional Logic</DialogTitle>
           </DialogHeader>
