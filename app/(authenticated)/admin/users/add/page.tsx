@@ -2,34 +2,39 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Input } from "../../../../../components/ui/input"
 import { Button } from "../../../../../components/ui/button"
 import { Label } from "../../../../../components/ui/label"
 import { toast } from "../../../../../components/ui/use-toast"
-import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue  } from "../../../../../components/ui/select"
+import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from "../../../../../components/ui/select"
+import { SC } from "../../../../../service/Api/serverCall"
 
 export default function AddUser() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    first_name: "",
+    last_name: "",
     displayName: "",
     email: "",
     phone: "",
     type: "User",
     password: "",
-    slug: "",
+    // slug: "",
   })
 
-   async function createUser(data: any) {
-    console.log("Creating user:", data)
-    // Replace with actual API call
-    return { id: Date.now().toString(), ...data, slug: data.displayName.toLowerCase().replace(/\s+/g, "-") }
-  }
-  
+  // Generate slug from display name
+  // useEffect(() => {
+  //   if (formData.displayName && !formData.slug) {
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       slug: prev.displayName.toLowerCase().replace(/\s+/g, "-"),
+  //     }))
+  //   }
+  // }, [formData.displayName])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
     setFormData({
@@ -50,16 +55,37 @@ export default function AddUser() {
     setIsLoading(true)
 
     try {
-      await createUser(formData)
-      toast({
-        title: "Success",
-        description: "User created successfully",
+      // Prepare data for API
+      const userData = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        displayName: formData.displayName,
+        email: formData.email,
+        phone: formData.phone,
+        type: formData.type,
+        password: formData.password,
+        // slug: formData.slug || formData.displayName.toLowerCase().replace(/\s+/g, "-"),
+      }
+
+      // Send data to API
+      const response = await SC.postCall({
+        url: "users",
+        data: userData,
       })
-      router.push("/admin/users/list")
-    } catch (error) {
+
+      if (response.status === 201 || response.status === 200) {
+        toast({
+          title: "Success",
+          description: "User created successfully",
+        })
+        router.push("/admin/users/list")
+      } else {
+        throw new Error(response.data.message || "Failed to create user")
+      }
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to create user",
+        description: error.message || "Failed to create user",
         variant: "destructive",
       })
     } finally {
@@ -74,24 +100,24 @@ export default function AddUser() {
 
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <Label htmlFor="firstName">First Name</Label>
+            <Label htmlFor="first_name">First Name</Label>
             <Input
-              id="firstName"
+              id="first_name"
               placeholder="John"
               className="mt-1"
-              value={formData.firstName}
+              value={formData.first_name}
               onChange={handleChange}
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="lastName">Last Name</Label>
+            <Label htmlFor="last_name">Last Name</Label>
             <Input
-              id="lastName"
+              id="last_name"
               placeholder="Doe"
               className="mt-1"
-              value={formData.lastName}
+              value={formData.last_name}
               onChange={handleChange}
               required
             />
@@ -109,7 +135,7 @@ export default function AddUser() {
             />
           </div>
 
-          <div>
+          {/* <div>
             <Label htmlFor="slug">Slug</Label>
             <Input
               id="slug"
@@ -117,12 +143,11 @@ export default function AddUser() {
               className="mt-1"
               value={formData.slug}
               onChange={handleChange}
-              required
             />
             <p className="text-xs text-muted-foreground mt-1">
               URL-friendly version of the display name (auto-generated if left empty)
             </p>
-          </div>
+          </div> */}
 
           <div>
             <Label htmlFor="email">Email</Label>
@@ -157,7 +182,6 @@ export default function AddUser() {
               <SelectContent>
                 <SelectItem value="User">User</SelectItem>
                 <SelectItem value="Admin">Admin</SelectItem>
-                <SelectItem value="Moderator">Moderator</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -175,9 +199,15 @@ export default function AddUser() {
             />
           </div>
 
-          <Button type="submit" className="bg-black hover:bg-black/90" disabled={isLoading}>
-            {isLoading ? "Submitting..." : "Submit"}
-          </Button>
+          <div className="flex gap-4">
+            <Button type="submit" className="bg-black hover:bg-black/90" disabled={isLoading}>
+              {isLoading ? "Submitting..." : "Submit"}
+            </Button>
+            
+            <Button type="button" variant="outline" onClick={() => router.push("/admin/users/list")}>
+              Cancel
+            </Button>
+          </div>
         </form>
       </div>
     </div>

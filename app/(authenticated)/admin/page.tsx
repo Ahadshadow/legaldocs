@@ -3,8 +3,9 @@ export default function Home() {
     <div className="p-6">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+        <p>Reserved for mileston3 and payment info</p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-white p-6 rounded-lg border shadow-sm">
             <h2 className="text-lg font-medium mb-2">Users</h2>
             <p className="text-3xl font-bold">5</p>
@@ -49,7 +50,7 @@ export default function Home() {
               <p className="text-xs text-muted-foreground mt-1">2 days ago</p>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   )

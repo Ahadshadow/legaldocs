@@ -65,7 +65,7 @@ export default function DocumentsList() {
   const handleDelete = async (item: any) => {
     if (window.confirm(`Are you sure you want to delete ${item.name}?`)) {
       try {
-        await SC.deleteCall({ url: `documents/${item._id}` })
+        await SC.deleteCall({ url: `documents/${item.slug}` })
 
         // Reload the current page after deletion
         loadDocuments(pagination.currentPage)

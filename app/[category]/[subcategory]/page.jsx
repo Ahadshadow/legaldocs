@@ -5,19 +5,19 @@ import { ChevronRight, ChevronDown, Search, LightbulbIcon } from "lucide-react";
 import PropTypes from "prop-types";
 import Link from "next/link";
 import Image from "next/image";
-import { CreateDocumentButton } from "../../../../components/create-documents-buttons";
+import { CreateDocumentButton } from "../../../components/create-documents-buttons";
 import {
   CustomSelect,
   CustomSelectContent,
   CustomSelectItem,
   CustomSelectTrigger,
   CustomSelectValue,
-} from "../../../../components/ui/custom-select";
-import { SC } from "../../../../service/Api/serverCall";
+} from "../../../components/ui/custom-select";
+import { SC } from "../../../service/Api/serverCall";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Input } from "../../../../components/ui/input";
-import { getSubcategoriesByCategoryId } from "../../../../service/navigationService";
-import { Button } from "../../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { getSubcategoriesByCategoryId } from "../../../service/navigationService";
+import { Button } from "../../../components/ui/button";
 
 // Separate DocumentItem component
 function DocumentItem({ title, id }) {

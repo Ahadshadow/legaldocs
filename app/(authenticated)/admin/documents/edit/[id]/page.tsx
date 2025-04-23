@@ -3,7 +3,7 @@
 import type React from "react"
 import type { ChangeEvent, FormEvent } from "react"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, use } from "react"
 import { useRouter } from "next/navigation"
 import { Input } from "../../../../../../components/ui/input"
 import { Button } from "../../../../../../components/ui/button"
@@ -15,7 +15,9 @@ import { Check, ChevronDown, X } from "lucide-react"
 
 export default function EditDocument({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const { id } = params
+  // Unwrap params using React.use()
+  const unwrappedParams = use(params)
+  const id = unwrappedParams.id
 
   const [isLoading, setIsLoading] = useState(true)
   const [subcategories, setSubcategories] = useState<any[]>([])
@@ -55,7 +57,6 @@ export default function EditDocument({ params }: { params: { id: string } }) {
         const documentResponse = await SC.getCall({ url: `document/${id}` })
         const documentData = documentResponse.data.data
 
-
         setFormData({
           name: documentData.name || "",
           description: documentData.description || "",
@@ -63,9 +64,9 @@ export default function EditDocument({ params }: { params: { id: string } }) {
         })
 
         // Set selected subcategories if they exist
-        if (documentData.subcategory_ids && Array.isArray(documentData.subcategory_ids)) {
-          const subcategoryIdsdocumentData = documentData.subcategory_ids.map((subcat: any) => subcat)
-          setSelectedSubcategories(subcategoryIdsdocumentData)
+        if (documentData.sub_categories && Array.isArray(documentData.sub_categories)) {
+          const subcategoryIds = documentData.sub_categories.map((subcat: any) => subcat._id)
+          setSelectedSubcategories(subcategoryIds)
         }
 
         // If there's an image URL in the document data

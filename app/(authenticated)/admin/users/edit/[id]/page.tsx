@@ -2,100 +2,73 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
-// import { Input } from "../../../../../../components/ui/input"
+import { Input } from "../../../../../../components/ui/input"
 import { Button } from "../../../../../../components/ui/button"
-// import { Label } from "../../../../../../components/ui/label"
+import { Label } from "../../../../../../components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../../../components/ui/select"
 import { toast } from "../../../../../../components/ui/use-toast"
-import { Input } from "../../../../../../components/ui/input"
-import { Label } from "../../../../../../components/ui/label"
-
+import { SC } from "../../../../../../service/Api/serverCall"
 
 export default function EditUser({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const { id } = params
+  // Unwrap params using React.use()
+  const unwrappedParams = use(params)
+  const id = unwrappedParams.id
 
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    first_name: "",
+    last_name: "",
     displayName: "",
     email: "",
     phone: "",
     type: "",
-    slug: "",
+    // slug: "",
   })
 
-
- async function updateUser(id: string, data: any) {
-  console.log("Updating user:", id, data)
-  // Replace with actual API call
-  return { id, ...data }
-}
-
-  async function fetchUsers() {
-    // Mock data - replace with actual API call
-    return [
-      { id: "1", name: "Test User", slug: "test-user", email: "test@example.com", phone: "N/A", type: "Admin" },
-      {
-        id: "2",
-        name: "Abdulahad Tahir",
-        slug: "abdulahad-tahir",
-        email: "abdulahadtahir433@gmail.com",
-        phone: "+923044688919",
-        type: "User",
-      },
-      { id: "3", name: "ahad 2", slug: "ahad-2", email: "sahdowahad@gmail.com", phone: "03044688919", type: "User" },
-      {
-        id: "4",
-        name: "Masub Ghazali",
-        slug: "masub-ghazali",
-        email: "masubghazali26@gmail.com",
-        phone: "+923245658644",
-        type: "User",
-      },
-      { id: "5", name: "Andrej kutnar", slug: "andrej-kutnar", email: "andro822@gmail.com", phone: "+386", type: "User" },
-    ]
-  }
-  
-
+  // Load user data
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const users = await fetchUsers()
-        const user = users.find((u: any) => u.id === id)
+        const response = await SC.getCall({ url: `users/${id}` })
 
-        if (user) {
+        if (response.status === 200 && response.data.data) {
+          const userData = response.data.data
+
           // Split name into first and last name if needed
-          const nameParts = user.name.split(" ")
-          const firstName = nameParts[0] || ""
-          const lastName = nameParts.slice(1).join(" ") || ""
+          let first_name = userData.first_name || ""
+          let last_name = userData.last_name || ""
+
+          // If first_name/last_name aren't available but displayName is
+          if (!first_name && !last_name && userData.displayName) {
+            const nameParts = userData.displayName.split(" ")
+            first_name = nameParts[0] || ""
+            last_name = nameParts.slice(1).join(" ") || ""
+          }
 
           setFormData({
-            firstName,
-            lastName,
-            displayName: user.name,
-            email: user.email,
-            phone: user.phone,
-            type: user.type,
-            slug: user.slug,
+            first_name,
+            last_name,
+            displayName: userData.displayName || `${first_name} ${last_name}`.trim(),
+            email: userData.email || "",
+            phone: userData.phone || "",
+            type: userData.type || "User",
+            // slug: userData.slug || "",
           })
         } else {
-          toast({
-            title: "Error",
-            description: "User not found",
-            variant: "destructive",
-          })
-          router.push("/admin/users/list")
+          throw new Error("User not found or invalid response")
         }
-      } catch (error) {
+      } catch (error: any) {
         toast({
           title: "Error",
-          description: "Failed to load user",
+          description: error.message || "Failed to load user",
           variant: "destructive",
         })
+        router.push("/admin/users/list")
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -122,27 +95,51 @@ export default function EditUser({ params }: { params: { id: string } }) {
     setIsLoading(true)
 
     try {
-      // Combine first and last name for the full name
+      // Prepare data for API
       const userData = {
-        ...formData,
-        name: `${formData.firstName} ${formData.lastName}`.trim(),
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        displayName: formData.displayName,
+        email: formData.email,
+        phone: formData.phone,
+        type: formData.type,
       }
 
-      await updateUser(id, userData)
-      toast({
-        title: "Success",
-        description: "User updated successfully",
+      // Send data to API
+      const response = await SC.putCall({
+        url: `users/${id}`,
+        data: userData,
       })
-      router.push("/admin/users/list")
-    } catch (error) {
+
+      if (response.status === 200) {
+        toast({
+          title: "Success",
+          description: "User updated successfully",
+        })
+        router.push("/admin/users/list")
+      } else {
+        throw new Error(response.data.message || "Failed to update user")
+      }
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to update user",
+        description: error.message || "Failed to update user",
         variant: "destructive",
       })
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex justify-center items-center min-h-[300px]">
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p>Loading user data...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -152,24 +149,24 @@ export default function EditUser({ params }: { params: { id: string } }) {
 
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <Label htmlFor="firstName">First Name</Label>
+            <Label htmlFor="first_name">First Name</Label>
             <Input
-              id="firstName"
+              id="first_name"
               placeholder="John"
               className="mt-1"
-              value={formData.firstName}
+              value={formData.first_name}
               onChange={handleChange}
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="lastName">Last Name</Label>
+            <Label htmlFor="last_name">Last Name</Label>
             <Input
-              id="lastName"
+              id="last_name"
               placeholder="Doe"
               className="mt-1"
-              value={formData.lastName}
+              value={formData.last_name}
               onChange={handleChange}
               required
             />
@@ -185,19 +182,6 @@ export default function EditUser({ params }: { params: { id: string } }) {
               onChange={handleChange}
               required
             />
-          </div>
-
-          <div>
-            <Label htmlFor="slug">Slug</Label>
-            <Input
-              id="slug"
-              placeholder="john-doe"
-              className="mt-1"
-              value={formData.slug}
-              onChange={handleChange}
-              required
-            />
-            <p className="text-xs text-muted-foreground mt-1">URL-friendly version of the display name</p>
           </div>
 
           <div>
@@ -233,7 +217,6 @@ export default function EditUser({ params }: { params: { id: string } }) {
               <SelectContent>
                 <SelectItem value="User">User</SelectItem>
                 <SelectItem value="Admin">Admin</SelectItem>
-                <SelectItem value="Moderator">Moderator</SelectItem>
               </SelectContent>
             </Select>
           </div>

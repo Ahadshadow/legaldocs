@@ -2,79 +2,98 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-
 import { Plus } from "lucide-react"
 import DataTable from "../../../../../components/admin/data-table"
 import { Button } from "../../../../../components/ui/button"
 import { toast } from "../../../../../components/ui/use-toast"
+import { SC } from "../../../../../service/Api/serverCall"
+import { CustomPagination } from "../../../../../components/ui/custom-pagination"
 
 export default function UsersList() {
   const router = useRouter()
   const [users, setUsers] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    perPage: 10,
+    total: 0,
+  })
 
-   async function deleteUser(id: string) {
-    console.log("Deleting user:", id)
-    // Replace with actual API call
-    return { success: true }
-  }
-  
-   async function fetchUsers() {
-    // Mock data - replace with actual API call
-    return [
-      { id: "1", name: "Test User", slug: "test-user", email: "test@example.com", phone: "N/A", type: "Admin" },
-      {
-        id: "2",
-        name: "Abdulahad Tahir",
-        slug: "abdulahad-tahir",
-        email: "abdulahadtahir433@gmail.com",
-        phone: "+923044688919",
-        type: "User",
-      },
-      { id: "3", name: "ahad 2", slug: "ahad-2", email: "sahdowahad@gmail.com", phone: "03044688919", type: "User" },
-      {
-        id: "4",
-        name: "Masub Ghazali",
-        slug: "masub-ghazali",
-        email: "masubghazali26@gmail.com",
-        phone: "+923245658644",
-        type: "User",
-      },
-      { id: "5", name: "Andrej kutnar", slug: "andrej-kutnar", email: "andro822@gmail.com", phone: "+386", type: "User" },
-    ]
-  }
   useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        const data = await fetchUsers()
-        setUsers(data)
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load users",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadUsers()
+    loadUsers(pagination.currentPage)
   }, [])
+
+  const loadUsers = async (page = 1) => {
+    try {
+      setIsLoading(true)
+      const response = await SC.getCall({ url: `users?page=${page}` })
+
+      if (response.status === 200 && response.data.data) {
+        // Extract pagination data from response
+        const { current_page, last_page, per_page, total, data: usersData } = response.data.data
+
+        // Update pagination state
+        setPagination({
+          currentPage: current_page,
+          totalPages: last_page,
+          perPage: per_page,
+          total: total,
+        })
+
+        // Format the data to match the expected structure for the DataTable
+        const formattedUsers = usersData.map((user: any) => ({
+          id: user._id || user.id,
+          name: user.displayName || `${user.first_name} ${user.last_name}`.trim(),
+          slug: user.slug || "",
+          email: user.email || "",
+          phone: user.phone || "N/A",
+          type: user.type || "User",
+        }))
+
+        setUsers(formattedUsers)
+      } else {
+        throw new Error("Failed to load users or invalid response format")
+      }
+    } catch (error: any) {
+      console.error("Error loading users:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to load users",
+        variant: "destructive",
+      })
+      // Set empty array to avoid undefined errors
+      setUsers([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handlePageChange = (page: number) => {
+    loadUsers(page)
+  }
 
   const handleDelete = async (item: any) => {
     if (window.confirm(`Are you sure you want to delete ${item.name}?`)) {
       try {
-        await deleteUser(item.id)
-        setUsers(users.filter((user: any) => user.id !== item.id))
-        toast({
-          title: "Success",
-          description: "User deleted successfully",
-        })
-      } catch (error) {
+        const response = await SC.deleteCall({ url: `users/${item.id}` })
+
+        if (response.status === 204) {
+          // Reload the current page after deletion
+          loadUsers(pagination.currentPage)
+
+          toast({
+            title: "Success",
+            description: "User deleted successfully",
+          })
+        } else {
+          throw new Error(response.data.message || "Failed to delete user")
+        }
+      } catch (error: any) {
+        console.error("Error deleting user:", error)
         toast({
           title: "Error",
-          description: "Failed to delete user",
+          description: error.message || "Failed to delete user",
           variant: "destructive",
         })
       }
@@ -83,7 +102,7 @@ export default function UsersList() {
 
   const columns = [
     { key: "name", label: "NAME" },
-    { key: "slug", label: "SLUG" },
+    // { key: "slug", label: "SLUG" },
     { key: "email", label: "EMAIL" },
     { key: "phone", label: "PHONE" },
     { key: "type", label: "TYPE" },
@@ -102,8 +121,15 @@ export default function UsersList() {
     },
   ]
 
-  if (isLoading) {
-    return <div className="p-6 text-center">Loading users...</div>
+  if (isLoading && pagination.currentPage === 1) {
+    return (
+      <div className="p-6 flex justify-center items-center min-h-[300px]">
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p>Loading users...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -116,7 +142,43 @@ export default function UsersList() {
           </Button>
         </div>
 
-        <DataTable title="Users" columns={columns} data={users} actions={actions} />
+        {users.length === 0 && !isLoading ? (
+          <div className="text-center p-8 border rounded-md bg-muted/50">
+            <p className="text-muted-foreground mb-4">No users found</p>
+            <Button onClick={() => router.push("/admin/users/add")} variant="outline">
+              <Plus className="mr-2 h-4 w-4" /> Add your first user
+            </Button>
+          </div>
+        ) : (
+          <>
+            <DataTable
+              title="Users"
+              columns={columns}
+              data={users}
+              actions={actions}
+              showPagination={false} // We're using our custom pagination
+            />
+
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="mt-6">
+                <CustomPagination
+                  currentPage={pagination.currentPage}
+                  totalPages={pagination.totalPages}
+                  onPageChange={handlePageChange}
+                  showFirstLast={true}
+                  maxPageButtons={5}
+                />
+              </div>
+            )}
+
+            {/* Pagination summary */}
+            <div className="mt-2 text-sm text-gray-500 text-center">
+              Showing {(pagination.currentPage - 1) * pagination.perPage + 1} to{" "}
+              {Math.min(pagination.currentPage * pagination.perPage, pagination.total)} of {pagination.total} entries
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
