@@ -36,26 +36,22 @@ function DocumentItem({ title, id }) {
 }
 
 export default function SubcategoryPage({ params }) {
-
-  
-  const { category, subcategory } =use(params);
+  const { category, subcategory } = use(params);
 
   const [options, setOptions] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const searchParams = useSearchParams();
-  const isViewAll = searchParams.get("viewAll") === "true";
+  const isViewAll = subcategory === "viewAll";
   const subcategoryId = searchParams.get("subcategoryId");
   const router = useRouter();
   const [filteredOption, setFilteredOption] = useState(null);
   const [faqOpen, setFaqOpen] = useState(null); // To track open FAQ items
-  const [activeSection, setActiveSection] = useState("Business Formation");
+  const [activeSection, setActiveSection] = useState(null);
   const [error, setError] = useState(null);
   const [subcategories, setSubcategories] = useState([]);
   const [documents, setDocuments] = useState([]);
 
   const [subLoading, setSubLoading] = useState(false);
-
-  const categoryId = subcategory.replace(/-/g, " ");
 
   // console.log("subcategory", subcategory);
 
@@ -64,9 +60,16 @@ export default function SubcategoryPage({ params }) {
       if (isViewAll) {
         // setSubLoading(true)
         try {
-          const response = await getSubcategoriesByCategoryId(categoryId);
+          const response = await getSubcategoriesByCategoryId(
+            `helper/${category}`
+          );
+
           if (response && response.status) {
             setSubcategories(response.data || []);
+
+            if (response?.data && response.data?.length > 0) {
+              setActiveSection(response.data[0]);
+            }
           } else {
             setSubcategories([]);
           }
@@ -81,7 +84,7 @@ export default function SubcategoryPage({ params }) {
       }
     }
     fetchSubcategories();
-  }, [categoryId]);
+  }, [category]);
 
   useEffect(() => {
     async function fetchOptions() {
@@ -100,7 +103,7 @@ export default function SubcategoryPage({ params }) {
       }
     }
 
-    if (subcategory) {
+    if (subcategory && !isViewAll) {
       setOptions(null);
       fetchOptions();
     }
@@ -149,11 +152,11 @@ export default function SubcategoryPage({ params }) {
 
   useEffect(() => {
     async function fetchSDocuments() {
-      if (isViewAll) {
+      if (isViewAll && activeSection) {
         // setSubLoading(true)
         try {
           const response = await SC.getCall({
-            url: `documents/${activeSection.id}`,
+            url: `documents/${activeSection.slug}`,
           });
           if (response && response.status) {
             setDocuments(response.data.data || []);
@@ -172,7 +175,7 @@ export default function SubcategoryPage({ params }) {
     }
     fetchSDocuments();
   }, [activeSection]);
-
+  console.log("activeSession", activeSection);
   return (
     <>
       {/* Header */}
@@ -339,10 +342,14 @@ export default function SubcategoryPage({ params }) {
                     <button
                       key={`nav-${index}`}
                       onClick={() =>
-                        setActiveSection({ name: sub.name, id: sub._id })
+                        setActiveSection({
+                          name: sub.name,
+                          id: sub._id,
+                          slug: sub.slug,
+                        })
                       }
                       className={`border-l-4 px-6 py-4 font-medium text-left ${
-                        activeSection.name === sub.name
+                        activeSection?.name === sub.name
                           ? "border-primary text-primary"
                           : "border-transparent text-gray-600 hover:bg-gray-50"
                       }`}
