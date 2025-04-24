@@ -7,11 +7,13 @@ import { useRouter } from "next/navigation";
 import { Input } from "../../../../../components/ui/input";
 import { Button } from "../../../../../components/ui/button";
 import { Label } from "../../../../../components/ui/label";
-import { toast } from "../../../../../components/ui/use-toast";
 import { SC } from "../../../../../service/Api/serverCall";
+import { useToast } from "@/adminComponents/ui/use-toast";
 
 
 export default function AddCategory() {
+    const { toast } = useToast()
+  
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({

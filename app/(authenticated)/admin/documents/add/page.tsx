@@ -10,11 +10,13 @@ import { Input } from "../../../../../components/ui/input"
 import { Button } from "../../../../../components/ui/button"
 import { Label } from "../../../../../components/ui/label"
 import { Textarea } from "../../../../../components/ui/textarea"
-import { toast } from "../../../../../components/ui/use-toast"
 import { SC } from "../../../../../service/Api/serverCall"
 import { Check, ChevronDown, X } from "lucide-react"
+import { useToast } from "@/adminComponents/ui/use-toast"
 
 export default function CreateDocument() {
+  const { toast } = useToast()
+
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [subcategories, setSubcategories] = useState<any[]>([])

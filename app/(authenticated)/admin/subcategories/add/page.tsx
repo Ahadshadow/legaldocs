@@ -8,10 +8,12 @@ import { Input } from "../../../../../components/ui/input"
 import { Button } from "../../../../../components/ui/button"
 import { Label } from "../../../../../components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../../components/ui/select"
-import { toast } from "../../../../../components/ui/use-toast"
 import { SC } from "../../../../../service/Api/serverCall"
+import { useToast } from "@/adminComponents/ui/use-toast"
 
 export default function AddSubcategory() {
+  const { toast } = useToast()
+
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [categories, setCategories] = useState<any[]>([])

@@ -14,11 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../../../../components/ui/select";
-import { toast } from "../../../../../../components/ui/use-toast";
 import { getSubCategories } from "../../../../../../service/supportSubCategoryService";
 import { createBlog } from "../../../../../../service/supportBlogService";
 // import { RichTextEditor } from "../../../../../../components/ui/text-editor";
 import { Switch } from "../../../../../../components/ui/switchPanel";
+import { useToast } from "@/adminComponents/ui/use-toast";
 const RichTextEditor = dynamic(
   () =>
     import("../../../../../../components/ui/text-editor").then(
@@ -29,6 +29,7 @@ const RichTextEditor = dynamic(
 export default function AddBlog() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast()
 
   const [subCategories, setSubCategories] = useState<any[]>([]);
   const [formData, setFormData] = useState({

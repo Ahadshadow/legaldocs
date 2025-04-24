@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "../../../../../../components/ui/button"
-import { toast } from "../../../../../../components/ui/use-toast"
 import { ArrowLeft, Edit } from "lucide-react"
+import { useToast } from "@/adminComponents/ui/use-toast"
 
 export default function ShowDocument({ params }: { params: { id: string } }) {
   const router = useRouter()
+  const { toast } = useToast()
+
   const { id } = params
 
   const [document, setDocument] = useState<any>(null)

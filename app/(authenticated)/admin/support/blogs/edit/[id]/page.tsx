@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../../../../../components/ui/select";
-import { toast } from "../../../../../../../components/ui/use-toast";
 import { getSubCategories } from "../../../../../../../service/supportSubCategoryService";
 import {
   getBlog,
@@ -22,9 +21,12 @@ import {
 } from "../../../../../../../service/supportBlogService";
 import { Switch } from "../../../../../../../components/ui/switchPanel";
 import { RichTextEditor } from "../../../../../../../components/ui/text-editor";
+import { useToast } from "@/adminComponents/ui/use-toast";
 
 export default function EditBlog({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const { toast } = useToast()
+
   const { id } = params;
 
   const [isLoading, setIsLoading] = useState(true);

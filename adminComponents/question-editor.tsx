@@ -7,7 +7,6 @@ import { Label } from "./ui/label"
 import { Checkbox } from "./ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Trash2, Plus, AlertCircle } from "lucide-react"
-import { ScrollArea } from "./ui/scroll-area"
 import { Alert, AlertDescription } from "./ui/alert"
 
 export function QuestionEditor({ question, onUpdate, generateFieldKey, autoClose = false }) {
@@ -46,7 +45,7 @@ export function QuestionEditor({ question, onUpdate, generateFieldKey, autoClose
   }
 
   const handleKeyChange = (value) => {
-    setIsAutoGeneratingKey(false)
+    // setIsAutoGeneratingKey(false)
     setEditedQuestion((prev) => ({
       ...prev,
       uniqueKeyName: value,

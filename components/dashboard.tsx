@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "../lib/utils";
 import UserDropdown from "./UserDropdown";
+import { Toaster } from "@/adminComponents/ui/toaster";
 
 export default function Dashboard({
   children,
@@ -32,6 +33,8 @@ export default function Dashboard({
     });
   return (
     <div className="flex h-screen overflow-hidden bg-background">
+      <Toaster />
+
       {/* Sidebar */}
       <div className="w-[240px] border-r flex flex-col h-screen">
         {/* Logo */}

@@ -7,8 +7,8 @@ import { useRouter } from "next/navigation";
 import { Input } from "../../../../../../components/ui/input";
 import { Button } from "../../../../../../components/ui/button";
 import { Label } from "../../../../../../components/ui/label";
-import { toast } from "../../../../../../components/ui/use-toast";
 import { createCategory } from "../../../../../../service/supportCategoryService";
+import { useToast } from "@/adminComponents/ui/use-toast";
 
 export default function AddCategory() {
   const router = useRouter();
@@ -16,6 +16,8 @@ export default function AddCategory() {
   const [formData, setFormData] = useState({
     name: "",
   });
+
+  const { toast } = useToast()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;

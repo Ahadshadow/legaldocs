@@ -7,9 +7,9 @@ import { useRouter } from "next/navigation"
 import { Input } from "../../../../../components/ui/input"
 import { Button } from "../../../../../components/ui/button"
 import { Label } from "../../../../../components/ui/label"
-import { toast } from "../../../../../components/ui/use-toast"
 import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from "../../../../../components/ui/select"
 import { SC } from "../../../../../service/Api/serverCall"
+import { useToast } from "@/adminComponents/ui/use-toast"
 
 export default function AddUser() {
   const router = useRouter()
@@ -24,6 +24,8 @@ export default function AddUser() {
     password: "",
     // slug: "",
   })
+  const { toast } = useToast()
+
 
   // Generate slug from display name
   // useEffect(() => {
