@@ -23,7 +23,7 @@ export default function SearchSection() {
       const mergedRes = [...res.data?.documents, ...res.data?.subcategories];
       const data =
         mergedRes?.map((item) => {
-          const isDocument = !!item?.sub_Categories;
+          const isDocument = !!item?.sub_categories;
           return {
             label: item?.name,
             url: isDocument
