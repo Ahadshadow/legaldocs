@@ -83,20 +83,22 @@ export default function DocumentPage({ params }) {
         <DocumentHeader
           submissionId={submissionId}
           isEmailMatch={isEmailMatch}
-          isComplete={documentsData}
+          documentsData={documentsData}
           Heading={Heading}
         />
         <div className="flex-1 flex overflow-hidden">
           <DocumentSidebar
             isEmailMatch={isEmailMatch}
-            isComplete={documentsData}
+            documentsData={documentsData}
           />
           <div className="flex-1 flex flex-col overflow-hidden">
             <DocumentToolbar
               isEmailMatch={isEmailMatch}
               isComplete={documentsData.status}
             />
-            <DocumentViewer isEmailMatch={isEmailMatch} />
+            <DocumentViewer isEmailMatch={isEmailMatch}
+             documentsData={documentsData}
+            />
           </div>
         </div>
       </div>

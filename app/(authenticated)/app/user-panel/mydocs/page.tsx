@@ -324,16 +324,19 @@ export default function DocumentsPage() {
                             }
                           >
                             <Pencil className="mr-2 h-4 w-4" />
-                            <span>PDF Editor</span>
+                            <span>{isEmailMatch ? "Show Document" : "Document Editor"} </span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleSmartEditorClick(submission)
-                            }
-                          >
-                            <Pencil className="mr-2 h-4 w-4" />
-                            <span>Smart Editor</span>
-                          </DropdownMenuItem>
+                          {
+                             (!isEmailMatch  && submission?.status != "Complete") &&  <DropdownMenuItem
+                             onClick={() =>
+                               handleSmartEditorClick(submission)
+                             }
+                           >
+                             <Pencil className="mr-2 h-4 w-4" />
+                             <span>Smart Editor</span>
+                           </DropdownMenuItem>
+                          }
+                         
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

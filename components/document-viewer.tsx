@@ -21,7 +21,7 @@ import { HorizontalLinePanel } from "./horizontal-line-panel"
 import { DraggableSignature } from "./draggable-signature"
 import "./document-viewer.css"
 
-export function DocumentViewer({ isEmailMatch }: { isEmailMatch: boolean }) {
+export function DocumentViewer({ isEmailMatch , documentsData}: { isEmailMatch: boolean , documentsData:any}) {
   const [zoom, setZoom] = useState(100)
   const [currentPath, setCurrentPath] = useState<string>("")
   const [newSignatures, setNewSignatures] = useState<string[]>([])
@@ -175,7 +175,7 @@ export function DocumentViewer({ isEmailMatch }: { isEmailMatch: boolean }) {
                 content={pages[0].content.replace(/\n/g, "\n").replace(/\\r/g, "\r")}
                 onChange={(newContent) => updatePageContent(pages[0].id, newContent)}
                 className="prose max-w-none w-full"
-                readOnly={false}
+                readOnly={!!isEmailMatch || documentsData?.status == "Complete"}
               />
               {signatures.map((signature) => (
                 <DraggableSignature

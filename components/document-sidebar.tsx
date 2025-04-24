@@ -328,7 +328,7 @@ function PageActions({ pageId, isEditable }: PageActionsProps) {
   )
 }
 
-export function DocumentSidebar({ isEmailMatch }: { isEmailMatch: boolean }) {
+export function DocumentSidebar({ isEmailMatch, documentsData }: { isEmailMatch: boolean , documentsData:any}) {
   const { activeTool, setActiveTool, copyPage, deletePage, rotatePage, extractPage } = useDocument()
   const [selectedPages, setSelectedPages] = useState<number[]>([])
   const [isSelectionMode, setIsSelectionMode] = useState(false)
@@ -361,7 +361,7 @@ export function DocumentSidebar({ isEmailMatch }: { isEmailMatch: boolean }) {
       <div className="w-[120px] border-r flex flex-col">
         <div className="flex-1 overflow-auto">
           <div className="p-3 space-y-3">
-            {!isEmailMatch && (
+            {!isEmailMatch && documentsData?.status != "Complete" &&  (
               <SidebarButton
                 icon={<Edit />}
                 label="Edit"
@@ -369,12 +369,15 @@ export function DocumentSidebar({ isEmailMatch }: { isEmailMatch: boolean }) {
                 onClick={() => setActiveTool(activeTool === "edit" ? null : "edit")}
               />
             )}
-            <SidebarButton
+            {
+              documentsData?.status != "Complete" && <SidebarButton
               icon={<FileSignature />}
               label="Signature"
               active={activeTool === "signature"}
               onClick={() => setActiveTool(activeTool === "signature" ? null : "signature")}
             />
+            }
+            
             {/* <SidebarButton
               icon={<FormInput />}
               label="Questions & Steps"

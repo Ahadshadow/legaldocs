@@ -28,12 +28,12 @@ import { SC } from "../service/Api/serverCall";
 export function DocumentHeader({
   submissionId,
   isEmailMatch,
-  isComplete,
+  documentsData,
   Heading,
 }: {
   submissionId?: string;
   isEmailMatch?: boolean;
-  isComplete?: any;
+  documentsData?: any;
   Heading?: string;
 }) {
   const { editor, activeTool, signatures, prepareForSubmission, email } =
@@ -339,9 +339,9 @@ export function DocumentHeader({
         >
           <Redo className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="icon" onClick={handlePrint}>
+        {/* <Button variant="outline" size="icon" onClick={handlePrint}>
           <Printer className="h-4 w-4" />
-        </Button>
+        </Button> */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button>
@@ -363,7 +363,8 @@ export function DocumentHeader({
             Download PDF
           </Button>
         )} */}
-        <div className="flex items-center gap-2">
+        {
+          documentsData?.status != "Complete" &&   <div className="flex items-center gap-2">
           <Button disabled={submitLoading} onClick={handleSubmit}>
             {submitLoading ? (
               <div className="flex gap-1">
@@ -375,6 +376,8 @@ export function DocumentHeader({
             )}
           </Button>
         </div>
+        }
+       
       </div>
     </div>
   );
