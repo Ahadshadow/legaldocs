@@ -122,7 +122,6 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; documentsDa
   children,
   documentsData,
 }) => {
-  console.log("Submission ID:", documentsData)
 
 
   const [pages, setPages] = useState<Page[]>(() => [
@@ -235,7 +234,6 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; documentsDa
     const pageToExtract = pages.find((page) => page.id === pageId)
     if (pageToExtract) {
       // In a real implementation, this would trigger a download
-      console.log(`Extracting page ${pageId}`)
     }
   }
 

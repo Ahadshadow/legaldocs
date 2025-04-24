@@ -67,7 +67,6 @@ export default function DocumentPage({ params }) {
       const match = userEmail === signatureEmail;
       setIsEmailMatch(match);
     } else {
-      console.log("One of the emails is undefined or null");
       setIsEmailMatch(false);
     }
   }, [userData?.email, documentsData?.signatureRequestEmail]);

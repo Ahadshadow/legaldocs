@@ -92,7 +92,6 @@ export default function DocumentsPage() {
     if (isLoggedIn) {
       const data = getUserData();
       setUserData(data);
-      console.log(data.email, "data.email");
     } else {
       setUserData(null);
     }

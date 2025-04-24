@@ -47,7 +47,6 @@ export function DocumentHeader({
     return () => {
       // Clean up localStorage when navigating away
       localStorage.removeItem("document-steps-definition");
-      console.log("Steps data cleared from localStorage on navigation");
     };
   }, []);
 
@@ -118,7 +117,6 @@ export function DocumentHeader({
 
   const handleSave = useCallback(
     (format: "pdf" | "doc") => {
-      console.log("handleSave called with format:", format);
       if (editor) {
         // Select the entire document content, including signature fields
         const contentDiv = document.querySelector(
@@ -152,7 +150,6 @@ export function DocumentHeader({
               element.classList.contains("ProseMirror-gapcursor"),
           })
             .then((canvas) => {
-              console.log("HTML2Canvas successful");
               const imgData = canvas.toDataURL("image/png");
               const pdf = new jsPDF("p", "mm", "a4");
               const imgProps = pdf.getImageProperties(imgData);
@@ -177,7 +174,6 @@ export function DocumentHeader({
 
               const blob = pdf.output("blob");
               saveAs(blob, "document.pdf");
-              console.log(`PDF saved successfully with ${page} page(s)`);
             })
             .catch((error) => {
               console.error("Error generating PDF:", error);
@@ -213,7 +209,6 @@ export function DocumentHeader({
               { type: "application/msword" }
             );
             saveAs(blob, "document.doc");
-            console.log("DOC saved successfully with signatures");
           } catch (error) {
             console.error("Error generating DOC:", error);
             alert(
@@ -231,7 +226,6 @@ export function DocumentHeader({
 
   // In the handleSubmit and handleSubmitAsAdmin functions, update the data preparation:
   const handleSubmit = useCallback(async () => {
-    console.log("Current email:", email);
     const data = prepareForSubmission();
 
     // Get the steps data from localStorage
@@ -245,7 +239,6 @@ export function DocumentHeader({
       console.error("Error preparing steps data:", error);
     }
 
-    console.log("Complete data payload for API:", data);
     try {
       setSubmitLoading(true);
       const response = await SC.postCall({
@@ -277,7 +270,6 @@ export function DocumentHeader({
 
   // Similarly update handleSubmitAsAdmin
   const handleSubmitAsAdmin = useCallback(async () => {
-    console.log("Submitting as admin");
     const data = prepareForSubmission();
 
     // Get the steps data from localStorage
@@ -291,7 +283,6 @@ export function DocumentHeader({
       console.error("Error preparing steps data:", error);
     }
 
-    console.log("Complete data payload for API:", data);
     try {
       const response = await SC.postCall({
         url: `document/${submissionId}/update`,

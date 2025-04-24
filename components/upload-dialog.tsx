@@ -38,7 +38,6 @@ export function UploadDialog({ open, onOpenChange }: UploadDialogProps) {
 
   const handleFiles = (files: File[]) => {
     // Handle the uploaded files here
-    console.log("Files:", files)
     onOpenChange(false)
   }
 

@@ -221,7 +221,6 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData
     const pageToExtract = pages.find((page) => page.id === pageId)
     if (pageToExtract) {
       // In a real implementation, this would trigger a download
-      console.log(`Extracting page ${pageId}`)
     }
   }
 
@@ -466,7 +465,6 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData
 
   const prepareForSubmission = useCallback(() => {
     const content = pages[0].content
-    console.log("Preparing submission with email:", email)
     return {
       content,
       signatures: signatures.map((sig) => ({
@@ -482,12 +480,10 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode; initialData
   }, [pages, signatures, email])
 
   const updateEmail = useCallback((newEmail: string) => {
-    console.log("Setting email to:", newEmail)
     setEmail(newEmail)
   }, [])
 
   const setActivePanel = useCallback((panel: string | null) => {
-    console.log("Setting active panel to:", panel)
     setActivePanelState(panel)
   }, [])
 

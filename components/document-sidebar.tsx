@@ -342,7 +342,6 @@ export function DocumentSidebar({ isEmailMatch, documentsData }: { isEmailMatch:
 
   const handleSignatureAdd = () => {
     // Placeholder function for adding a signature
-    console.log("Signature added")
   }
 
   const renderActivePanel = () => {

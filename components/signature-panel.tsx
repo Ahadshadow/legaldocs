@@ -116,11 +116,11 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
   const [convertedImages, setConvertedImages] = useState<Record<string, string>>({})
   const [newSignatures, setNewSignatures] = useState<Signature[]>([])
 
-  useEffect(() => {
-    console.log("SignaturePanel rendered")
-    console.log("Current email:", email)
-    console.log("Current signatures:", signatures)
-  }, [email, signatures])
+  // useEffect(() => {
+  //   console.log("SignaturePanel rendered")
+  //   console.log("Current email:", email)
+  //   console.log("Current signatures:", signatures)
+  // }, [email, signatures])
 
   useEffect(() => {
     const convertSignatures = async () => {
@@ -133,7 +133,6 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
               base64Content = `data:image/png;base64,${base64Content}`
             }
             converted[signature.id] = base64Content
-            console.log(`Processed signature ${signature.id}:`, base64Content.substring(0, 50) + "...")
 
             // Validate base64 string
             const img = new Image()
@@ -146,8 +145,7 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
         }
       }
       setConvertedImages(converted)
-      console.log("Converted images:", converted)
-    }
+s    }
     convertSignatures()
   }, [newSignatures])
 
@@ -172,7 +170,6 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
       onSignatureAdd(newSignature)
       setNewSignatures((prev) => [...prev, newSignature])
       setIsDrawDialogOpen(false)
-      console.log(`Signature added:`, newSignature)
 
       if (type === "draw" || type === "upload") {
         try {
@@ -182,7 +179,6 @@ export function SignaturePanel({ isEmailMatch, onSignatureAdd }: SignaturePanelP
           }
           setConvertedImages((prev) => {
             const updated = { ...prev, [newSignature.id]: base64Content }
-            console.log("Updated converted images:", updated)
             return updated
           })
 

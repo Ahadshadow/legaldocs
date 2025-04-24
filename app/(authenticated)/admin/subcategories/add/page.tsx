@@ -22,7 +22,6 @@ export default function AddSubcategory() {
 
 
   async function createSubcategory(data: any) {
-    console.log("Creating subcategory:", data)
     // Replace with actual API call
     return { id: Date.now().toString(), ...data,}
   }

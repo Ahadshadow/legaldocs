@@ -175,7 +175,6 @@ export default function SubcategoryPage({ params }) {
     }
     fetchSDocuments();
   }, [activeSection]);
-  console.log("activeSession", activeSection);
   return (
     <>
       {/* Header */}

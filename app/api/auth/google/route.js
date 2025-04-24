@@ -28,7 +28,6 @@ export async function POST(req) {
 
     // TODO: Generate your own JWT or session token
     const token = generateCustomToken({ email, name, picture, googleId: sub });
-    console.log("payload:>", payload);
     return new Response(
       JSON.stringify({
         accessToken: token,

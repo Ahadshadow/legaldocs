@@ -20,7 +20,6 @@ export default function BlogsList() {
   const loadBlogs = async () => {
     try {
       const data = await getBlogs();
-      console.log(data.data);
       setBlogs(
         data.data?.map((item) => {
           return {
@@ -94,7 +93,6 @@ export default function BlogsList() {
       key: "image",
       label: "Image",
       render: (value) => {
-        console.log(value);
         return value ? (
           <img src={value} alt="image" className="w-4 h-4 rounded " />
         ) : (

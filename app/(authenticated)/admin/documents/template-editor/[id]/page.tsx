@@ -120,8 +120,6 @@ export default function Home() {
       try {
         const response = await SC.getCall({ url: `document/${templateId}` })
 
-        console.log("response", response)
-
         // const [documentRaw, setDocumentRaw] = useState(null)
 
         if (response.status == 200 && response.data.data) {
@@ -255,9 +253,6 @@ export default function Home() {
       </div>
     )
   }
-
-  console.log("documentRaw", documentRaw);
-  
 
   return (
     <main className="flex h-screen overflow-hidden">

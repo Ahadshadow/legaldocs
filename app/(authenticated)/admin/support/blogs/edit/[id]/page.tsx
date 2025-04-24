@@ -155,7 +155,6 @@ export default function EditBlog({ params }: { params: { id: string } }) {
     return <div className="p-6 text-center">Loading blog...</div>;
   }
 
-  console.log("FormData", formData);
 
   return (
     <div className="p-6">

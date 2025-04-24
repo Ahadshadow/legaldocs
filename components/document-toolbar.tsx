@@ -115,7 +115,6 @@ export function DocumentToolbar({isEmailMatch , isComplete}) {
       setIsSelectSignerOpen(true)
     }
   }
-  console.log(isComplete, "compiii");
   
 
   return (

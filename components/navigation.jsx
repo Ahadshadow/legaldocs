@@ -94,7 +94,6 @@ export default function Navigation() {
       router.push(`/${subcategory.category.slug}/${subcategory?.slug}`);
     }
   };
-  console.log("subcategories", subcategories);
   return (
     <nav className="border-b">
       <div className="container mx-auto px-4">

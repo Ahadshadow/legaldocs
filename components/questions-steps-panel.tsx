@@ -116,7 +116,6 @@ export function QuestionsStepsPanel() {
         // Convert to form renderer format before saving
         const formRendererData = convertToFormRendererFormat(data)
         localStorage.setItem("document-steps-definition", JSON.stringify(formRendererData))
-        console.log("Steps data saved to localStorage in form renderer format")
       } catch (error) {
         console.error("Error saving steps data to localStorage:", error)
       }
@@ -276,7 +275,6 @@ export function QuestionsStepsPanel() {
       if (pages && pages.length > 0) {
         const content = pages[0].content
         const parsedSteps = parseDocumentContent(content)
-        console.log("parsedSteps", parsedSteps);
 
         // If we have steps data from the API, merge it with the parsed steps
         let mergedSteps = parsedSteps
@@ -313,14 +311,12 @@ export function QuestionsStepsPanel() {
         // Process dependencies
         const withDependencies = processDependencies(internalFormat, parsedData)
         setDefinition(withDependencies)
-        console.log("Loaded steps data from localStorage")
       } else if (initialData && initialData.steps && initialData.steps.length > 0) {
         // If no localStorage data, try to load from API data
         const internalFormat = convertFromFormRendererFormat(initialData.steps)
         // Process dependencies
         const withDependencies = processDependencies(internalFormat, initialData.steps)
         setDefinition(withDependencies)
-        console.log("Loaded steps data from API")
       } else {
         // If no data from localStorage or API, parse from document content
         parseDocumentSteps()
@@ -414,33 +410,33 @@ export function QuestionsStepsPanel() {
   }, [])
 
   // Add this useEffect after the other useEffect hooks
-  useEffect(() => {
-    console.log(
-      "Current Definition Array:",
-      definition.map((step) => ({
-        name: step.name,
-        subsections: step.subsections.map((subsection) => ({
-          name: subsection.name,
-          faqQuestion: subsection.faqQuestion,
-          faqAnswer: subsection.faqAnswer,
-          questions: subsection.questions.map((q) => ({
-            label: q.label,
-            faqQuestion: q.faqQuestion,
-            faqAnswer: q.faqAnswer,
-            type: q.type,
-            attribute: q.attribute,
-            options: q.options,
-            dependence: q.dependence
-              ? {
-                  question: q.dependence.question,
-                  value: q.dependence.value,
-                }
-              : undefined,
-          })),
-        })),
-      })),
-    )
-  }, [definition])
+  // useEffect(() => {
+  //   console.log(
+  //     "Current Definition Array:",
+  //     definition.map((step) => ({
+  //       name: step.name,
+  //       subsections: step.subsections.map((subsection) => ({
+  //         name: subsection.name,
+  //         faqQuestion: subsection.faqQuestion,
+  //         faqAnswer: subsection.faqAnswer,
+  //         questions: subsection.questions.map((q) => ({
+  //           label: q.label,
+  //           faqQuestion: q.faqQuestion,
+  //           faqAnswer: q.faqAnswer,
+  //           type: q.type,
+  //           attribute: q.attribute,
+  //           options: q.options,
+  //           dependence: q.dependence
+  //             ? {
+  //                 question: q.dependence.question,
+  //                 value: q.dependence.value,
+  //               }
+  //             : undefined,
+  //         })),
+  //       })),
+  //     })),
+  //   )
+  // }, [definition])
 
   // Add this useEffect to save the steps definition to localStorage when it changes
   useEffect(() => {
@@ -456,7 +452,6 @@ export function QuestionsStepsPanel() {
         try {
           const formRendererData = convertToFormRendererFormat(definition)
           localStorage.setItem("document-steps-definition", JSON.stringify(formRendererData))
-          console.log("Steps data saved to localStorage on unmount in form renderer format")
         } catch (error) {
           console.error("Error saving steps data to localStorage on unmount:", error)
         }
@@ -937,8 +932,6 @@ export function QuestionsStepsPanel() {
   const exportStepsData = () => {
     try {
       const formRendererData = convertToFormRendererFormat(definition)
-      console.log("Steps data in form renderer format:", formRendererData)
-
       // Create a downloadable JSON file
       const dataStr = JSON.stringify(formRendererData, null, 2)
       const dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr)

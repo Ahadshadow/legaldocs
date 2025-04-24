@@ -8,7 +8,6 @@ export function HeroSection() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    console.log('Searching for:', searchQuery)
   }
 
   return (

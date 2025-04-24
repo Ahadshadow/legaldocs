@@ -47,7 +47,6 @@ export default function EditSubcategory({
       setCategories(categoriesData.data || []);
       // UPDATING SUB CATEGORY
       const subcategory = subcategoriesData.data || {};
-      console.log("subcategory:>", subcategory);
 
       setFormData({
         name: subcategory.name,

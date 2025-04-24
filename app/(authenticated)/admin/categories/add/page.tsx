@@ -34,8 +34,6 @@ export default function AddCategory() {
     try {
       const response = await SC.postCall({ url: "categories", data: formData });
 
-      console.log("response", response);
-
       toast({
         title: "Success",
         description: "Category created successfully",
