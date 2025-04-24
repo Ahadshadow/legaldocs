@@ -8,11 +8,13 @@ import { Input } from "../../../../../../components/ui/input"
 import { Button } from "../../../../../../components/ui/button"
 import { Label } from "../../../../../../components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../../../components/ui/select"
-import { toast } from "../../../../../../components/ui/use-toast"
 import { SC } from "../../../../../../service/Api/serverCall"
+import { useToast } from "@/adminComponents/ui/use-toast"
 
 export default function EditUser({ params }: { params: { id: string } }) {
   const router = useRouter()
+  const { toast } = useToast()
+
   // Unwrap params using React.use()
   const unwrappedParams = use(params)
   const id = unwrappedParams.id

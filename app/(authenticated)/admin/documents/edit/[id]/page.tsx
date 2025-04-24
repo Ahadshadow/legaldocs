@@ -9,12 +9,14 @@ import { Input } from "../../../../../../components/ui/input"
 import { Button } from "../../../../../../components/ui/button"
 import { Label } from "../../../../../../components/ui/label"
 import { Textarea } from "../../../../../../components/ui/textarea"
-import { toast } from "../../../../../../components/ui/use-toast"
 import { SC } from "../../../../../../service/Api/serverCall"
 import { Check, ChevronDown, X } from "lucide-react"
+import { useToast } from "@/adminComponents/ui/use-toast"
 
 export default function EditDocument({ params }: { params: { id: string } }) {
   const router = useRouter()
+  const { toast } = useToast()
+
   // Unwrap params using React.use()
   const unwrappedParams = use(params)
   const id = unwrappedParams.id

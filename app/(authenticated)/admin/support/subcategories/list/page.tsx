@@ -4,18 +4,20 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 // import DataTable from "../../../components/data-table"
 import { Button } from "../../../../../../components/ui/button";
-import { toast } from "../../../../../../components/ui/use-toast";
 import { Plus } from "lucide-react";
 import DataTable from "../../../../../../components/admin/data-table";
 import {
   deleteSubCategory,
   getSubCategories,
 } from "../../../../../../service/supportSubCategoryService";
+import { useToast } from "@/adminComponents/ui/use-toast";
 
 export default function SubcategoriesList() {
   const router = useRouter();
   const [subcategories, setSubcategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const { toast } = useToast()
 
   const loadSubcategories = async () => {
     try {

@@ -7,15 +7,17 @@ import { useRouter } from "next/navigation";
 import { Input } from "../../../../../../../components/ui/input";
 import { Button } from "../../../../../../../components/ui/button";
 import { Label } from "../../../../../../../components/ui/label";
-import { toast } from "../../../../../../../components/ui/use-toast";
 import {
   getCategory,
   updateCategory,
 } from "../../../../../../../service/supportCategoryService";
+import { useToast } from "@/adminComponents/ui/use-toast";
 
 export default function EditCategory({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { id } = params;
+  const { toast } = useToast()
+
 
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({

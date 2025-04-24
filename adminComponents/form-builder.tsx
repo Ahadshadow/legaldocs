@@ -39,6 +39,7 @@ export function FormBuilder({
 
   // Update cursor position when editor instance changes
   useEffect(() => {
+
     if (editorInstance) {
       const { from } = editorInstance.state.selection
       setCursorPosition(from)
@@ -97,10 +98,43 @@ export function FormBuilder({
     setSelectedSubsection(updatedSteps[stepIndex].subsections.length - 1)
   }
 
+  // Get all questions for conditional logic
+  const getAllQuestions = () => {
+    const questions = []
+
+    formStructure?.steps?.forEach((step) => {
+      step?.subsections?.forEach((subsection) => {
+        subsection?.question?.forEach((question) => {
+          questions.push({
+            id: question.id,
+            uniqueKeyName: question.uniqueKeyName,
+            questionToAsk: question.questionToAsk,
+            type: question.type,
+            list: question.list || [],
+          })
+        })
+      })
+    })
+
+    return questions
+  }
+
   // Add a new question with all required fields
   const addQuestion = (stepIndex, subsectionIndex) => {
     const defaultQuestionText = "New Question"
-    const uniqueKeyName = generateFieldKey(defaultQuestionText)
+    let uniqueKeyName = generateFieldKey(defaultQuestionText)
+
+    // Ensure the field key is unique
+    const allQuestions = getAllQuestions()
+    let counter = 1
+    let tempKeyName = uniqueKeyName
+
+    while (allQuestions.some((q) => q.uniqueKeyName === tempKeyName)) {
+      tempKeyName = `${uniqueKeyName}_${counter}`
+      counter++
+    }
+
+    uniqueKeyName = tempKeyName
 
     const uniqueId = `question_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
 
@@ -144,26 +178,18 @@ export function FormBuilder({
     }
   }
 
-  // Start editing a step name
-  const startEditingStep = (stepIndex, name) => {
-    setEditingStepIndex(stepIndex)
-    setEditingName(name)
-    setTimeout(() => {
-      inputRef.current?.focus()
-    }, 0)
-  }
-
-  // Start editing a subsection name
-  const startEditingSubsection = (stepIndex, subsectionIndex, name) => {
-    setEditingSubsectionIndex({ stepIndex, subsectionIndex })
-    setEditingName(name)
-    setTimeout(() => {
-      inputRef.current?.focus()
-    }, 0)
-  }
-
   // Save edited name
   const saveEditedName = () => {
+    // Validate that the name is not empty or just whitespace
+    if (!editingName || !editingName.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Name cannot be empty",
+        variant: "destructive",
+      })
+      return // Prevent saving empty names
+    }
+
     if (editingStepIndex !== null) {
       updateStepName(editingStepIndex, editingName)
       setEditingStepIndex(null)
@@ -172,6 +198,24 @@ export function FormBuilder({
       setEditingSubsectionIndex(null)
     }
     setEditingName("")
+  }
+
+  // Start editing a step name
+  const startEditingStep = (stepIndex, name) => {
+    setEditingStepIndex(stepIndex)
+    setEditingName(name || "") // Ensure we don't start with null or undefined
+    setTimeout(() => {
+      inputRef.current?.focus()
+    }, 0)
+  }
+
+  // Start editing a subsection name
+  const startEditingSubsection = (stepIndex, subsectionIndex, name) => {
+    setEditingSubsectionIndex({ stepIndex, subsectionIndex })
+    setEditingName(name || "") // Ensure we don't start with null or undefined
+    setTimeout(() => {
+      inputRef.current?.focus()
+    }, 0)
   }
 
   // Cancel editing
@@ -311,13 +355,44 @@ export function FormBuilder({
     }
   }
 
+  // Function to get questions that affect this question
+  const getAffectingQuestions = (questionId) => {
+    const affectingQuestions = []
+
+    formStructure?.steps?.forEach((step) => {
+      step?.subsections?.forEach((subsection) => {
+        subsection?.question?.forEach((question) => {
+          if (question.affectedQuestion && question.affectedQuestion.some((q) => q.id === questionId)) {
+            affectingQuestions.push({
+              id: question.id,
+              uniqueKeyName: question.uniqueKeyName,
+              questionToAsk: question.questionToAsk,
+              values: question.affectedQuestion.find((q) => q.id === questionId).value,
+            })
+          }
+        })
+      })
+    })
+
+    return affectingQuestions
+  }
+
   // Update question
   const updateQuestion = (stepIndex, subsectionIndex, questionId, updatedQuestion) => {
     // Validate required fields
-    if (!updatedQuestion.questionToAsk || !updatedQuestion.uniqueKeyName) {
+    if (!updatedQuestion.questionToAsk || !updatedQuestion.questionToAsk.trim()) {
       toast({
         title: "Validation Error",
-        description: "Question text and field key are required",
+        description: "Question text is required",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    if (!updatedQuestion.uniqueKeyName || !updatedQuestion.uniqueKeyName.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Field key is required",
         variant: "destructive",
       })
       return false
@@ -348,8 +423,18 @@ export function FormBuilder({
       const oldFieldKey = oldQuestion.uniqueKeyName
       const newFieldKey = updatedQuestion.uniqueKeyName
 
-      // If the field key changed, update references in the document
+      // Check if the field key is unique (only if it changed)
       if (oldFieldKey !== newFieldKey) {
+        const allQuestions = getAllQuestions()
+        if (allQuestions.some((q) => q.id !== questionId && q.uniqueKeyName === newFieldKey)) {
+          toast({
+            title: "Validation Error",
+            description: "Field key must be unique. This key is already in use.",
+            variant: "destructive",
+          })
+          return false
+        }
+
         // Update the document content by replacing all instances of the old field key
         // with the new field key, preserving the rest of the field format
         let updatedContent = documentContent
@@ -394,49 +479,6 @@ export function FormBuilder({
     return false
   }
 
-  // Get all questions for conditional logic
-  const getAllQuestions = () => {
-    const questions = []
-
-    formStructure?.steps?.forEach((step) => {
-      step?.subsections?.forEach((subsection) => {
-        subsection?.question?.forEach((question) => {
-          questions.push({
-            id: question.id,
-            uniqueKeyName: question.uniqueKeyName,
-            questionToAsk: question.questionToAsk,
-            type: question.type,
-            list: question.list || [],
-          })
-        })
-      })
-    })
-
-    return questions
-  }
-
-  // Function to get questions that affect this question
-  const getAffectingQuestions = (questionId) => {
-    const affectingQuestions = []
-
-    formStructure?.steps?.forEach((step) => {
-      step?.subsections?.forEach((subsection) => {
-        subsection?.question?.forEach((question) => {
-          if (question.affectedQuestion && question.affectedQuestion.some((q) => q.id === questionId)) {
-            affectingQuestions.push({
-              id: question.id,
-              uniqueKeyName: question.uniqueKeyName,
-              questionToAsk: question.questionToAsk,
-              values: question.affectedQuestion.find((q) => q.id === questionId).value,
-            })
-          }
-        })
-      })
-    })
-
-    return affectingQuestions
-  }
-
   // Add a new question directly from the conditional editor
   const addNewQuestionFromConditional = (newQuestion) => {
     if (formStructure.steps.length > 0) {
@@ -444,7 +486,19 @@ export function FormBuilder({
       const subsectionIndex = selectedSubsection
 
       const uniqueId = `question_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-      const uniqueKeyName = newQuestion.uniqueKeyName || generateFieldKey(newQuestion.questionToAsk)
+      let uniqueKeyName = newQuestion.uniqueKeyName || generateFieldKey(newQuestion.questionToAsk)
+
+      // Ensure the field key is unique
+      const allQuestions = getAllQuestions()
+      let counter = 1
+      let tempKeyName = uniqueKeyName
+
+      while (allQuestions.some((q) => q.uniqueKeyName === tempKeyName)) {
+        tempKeyName = `${uniqueKeyName}_${counter}`
+        counter++
+      }
+
+      uniqueKeyName = tempKeyName
 
       const questionToAdd = {
         ...newQuestion,
@@ -564,7 +618,8 @@ export function FormBuilder({
                               if (e.key === "Enter") saveEditedName()
                               if (e.key === "Escape") cancelEditing()
                             }}
-                            className="h-8"
+                            className={`h-8 ${!editingName || !editingName.trim() ? "border-destructive" : ""}`}
+                            placeholder="Enter name (required)"
                           />
                           <div
                             role="button"
@@ -701,7 +756,8 @@ export function FormBuilder({
                                         if (e.key === "Enter") saveEditedName()
                                         if (e.key === "Escape") cancelEditing()
                                       }}
-                                      className="h-7 text-sm"
+                                      className={`h-7 text-sm ${!editingName || !editingName.trim() ? "border-destructive" : ""}`}
+                                      placeholder="Enter name (required)"
                                     />
                                     <div
                                       role="button"

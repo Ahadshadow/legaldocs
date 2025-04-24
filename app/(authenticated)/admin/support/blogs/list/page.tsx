@@ -4,15 +4,17 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 // import DataTable from "../../../components/data-table"
 import { Button } from "../../../../../../components/ui/button";
-import { toast } from "../../../../../../components/ui/use-toast";
 import { Plus } from "lucide-react";
 import DataTable from "../../../../../../components/admin/data-table";
 import {
   deleteBlog,
   getBlogs,
 } from "../../../../../../service/supportBlogService";
+import { useToast } from "@/adminComponents/ui/use-toast";
 
 export default function BlogsList() {
+  const { toast } = useToast()
+
   const router = useRouter();
   const [blogs, setBlogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

@@ -14,12 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../../../../../components/ui/select";
-import { toast } from "../../../../../../../components/ui/use-toast";
 import { getCategories } from "../../../../../../../service/supportCategoryService";
 import {
   getSubCategory,
   updateSubCategory,
 } from "../../../../../../../service/supportSubCategoryService";
+import { useToast } from "@/adminComponents/ui/use-toast";
 
 export default function EditSubcategory({
   params,
@@ -27,6 +27,8 @@ export default function EditSubcategory({
   params: { id: string };
 }) {
   const router = useRouter();
+  const { toast } = useToast()
+
   const { id } = params;
 
   const [isLoading, setIsLoading] = useState(false);

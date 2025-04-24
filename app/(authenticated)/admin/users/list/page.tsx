@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation"
 import { Plus } from "lucide-react"
 import DataTable from "../../../../../components/admin/data-table"
 import { Button } from "../../../../../components/ui/button"
-import { toast } from "../../../../../components/ui/use-toast"
 import { SC } from "../../../../../service/Api/serverCall"
 import { CustomPagination } from "../../../../../components/ui/custom-pagination"
+import { useToast } from "@/adminComponents/ui/use-toast"
 
 export default function UsersList() {
   const router = useRouter()
@@ -19,6 +19,8 @@ export default function UsersList() {
     perPage: 10,
     total: 0,
   })
+  const { toast } = useToast()
+
 
   useEffect(() => {
     loadUsers(pagination.currentPage)

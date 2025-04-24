@@ -14,11 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../../../../components/ui/select";
-import { toast } from "../../../../../../components/ui/use-toast";
 import { getCategories } from "../../../../../../service/supportCategoryService";
 import { createSubCategory } from "../../../../../../service/supportSubCategoryService";
+import { useToast } from "@/adminComponents/ui/use-toast";
 
 export default function AddSubcategory() {
+  const { toast } = useToast()
+
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);

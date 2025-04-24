@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "../../../../../components/ui/button"
-import { toast } from "../../../../../components/ui/use-toast"
 import { Plus } from "lucide-react"
 import DataTable from "../../../../../components/admin/data-table"
 import { SC } from "../../../../../service/Api/serverCall"
 import { CustomPagination } from "../../../../../components/ui/custom-pagination"
+import { useToast } from "@/adminComponents/ui/use-toast"
 
 export default function SubcategoriesList() {
+  const { toast } = useToast()
+
   const router = useRouter()
   const [subcategories, setSubcategories] = useState([])
   const [isLoading, setIsLoading] = useState(true)

@@ -3,18 +3,20 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "../../../../../../components/ui/button";
-import { toast } from "../../../../../../components/ui/use-toast";
 import { Plus } from "lucide-react";
 import DataTable from "../../../../../../components/admin/data-table";
 import {
   deleteCategory,
   getCategories,
 } from "../../../../../../service/supportCategoryService";
+import { useToast } from "@/adminComponents/ui/use-toast";
 
 export default function CategoriesList() {
   const router = useRouter();
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const { toast } = useToast()
 
   const loadCategories = async () => {
     try {
