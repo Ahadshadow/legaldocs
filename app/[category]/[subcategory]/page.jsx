@@ -20,12 +20,12 @@ import { getSubcategoriesByCategoryId } from "../../../service/navigationService
 import { Button } from "../../../components/ui/button";
 
 // Separate DocumentItem component
-function DocumentItem({ title, id }) {
+function DocumentItem({ title, id, slug }) {
   return (
     <div className="p-6 hover:bg-gray-50">
       <h2 className="mb-2 text-lg font-medium">
         <Link
-          href={`/app/pdf-builder/documents/${id}`}
+          href={`/app/pdf-builder/documents/${slug}`}
           className="text-gray-900 hover:text-primary"
         >
           {title}
@@ -397,6 +397,7 @@ export default function SubcategoryPage({ params }) {
                             key={`doc-${index}`}
                             title={item.name}
                             id={item._id}
+                            slug={item.slug}
                           />
                         ))}
                       </div>
