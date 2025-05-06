@@ -29,12 +29,14 @@ export default function SignUp() {
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [error, setError] = useState("");
+  const [errors, setErrors] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleSignUp = async (e) => {
     e.preventDefault();
     setError("");
+    setErrors(null);
     setIsLoading(true);
 
     if (password !== passwordConfirmation) {
@@ -68,8 +70,10 @@ export default function SignUp() {
         router.push("/signin");
       }
     } catch (error) {
-      setError("An error occurred. Please try again.");
-      console.error("Sign-up error:", error);
+      let errorMessages = error.response.data?.errors || null;
+      let errorMessage = error.response.data?.message || "";
+      if (errorMessage) setError(errorMessage);
+      if (errorMessages) setErrors(errorMessages);
     } finally {
       setIsLoading(false);
     }
@@ -129,6 +133,9 @@ export default function SignUp() {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
+            {errors?.email && (
+              <p className="text-sm text-red-500">{errors?.email?.[0]}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="phone">Phone</Label>
@@ -150,6 +157,9 @@ export default function SignUp() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            {errors?.password && (
+              <p className="text-sm text-red-500">{errors?.password?.[0]}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="passwordConfirmation">Confirm password</Label>

@@ -78,8 +78,10 @@ export default function DocumentsPage() {
           throw new Error("Failed to fetch submissions");
         }
       } catch (error) {
-        console.error("Error fetching submissions:", error);
-        setError(error.message);
+        const errorMessage =
+          error.response?.data?.message || "No Submission found for this user!";
+        console.error("Error fetching submissions:", error.response);
+        setError(errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -139,22 +141,20 @@ export default function DocumentsPage() {
 
   const handlePDFEditorClick = useCallback(
     (submissionId) => {
-      router.push(
-        `/app/document-editor/documents/${submissionId}`
-      );
+      router.push(`/app/document-editor/documents/${submissionId}`);
     },
     [router]
   );
-  
+
   const handleSmartEditorClick = useCallback(
     (submission) => {
       router.push(
-        `/app/pdf-builder/documents/${submission.document.slug}?submission_id=${submission.submission_id}` 
+        `/app/pdf-builder/documents/${submission.document.slug}?submission_id=${submission.submission_id}`
       );
     },
     [router]
   );
-  
+
   return (
     <Layout>
       <GlobalStyles />
@@ -323,19 +323,23 @@ export default function DocumentsPage() {
                             }
                           >
                             <Pencil className="mr-2 h-4 w-4" />
-                            <span>{isEmailMatch ? "Show Document" : "Document Editor"} </span>
+                            <span>
+                              {isEmailMatch
+                                ? "Show Document"
+                                : "Document Editor"}{" "}
+                            </span>
                           </DropdownMenuItem>
-                          {
-                             (!isEmailMatch  && submission?.status != "Complete") &&  <DropdownMenuItem
-                             onClick={() =>
-                               handleSmartEditorClick(submission)
-                             }
-                           >
-                             <Pencil className="mr-2 h-4 w-4" />
-                             <span>Smart Editor</span>
-                           </DropdownMenuItem>
-                          }
-                         
+                          {!isEmailMatch &&
+                            submission?.status != "Complete" && (
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleSmartEditorClick(submission)
+                                }
+                              >
+                                <Pencil className="mr-2 h-4 w-4" />
+                                <span>Smart Editor</span>
+                              </DropdownMenuItem>
+                            )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
