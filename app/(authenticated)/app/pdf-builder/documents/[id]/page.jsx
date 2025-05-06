@@ -40,8 +40,7 @@ export default function DynamicForm({ params }) {
   const submissionId = searchParams.get("submission_id");
 
   const rawParams = use(params);
-  const selectedId =
-    rawParams.id;
+  const selectedId = rawParams.id;
   const [documentData, setDocumentData] = useState(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [currentSubsectionIndex, setCurrentSubsectionIndex] = useState(0);
@@ -371,8 +370,9 @@ export default function DynamicForm({ params }) {
       if (response.status) {
         toast({
           title: "Success",
-          description: `Document ${submissionId ? "updated" : "saved"
-            } successfully`,
+          description: `Document ${
+            submissionId ? "updated" : "saved"
+          } successfully`,
         });
         localStorage.removeItem("documentDraft"); // REMOVE LOCAL STORAGE DOCUMENT DRAFT
         router.push("/app/user-panel/mydocs");
@@ -534,9 +534,8 @@ export default function DynamicForm({ params }) {
         (acc, section) => acc + section.subsections.length,
         0
       )) *
-    100
+      100
   );
-
 
   return (
     <div className="flex h-[calc(100vh-4.9rem)] bg-gray-50 overflow-hidden">
@@ -570,33 +569,15 @@ export default function DynamicForm({ params }) {
                 <div className="prose max-w-none">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-semibold">Preview</h2>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => setIsPreviewMode(false)}
-                        variant="outline"
-                      >
-                        Back
-                      </Button>
-                      <Button
-                        disabled={submissionLoading}
-                        onClick={handleSave}
-                        className="bg-red-500 text-white hover:bg-red-600"
-                      >
-                        {submissionLoading ? (
-                          <Loader />
-                        ) : submissionId ? (
-                          "Update"
-                        ) : (
-                          "Save"
-                        )}
-                      </Button>
-                    </div>
                   </div>
                   <div className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
                     {documentData.flatMap((section) =>
                       section.subsections.flatMap((subsection) =>
                         subsection.question.map((field, id) => (
-                          <div key={`${id}-${field.uniqueKeyName}`} className="mb-4">
+                          <div
+                            key={`${id}-${field.uniqueKeyName}`}
+                            className="mb-4"
+                          >
                             <h3 className="font-semibold">
                               {field.questionToAsk}
                             </h3>
@@ -604,12 +585,33 @@ export default function DynamicForm({ params }) {
                               {Array.isArray(formData[field.uniqueKeyName])
                                 ? formData[field.uniqueKeyName].join(", ")
                                 : formData[field.uniqueKeyName] ||
-                                "Not provided"}
+                                  "Not provided"}
                             </p>
                           </div>
                         ))
                       )
                     )}
+                  </div>
+                  <div className="flex mt-4 justify-end gap-2">
+                    <Button
+                      onClick={() => setIsPreviewMode(false)}
+                      variant="outline"
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      disabled={submissionLoading}
+                      onClick={handleSave}
+                      className="bg-red-500 text-white hover:bg-red-600"
+                    >
+                      {submissionLoading ? (
+                        <Loader />
+                      ) : submissionId ? (
+                        "Update"
+                      ) : (
+                        "Save"
+                      )}
+                    </Button>
                   </div>
                 </div>
               ) : (
@@ -631,7 +633,7 @@ export default function DynamicForm({ params }) {
                             (field, id) =>
                               !shouldHideQuestion(field) && (
                                 <div
-                                  key={field.uniqueKeyName+id}
+                                  key={field.uniqueKeyName + id}
                                   className="bg-white shadow-sm border border-gray-200 rounded-lg"
                                 >
                                   <div className="p-4">
@@ -696,7 +698,7 @@ export default function DynamicForm({ params }) {
                             className="bg-red-500 text-white hover:bg-red-600"
                           >
                             {currentStepIndex === documentData.length - 1 &&
-                              currentSubsectionIndex ===
+                            currentSubsectionIndex ===
                               currentSection.subsections.length - 1
                               ? "Preview"
                               : "Next"}
@@ -706,18 +708,14 @@ export default function DynamicForm({ params }) {
                     </div>
                   </div>
 
-
-
-                  {currentSection.FAQQuestion &&
+                  {currentSection.FAQQuestion && (
                     <div>
                       <InfoCard
                         content={currentSection.FAQAnswer}
                         question={currentSection.FAQQuestion}
-
                       />
                     </div>
-                  }
-
+                  )}
                 </div>
               )}
             </div>

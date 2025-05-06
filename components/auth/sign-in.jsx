@@ -72,7 +72,10 @@ export default function SignIn(props) {
         setError("Sign-in failed. Please check your credentials.");
       }
     } catch (error) {
-      setError("An error occurred. Please try again.");
+      const errroMessage =
+        error?.response?.data?.message ||
+        "An error occurred. Please try again.";
+      setError(errroMessage);
       console.error("Sign-in error:", error);
     } finally {
       setIsLoading(false);
